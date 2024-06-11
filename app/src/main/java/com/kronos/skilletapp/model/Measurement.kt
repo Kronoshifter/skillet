@@ -6,18 +6,14 @@ data class Measurement(
 ) {
   fun scale(factor: Double) = copy(amount = amount * factor)
 
-  fun convert(to: MeasurementUnit.Mass): Measurement {
+  fun convert(to: MeasurementUnit.Mass) = convert(to) {
     check(unit is MeasurementUnit.Mass)
-
-    val factor = to.factor / unit.factor
-    return Measurement(amount = amount * factor, unit = to)
+    amount * unit.factor / to.factor
   }
 
-  fun convert(to: MeasurementUnit.Volume): Measurement {
+  fun convert(to: MeasurementUnit.Volume) = convert(to) {
     check(unit is MeasurementUnit.Volume)
-
-    val factor = to.factor / unit.factor
-    return Measurement(amount = amount * factor, unit = to)
+    amount * unit.factor / to.factor
   }
 
   fun convert(to: MeasurementUnit, conversion: () -> Double): Measurement {
