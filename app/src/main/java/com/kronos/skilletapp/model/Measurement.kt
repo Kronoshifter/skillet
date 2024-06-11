@@ -2,8 +2,16 @@ package com.kronos.skilletapp.model
 
 data class Measurement(
   val amount: Double,
-  val unit: MeasurementUnit
-)
+  val unit: MeasurementUnit,
+) {
+  fun scale(factor: Double) = Measurement(amount * factor, unit)
+
+  fun convertTo(to: MeasurementUnit): Measurement {
+    val factor = to.factor / unit.factor
+    return Measurement(amount * factor, to)
+  }
+
+}
 
 enum class MeasurementType {
   Mass,
@@ -12,10 +20,10 @@ enum class MeasurementType {
 }
 
 sealed class MeasurementUnit(
+  open val name: String,
   val factor: Double,
-  val name: String,
   val abbreviation: String,
-  val type: MeasurementType
+  val type: MeasurementType,
 ) {
 
   // Volume
@@ -23,15 +31,15 @@ sealed class MeasurementUnit(
   //// Metric
 
   data object Milliliter : MeasurementUnit(
-    factor = 1.0,
     name = "milliliter",
+    factor = 1.0,
     abbreviation = "mL",
     type = MeasurementType.Volume
   )
 
   data object Liter : MeasurementUnit(
-    factor = 1000.0,
     name = "liter",
+    factor = 1000.0,
     abbreviation = "L",
     type = MeasurementType.Volume
   )
@@ -123,31 +131,10 @@ sealed class MeasurementUnit(
 
   // Other
 
-  data object Slice : MeasurementUnit(
+  data class Custom(override val name: String) : MeasurementUnit(
     factor = 1.0,
-    name = "slice",
-    abbreviation = "slice",
-    type = MeasurementType.Other
-  )
-
-  data object Piece : MeasurementUnit(
-    factor = 1.0,
-    name = "piece",
-    abbreviation = "piece",
-    type = MeasurementType.Other
-  )
-
-  data object Each : MeasurementUnit(
-    factor = 1.0,
-    name = "each",
-    abbreviation = "each",
-    type = MeasurementType.Other
-  )
-
-  data object Stick : MeasurementUnit(
-    factor = 1.0,
-    name = "stick",
-    abbreviation = "stick",
+    name = name,
+    abbreviation = name,
     type = MeasurementType.Other
   )
 
@@ -168,10 +155,6 @@ sealed class MeasurementUnit(
       Kilogram,
       Ounce,
       Pound,
-      Slice,
-      Piece,
-      Each,
-      Stick
     )
   }
 }
