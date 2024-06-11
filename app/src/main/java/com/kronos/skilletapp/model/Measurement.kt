@@ -4,13 +4,26 @@ data class Measurement(
   val amount: Double,
   val unit: MeasurementUnit,
 ) {
-  fun scale(factor: Double) = Measurement(amount * factor, unit)
+  fun scale(factor: Double) = copy(amount = amount * factor)
 
-  fun convertTo(to: MeasurementUnit): Measurement {
+  fun convert(to: MeasurementUnit.Mass): Measurement {
+    check(unit is MeasurementUnit.Mass)
+
     val factor = to.factor / unit.factor
-    return Measurement(amount * factor, to)
+    return Measurement(amount = amount * factor, unit = to)
   }
 
+  fun convert(to: MeasurementUnit.Volume): Measurement {
+    check(unit is MeasurementUnit.Volume)
+
+    val factor = to.factor / unit.factor
+    return Measurement(amount = amount * factor, unit = to)
+  }
+
+  fun convert(to: MeasurementUnit, conversion: () -> Double): Measurement {
+    val factor = conversion()
+    return Measurement(amount = amount * factor, unit = to)
+  }
 }
 
 enum class MeasurementType {
@@ -21,121 +34,117 @@ enum class MeasurementType {
 
 sealed class MeasurementUnit(
   open val name: String,
-  val factor: Double,
-  val abbreviation: String,
-  val type: MeasurementType,
+  open val factor: Double,
+  open val abbreviation: String,
+//  val type: MeasurementType,
 ) {
+
+  sealed class Mass(
+    override val name: String,
+    override val factor: Double,
+    override val abbreviation: String,
+  ) : MeasurementUnit(name, factor, abbreviation)
+
+  sealed class Volume(
+    override val name: String,
+    override val factor: Double,
+    override val abbreviation: String,
+  ) : MeasurementUnit(name, factor, abbreviation)
+
+  data class Custom(
+    override val name: String,
+    override val factor: Double,
+    override val abbreviation: String,
+  ) : MeasurementUnit(name, factor, abbreviation)
 
   // Volume
 
   //// Metric
 
-  data object Milliliter : MeasurementUnit(
+  data object Milliliter : Volume(
     name = "milliliter",
     factor = 1.0,
     abbreviation = "mL",
-    type = MeasurementType.Volume
   )
 
-  data object Liter : MeasurementUnit(
+  data object Liter : Volume(
     name = "liter",
     factor = 1000.0,
     abbreviation = "L",
-    type = MeasurementType.Volume
   )
 
   //// Standard
 
-  data object Teaspoon : MeasurementUnit(
+  data object Teaspoon : Volume(
     factor = 4.929,
     name = "teaspoon",
     abbreviation = "tsp",
-    type = MeasurementType.Volume
   )
 
-  data object Tablespoon : MeasurementUnit(
+  data object Tablespoon : Volume(
     factor = 14.789,
     name = "tablespoon",
     abbreviation = "tbsp",
-    type = MeasurementType.Volume
   )
 
-  data object Cup : MeasurementUnit(
+  data object Cup : Volume(
     factor = 240.0,
     name = "cup",
     abbreviation = "C",
-    type = MeasurementType.Volume
   )
 
-  data object Pint : MeasurementUnit(
+  data object Pint : Volume(
     factor = 473.176,
     name = "pint",
     abbreviation = "pt",
-    type = MeasurementType.Volume
   )
 
-  data object Quart : MeasurementUnit(
+  data object Quart : Volume(
     factor = 946.353,
     name = "quart",
     abbreviation = "qt",
-    type = MeasurementType.Volume
   )
 
-  data object Gallon : MeasurementUnit(
+  data object Gallon : Volume(
     factor = 3785.410,
     name = "gallon",
     abbreviation = "gal",
-    type = MeasurementType.Volume
   )
 
-  data object FluidOunce : MeasurementUnit(
+  data object FluidOunce : Volume(
     factor = 29.574,
     name = "fluid ounce",
     abbreviation = "fl oz",
-    type = MeasurementType.Volume
   )
 
   // Mass
 
   //// Metric
 
-  data object Gram : MeasurementUnit(
+  data object Gram : Mass(
     factor = 1.0,
     name = "gram",
     abbreviation = "g",
-    type = MeasurementType.Mass
   )
 
-  data object Kilogram : MeasurementUnit(
+  data object Kilogram : Mass(
     factor = 1000.0,
     name = "kilogram",
     abbreviation = "kg",
-    type = MeasurementType.Mass
   )
 
   //// Standard
 
-  data object Ounce : MeasurementUnit(
+  data object Ounce : Mass(
     factor = 28.350,
     name = "ounce",
     abbreviation = "oz",
-    type = MeasurementType.Mass
   )
 
-  data object Pound : MeasurementUnit(
+  data object Pound : Mass(
     factor = 453.592,
     name = "pound",
     abbreviation = "lb",
-    type = MeasurementType.Mass
-  )
-
-  // Other
-
-  data class Custom(override val name: String) : MeasurementUnit(
-    factor = 1.0,
-    name = name,
-    abbreviation = name,
-    type = MeasurementType.Other
   )
 
   companion object {
