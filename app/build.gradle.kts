@@ -63,5 +63,6 @@ dependencies {
   androidTestImplementation("androidx.compose.ui:ui-test-junit4")
   debugImplementation("androidx.compose.ui:ui-tooling")
   debugImplementation("androidx.compose.ui:ui-test-manifest")
-    implementation(kotlin("reflect"))
+  implementation(kotlin("reflect"))
+  implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 }
