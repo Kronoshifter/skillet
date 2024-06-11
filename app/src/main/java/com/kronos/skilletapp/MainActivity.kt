@@ -34,7 +34,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
   )
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, device = "spec:parent=pixel_5")
 @Composable
 fun GreetingPreview() {
   SkilletAppTheme {
