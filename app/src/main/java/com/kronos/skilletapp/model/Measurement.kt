@@ -152,6 +152,26 @@ sealed class MeasurementUnit(
   )
 
   companion object {
-    fun values() = MeasurementUnit::class.sealedSubclasses.mapNotNull { it.objectInstance }
+//    fun values() = MeasurementUnit::class.sealedSubclasses.mapNotNull { it.objectInstance as? MeasurementUnit }
+
+    fun values() = listOf(
+      Milliliter,
+      Liter,
+      Teaspoon,
+      Tablespoon,
+      Cup,
+      Pint,
+      Quart,
+      Gallon,
+      FluidOunce,
+      Gram,
+      Kilogram,
+      Ounce,
+      Pound,
+      Slice,
+      Piece,
+      Each,
+      Stick
+    )
   }
 }
