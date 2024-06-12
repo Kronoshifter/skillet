@@ -32,26 +32,26 @@ sealed class MeasurementUnit(
   open val name: String,
   open val factor: Double,
   open val abbreviation: String,
-//  val type: MeasurementType,
+  open val type: MeasurementType,
 ) {
 
   sealed class Mass(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-  ) : MeasurementUnit(name, factor, abbreviation)
+  ) : MeasurementUnit(name, factor, abbreviation, type = MeasurementType.Mass)
 
   sealed class Volume(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-  ) : MeasurementUnit(name, factor, abbreviation)
+  ) : MeasurementUnit(name, factor, abbreviation, type = MeasurementType.Volume)
 
   data class Custom(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-  ) : MeasurementUnit(name, factor, abbreviation)
+  ) : MeasurementUnit(name, factor, abbreviation, type = MeasurementType.Other)
 
   // Volume
 
