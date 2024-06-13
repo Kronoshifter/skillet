@@ -53,6 +53,10 @@ android {
   }
 }
 
+tasks.withType<Test>().configureEach {
+  useJUnitPlatform()
+}
+
 dependencies {
 
   implementation("androidx.core:core-ktx:1.10.1")
