@@ -248,10 +248,7 @@ class MeasurementTests : FunSpec({
   context("Custom Conversions") {
     test("Volume to Mass") {
       val tablespoonsButter = Measurement(2.0, MeasurementUnit.Tablespoon)
-      val gramsButter = tablespoonsButter.convert(MeasurementUnit.Gram) {
-//        MeasurementUnit.Tablespoon.factor * 14.0
-        14.0
-      }
+      val gramsButter = tablespoonsButter.convert(MeasurementUnit.Gram) { it * 14 }
 
       gramsButter.amount shouldBe (28.0 plusOrMinus 0.001)
       gramsButter.unit shouldBe MeasurementUnit.Gram
@@ -259,9 +256,7 @@ class MeasurementTests : FunSpec({
 
     test("Mass to Volume") {
       val gramsButter = Measurement(28.0, MeasurementUnit.Gram)
-      val tablespoonsButter = gramsButter.convert(MeasurementUnit.Tablespoon) {
-        1.0 / 14.0
-      }
+      val tablespoonsButter = gramsButter.convert(MeasurementUnit.Tablespoon) { it / 14 }
 
       tablespoonsButter.amount shouldBe (2.0 plusOrMinus 0.001)
       tablespoonsButter.unit shouldBe MeasurementUnit.Tablespoon

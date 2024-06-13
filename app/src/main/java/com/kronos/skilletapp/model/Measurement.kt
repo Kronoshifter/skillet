@@ -5,21 +5,20 @@ data class Measurement(
   val unit: MeasurementUnit,
 ) {
   fun scale(factor: Double) = copy(amount = amount * factor)
+  operator fun times(factor: Double) = scale(factor)
+  operator fun times(factor: Int) = scale(factor.toDouble())
 
   fun convert(to: MeasurementUnit.Mass) = convert(to) {
     check(unit is MeasurementUnit.Mass)
-    unit.factor / to.factor
+    it * unit.factor / to.factor
   }
 
   fun convert(to: MeasurementUnit.Volume) = convert(to) {
     check(unit is MeasurementUnit.Volume)
-    unit.factor / to.factor
+    it * unit.factor / to.factor
   }
 
-  fun convert(to: MeasurementUnit, conversion: () -> Double): Measurement {
-    val factor = conversion()
-    return Measurement(amount = amount * factor, unit = to)
-  }
+  fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(amount), unit = to)
 }
 
 enum class MeasurementType {
