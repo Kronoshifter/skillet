@@ -42,9 +42,6 @@ fun GreetingPreview() {
   SkilletAppTheme {
     Column {
       Greeting("Android")
-      MeasurementUnit.values().forEach {
-        Text(it.name)
-      }
     }
   }
 }

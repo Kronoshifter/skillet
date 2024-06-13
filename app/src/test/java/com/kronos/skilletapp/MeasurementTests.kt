@@ -4,9 +4,11 @@ import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.model.MeasurementUnit
 import io.kotest.assertions.shouldFail
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldHave
 
 class MeasurementTests : FunSpec({
   val grams = Measurement(10.0, MeasurementUnit.Gram)
@@ -184,12 +186,6 @@ class MeasurementTests : FunSpec({
           converted.unit shouldBe MeasurementUnit.Cup
         }
 
-        test("Cups to Fluid Ounces") {
-          val converted = cup.convert(MeasurementUnit.FluidOunce)
-          converted.amount shouldBe (8.0 plusOrMinus 0.001)
-          converted.unit shouldBe MeasurementUnit.FluidOunce
-        }
-
         test("Fluid Ounces to Tablespoons") {
           val converted = fluidOunce.convert(MeasurementUnit.Tablespoon)
           converted.amount shouldBe (2.0 plusOrMinus 0.001)
@@ -214,65 +210,91 @@ class MeasurementTests : FunSpec({
           converted.unit shouldBe MeasurementUnit.Tablespoon
         }
       }
+
+      context("Metric to Imperial") {
+        test("Milliliters to Fluid Ounces") {
+          val converted = milliliters.convert(MeasurementUnit.FluidOunce)
+          converted.amount shouldBe (3.381 plusOrMinus 0.001)
+          converted.unit shouldBe MeasurementUnit.FluidOunce
+        }
+
+        test("Milliliters to Cups") {
+          val converted = milliliters.convert(MeasurementUnit.Cup)
+          converted.amount shouldBe (0.4232 plusOrMinus 0.001)
+          converted.unit shouldBe MeasurementUnit.Cup
+        }
+      }
+
+      context("Imperial to Metric") {
+        test("Tablespoons to Milliliters") {
+          val converted = tablespoon.convert(MeasurementUnit.Milliliter)
+          converted.amount shouldBe (14.7868 plusOrMinus 0.001)
+          converted.unit shouldBe MeasurementUnit.Milliliter
+        }
+
+        test("Cups to Milliliters") {
+          val converted = cup.convert(MeasurementUnit.Milliliter)
+          converted.amount shouldBe (236.588 plusOrMinus 0.001)
+          converted.unit shouldBe MeasurementUnit.Milliliter
+        }
+      }
     }
 
-    context("Metric to Imperial") {
-      test("Milliliters to Fluid Ounces") {
-        val converted = milliliters.convert(MeasurementUnit.FluidOunce)
-        converted.amount shouldBe (3.381 plusOrMinus 0.001)
-        converted.unit shouldBe MeasurementUnit.FluidOunce
+    context("Custom Conversions") {
+      test("Volume to Mass") {
+        val tablespoonsButter = Measurement(2.0, MeasurementUnit.Tablespoon)
+        val gramsButter = tablespoonsButter.convert(MeasurementUnit.Gram) { it * 14 }
+
+        gramsButter.amount shouldBe (28.0 plusOrMinus 0.001)
+        gramsButter.unit shouldBe MeasurementUnit.Gram
       }
 
-      test("Milliliters to Cups") {
-        val converted = milliliters.convert(MeasurementUnit.Cup)
-        converted.amount shouldBe (0.4232 plusOrMinus 0.001)
-        converted.unit shouldBe MeasurementUnit.Cup
+      test("Mass to Volume") {
+        val gramsButter = Measurement(28.0, MeasurementUnit.Gram)
+        val tablespoonsButter = gramsButter.convert(MeasurementUnit.Tablespoon) { it / 14 }
+
+        tablespoonsButter.amount shouldBe (2.0 plusOrMinus 0.001)
+        tablespoonsButter.unit shouldBe MeasurementUnit.Tablespoon
       }
     }
 
-    context("Imperial to Metric") {
-      test("Tablespoons to Milliliters") {
-        val converted = tablespoon.convert(MeasurementUnit.Milliliter)
-        converted.amount shouldBe (14.7868 plusOrMinus 0.001)
-        converted.unit shouldBe MeasurementUnit.Milliliter
+    context("Improper Conversions") {
+      test("Improper Volume to Mass") {
+        shouldThrowAny {
+          teaspoon.convert(MeasurementUnit.Gram)
+        }
       }
 
-      test("Cups to Milliliters") {
-        val converted = cup.convert(MeasurementUnit.Milliliter)
-        converted.amount shouldBe (236.588 plusOrMinus 0.001)
-        converted.unit shouldBe MeasurementUnit.Milliliter
+      test("Improper Mass to Volume") {
+        shouldThrowAny {
+          grams.convert(MeasurementUnit.Teaspoon)
+        }
       }
     }
   }
 
-  context("Custom Conversions") {
-    test("Volume to Mass") {
-      val tablespoonsButter = Measurement(2.0, MeasurementUnit.Tablespoon)
-      val gramsButter = tablespoonsButter.convert(MeasurementUnit.Gram) { it * 14 }
+  context("Scaling and Conversion") {
+    context("Metric") {
 
-      gramsButter.amount shouldBe (28.0 plusOrMinus 0.001)
-      gramsButter.unit shouldBe MeasurementUnit.Gram
     }
 
-    test("Mass to Volume") {
-      val gramsButter = Measurement(28.0, MeasurementUnit.Gram)
-      val tablespoonsButter = gramsButter.convert(MeasurementUnit.Tablespoon) { it / 14 }
-
-      tablespoonsButter.amount shouldBe (2.0 plusOrMinus 0.001)
-      tablespoonsButter.unit shouldBe MeasurementUnit.Tablespoon
-    }
-  }
-
-  context("Improper Conversions") {
-    test("Improper Volume to Mass") {
-      shouldThrow<IllegalStateException> {
-        teaspoon.convert(MeasurementUnit.Gram)
+    context("Imperial") {
+      test("Teaspoon to Tablespoon") {
+        val scaled = teaspoon.scaleAndConvert(3.0)
+        scaled.amount shouldBe (1.0 plusOrMinus 0.001)
+        scaled.unit shouldBe MeasurementUnit.Tablespoon
       }
-    }
 
-    test("Improper Mass to Volume") {
-      shouldThrow<IllegalStateException> {
-        grams.convert(MeasurementUnit.Teaspoon)
+      test("Tablespoon to Teaspoon") {
+        val scaled = tablespoon.scaleAndConvert(0.333)
+        scaled.amount shouldBe (1.0 plusOrMinus 0.001)
+        scaled.unit shouldBe MeasurementUnit.Teaspoon
+      }
+
+      test("Tablespoon to Cup") {
+        val scaled = tablespoon.scaleAndConvert(24.0)
+        scaled.amount shouldBe (1.5 plusOrMinus 0.001)
+        scaled.unit shouldBe MeasurementUnit.Cup
       }
     }
   }

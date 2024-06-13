@@ -1,5 +1,9 @@
 package com.kronos.skilletapp.model
 
+import com.github.michaelbull.result.*
+import com.kronos.skilletapp.utils.roundToEighth
+import kotlin.math.round
+
 data class Measurement(
   val amount: Double,
   val unit: MeasurementUnit,
@@ -8,17 +12,52 @@ data class Measurement(
   operator fun times(factor: Double) = scale(factor)
   operator fun times(factor: Int) = scale(factor.toDouble())
 
-  fun convert(to: MeasurementUnit.Mass) = convert(to) {
+  private fun convert(to: MeasurementUnit.Mass) = convert(to) {
     check(unit is MeasurementUnit.Mass)
     it * unit.factor / to.factor
   }
 
-  fun convert(to: MeasurementUnit.Volume) = convert(to) {
+  private fun convert(to: MeasurementUnit.Volume) = convert(to) {
     check(unit is MeasurementUnit.Volume)
     it * unit.factor / to.factor
   }
 
+  fun convert(to: MeasurementUnit) = when (unit) {
+    is MeasurementUnit.Mass -> convert(to as MeasurementUnit.Mass)
+    is MeasurementUnit.Volume -> convert(to as MeasurementUnit.Volume)
+    is MeasurementUnit.Custom -> copy(unit = to)
+  }
+
   fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(amount), unit = to)
+
+  fun scaleAndConvert(factor: Double): Measurement {
+    var scaled = scale(factor)
+
+    do {
+      // TODO: I don't know if this is the best way to calculate conversion thresholds. Hardcoded values might be better
+      val scaledAmount = scaled.amount.roundToEighth()
+      val low = scaled.unit.previous().mapOr(0.0) { it.factor / scaled.unit.factor }.roundToEighth()
+      val high = scaled.unit.next().mapOr(Double.POSITIVE_INFINITY) { it.factor / scaled.unit.factor }.roundToEighth()
+
+      if (scaledAmount <= low) {
+        scaled = scaled.convert(scaled.unit.previous().unwrap())
+      } else if (scaledAmount >= high) {
+        scaled = scaled.convert(scaled.unit.next().unwrap())
+      }
+    } while (scaledAmount !in low..high)
+
+    return scaled
+  }
+}
+
+fun MeasurementUnit.next(): Result<MeasurementUnit, Unit> {
+  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }
+  return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr {  }
+}
+
+fun MeasurementUnit.previous(): Result<MeasurementUnit, Unit> {
+  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }
+  return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr {  }
 }
 
 enum class MeasurementType {
@@ -165,28 +204,22 @@ sealed class MeasurementUnit(
   )
 
   companion object {
-//    fun values() = MeasurementUnit::class.sealedSubclasses.mapNotNull { it.objectInstance as? MeasurementUnit }
-
-    fun values() = listOf(
-      Milliliter,
-      Liter,
-      Teaspoon,
-      Tablespoon,
-      Cup,
-      Pint,
-      Quart,
-      Gallon,
-      FluidOunce,
-      Gram,
-      Kilogram,
-      Ounce,
-      Pound,
-    )
-
-    fun fromName(name: String) = values().firstOrNull { it.name == name }
-    fun fromAbbreviation(abbreviation: String) = values().firstOrNull { it.abbreviation == abbreviation }
-
-    fun byType(type: MeasurementType) = values().filter { it.type == type }
-    fun bySystem(system: MeasurementSystem) = values().filter { it.system == system }
+    val values by lazy {
+      listOf(
+        Milliliter,
+        Liter,
+        Teaspoon,
+        Tablespoon,
+        FluidOunce,
+        Cup,
+        Pint,
+        Quart,
+        Gallon,
+        Gram,
+        Kilogram,
+        Ounce,
+        Pound,
+      ).sortedBy { it.factor }
+    }
   }
 }
