@@ -278,6 +278,8 @@ class MeasurementTests : FunSpec({
 
     }
 
+    //TODO: Add tests for the new style of scaling and converting
+
     context("Imperial") {
       test("Teaspoon to Tablespoon") {
         val scaled = teaspoon.scaleAndConvert(3.0)
