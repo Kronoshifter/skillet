@@ -2,16 +2,20 @@ package com.kronos.skilletapp.model
 
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
-import java.math.BigDecimal
-import kotlin.math.round
 
 data class Measurement(
   val amount: Double,
   val unit: MeasurementUnit,
 ) {
-  fun scale(factor: Double) = copy(amount = amount * factor)
   operator fun times(factor: Double) = scale(factor)
   operator fun times(factor: Int) = scale(factor.toDouble())
+
+  operator fun div(factor: Double) = scale(1 / factor)
+  operator fun div(factor: Int) = scale(1 / factor.toDouble())
+
+  // TODO: add comparison operators
+
+  fun scale(factor: Double) = copy(amount = amount * factor)
 
   private fun convert(to: MeasurementUnit.Mass) = convert(to) {
     check(unit is MeasurementUnit.Mass)
@@ -30,28 +34,28 @@ data class Measurement(
   }
 
   fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(amount), unit = to)
+  
 
-  fun scaleAndConvert(factor: Double): Measurement {
-    var scaled = scale(factor)
+  fun scaleAndNormalize(factor: Double) = scale(factor).normalize()
 
-    do {
-      // TODO: I don't know if this is the best way to calculate conversion thresholds. Hardcoded values might be better
-      val scaledAmount = scaled.amount.roundToEighth()
-//      val low = scaled.unit.previous().mapOr(0.0) { it.factor / scaled.unit.factor }.roundToEighth()
-//      val high = scaled.unit.next().mapOr(Double.POSITIVE_INFINITY) { it.factor / scaled.unit.factor }.roundToEighth()
+  fun normalize(): Measurement {
+    var normalized = copy()
+    while (normalized.amount !in normalized.unit.normalRange) {
+      val low = normalized.unit.normalRange.start
+      val high = normalized.unit.normalRange.endExclusive
 
-      val low = scaled.unit.conversionThreshold.start
-      val high = scaled.unit.conversionThreshold.endExclusive
-
-      if (scaledAmount < low) {
-        scaled = scaled.convert(scaled.unit.previous().unwrap())
-      } else if (scaledAmount >= high) {
-        scaled = scaled.convert(scaled.unit.next().unwrap())
+      if (normalized.amount <= low) {
+        normalized = normalized.convert(normalized.unit.previous().unwrap())
+      } else if (normalized.amount >= high) {
+        normalized = normalized.convert(normalized.unit.next().unwrap())
       }
-    } while (scaledAmount !in scaled.unit.conversionThreshold)
-
-    return scaled
+    }
+    return normalized
   }
+
+  fun roundToEighth() = copy(amount = amount.roundToEighth())
+
+  fun scaleAndRound(factor: Double) = scale(factor).roundToEighth()
 }
 
 fun MeasurementUnit.next(): Result<MeasurementUnit, Unit> {
@@ -81,7 +85,7 @@ sealed class MeasurementUnit(
   open val factor: Double,
   open val abbreviation: String,
   open val system: MeasurementSystem,
-  open val conversionThreshold: OpenEndRange<Double>,
+  open val normalRange: OpenEndRange<Double>,
   open val type: MeasurementType,
 ) {
 
@@ -89,28 +93,28 @@ sealed class MeasurementUnit(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-    override val conversionThreshold: OpenEndRange<Double>,
+    override val normalRange: OpenEndRange<Double>,
     override val system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
     factor = factor,
     abbreviation = abbreviation,
     system = system,
-    conversionThreshold = conversionThreshold,
+    normalRange = normalRange,
     type = MeasurementType.Mass)
 
   sealed class Volume(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-    override val conversionThreshold: OpenEndRange<Double>,
+    override val normalRange: OpenEndRange<Double>,
     override val system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
     factor = factor,
     abbreviation = abbreviation,
     system = system,
-    conversionThreshold = conversionThreshold,
+    normalRange = normalRange,
     type = MeasurementType.Volume
   )
 
@@ -118,13 +122,13 @@ sealed class MeasurementUnit(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-    override val conversionThreshold: OpenEndRange<Double>
+    override val normalRange: OpenEndRange<Double>
   ) : MeasurementUnit(
     name = name,
     factor = factor,
     abbreviation = abbreviation,
     system = MeasurementSystem.Other,
-    conversionThreshold = conversionThreshold,
+    normalRange = normalRange,
     type = MeasurementType.Other
   )
 
@@ -136,7 +140,7 @@ sealed class MeasurementUnit(
     name = "milliliter",
     factor = 1.0,
     abbreviation = "mL",
-    conversionThreshold = 0.0..<1000.0,
+    normalRange = 0.0..<1000.0,
     system = MeasurementSystem.Metric
   )
 
@@ -144,7 +148,7 @@ sealed class MeasurementUnit(
     name = "liter",
     factor = 1000.0,
     abbreviation = "L",
-    conversionThreshold = 0.5..<Double.POSITIVE_INFINITY,
+    normalRange = 0.5..<Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 
@@ -154,7 +158,7 @@ sealed class MeasurementUnit(
     factor = 4.92892,
     name = "teaspoon",
     abbreviation = "tsp",
-    conversionThreshold = 0.0..<3.0,
+    normalRange = 0.0..<3.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -162,7 +166,7 @@ sealed class MeasurementUnit(
     factor = 14.7868,
     name = "tablespoon",
     abbreviation = "tbsp",
-    conversionThreshold = 0.333..<4.0,
+    normalRange = 0.334..<4.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -170,7 +174,7 @@ sealed class MeasurementUnit(
     factor = 236.588,
     name = "cup",
     abbreviation = "C",
-    conversionThreshold = 0.25..<Double.POSITIVE_INFINITY,
+    normalRange = 0.25..<Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
 
@@ -178,7 +182,7 @@ sealed class MeasurementUnit(
     factor = 473.176,
     name = "pint",
     abbreviation = "pt",
-    conversionThreshold = 0.5..<2.0,
+    normalRange = 0.5..<2.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -186,7 +190,7 @@ sealed class MeasurementUnit(
     factor = 946.353,
     name = "quart",
     abbreviation = "qt",
-    conversionThreshold = 0.5..<4.0,
+    normalRange = 0.5..<4.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -194,7 +198,7 @@ sealed class MeasurementUnit(
     factor = 3785.41,
     name = "gallon",
     abbreviation = "gal",
-    conversionThreshold = 0.25..<Double.POSITIVE_INFINITY,
+    normalRange = 0.25..<Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
 
@@ -202,7 +206,7 @@ sealed class MeasurementUnit(
     factor = 29.5735,
     name = "fluid ounce",
     abbreviation = "fl oz",
-    conversionThreshold = 0.5..<8.0,
+    normalRange = 0.5..<8.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -214,7 +218,7 @@ sealed class MeasurementUnit(
     factor = 1.0,
     name = "gram",
     abbreviation = "g",
-    conversionThreshold = 0.0..<1000.0,
+    normalRange = 0.0..<1000.0,
     system = MeasurementSystem.Metric
   )
 
@@ -222,7 +226,7 @@ sealed class MeasurementUnit(
     factor = 1000.0,
     name = "kilogram",
     abbreviation = "kg",
-    conversionThreshold = 0.5..<Double.POSITIVE_INFINITY,
+    normalRange = 0.5..<Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 
@@ -232,7 +236,7 @@ sealed class MeasurementUnit(
     factor = 28.3495,
     name = "ounce",
     abbreviation = "oz",
-    conversionThreshold = 0.0..<16.0,
+    normalRange = 0.0..<16.0,
     system = MeasurementSystem.Metric
   )
 
@@ -240,7 +244,7 @@ sealed class MeasurementUnit(
     factor = 453.592,
     name = "pound",
     abbreviation = "lb",
-    conversionThreshold = 0.5..<Double.POSITIVE_INFINITY,
+    normalRange = 0.5..<Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 

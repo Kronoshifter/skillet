@@ -2,13 +2,10 @@ package com.kronos.skilletapp
 
 import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.model.MeasurementUnit
-import io.kotest.assertions.shouldFail
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldHave
 
 class MeasurementTests : FunSpec({
   val grams = Measurement(10.0, MeasurementUnit.Gram)
@@ -273,31 +270,73 @@ class MeasurementTests : FunSpec({
     }
   }
 
-  context("Scaling and Conversion") {
+  context("Normalizing") {
+
+    context("Teaspoon") {
+      test("Teaspoon to Tablespoon") {
+        val normalized = Measurement(3.0, MeasurementUnit.Teaspoon).normalize()
+        normalized.amount shouldBe (1.0 plusOrMinus 0.001)
+        normalized.unit shouldBe MeasurementUnit.Tablespoon
+      }
+
+      test("Teaspoon to Cup") {
+        val normalized = Measurement(48.0, MeasurementUnit.Teaspoon).normalize()
+        normalized.amount shouldBe (1.0 plusOrMinus 0.001)
+        normalized.unit shouldBe MeasurementUnit.Cup
+      }
+    }
+  }
+
+  context("Scaling and Normalizing") {
     context("Metric") {
 
     }
 
-    //TODO: Add tests for the new style of scaling and converting
-
     context("Imperial") {
       test("Teaspoon to Tablespoon") {
-        val scaled = teaspoon.scaleAndConvert(3.0)
+        val scaled = teaspoon.scaleAndNormalize(3.0).roundToEighth()
         scaled.amount shouldBe (1.0 plusOrMinus 0.001)
         scaled.unit shouldBe MeasurementUnit.Tablespoon
       }
 
       test("Tablespoon to Teaspoon") {
-        val scaled = tablespoon.scaleAndConvert(0.333)
+        val scaled = tablespoon.scaleAndNormalize(0.333).roundToEighth()
         scaled.amount shouldBe (1.0 plusOrMinus 0.001)
         scaled.unit shouldBe MeasurementUnit.Teaspoon
       }
 
       test("Tablespoon to Cup") {
-        val scaled = tablespoon.scaleAndConvert(24.0)
+        val scaled = tablespoon.scaleAndNormalize(24.0).roundToEighth()
         scaled.amount shouldBe (1.5 plusOrMinus 0.001)
         scaled.unit shouldBe MeasurementUnit.Cup
       }
     }
+  }
+
+  context("Scale and Round") {
+    test("0.90834298 * 23") {
+      val m = Measurement(0.90834298, MeasurementUnit.Milliliter)
+      val scaled = m.scaleAndRound(23.0)
+      scaled.amount shouldBe (20.875 plusOrMinus 0.001)
+      scaled.unit shouldBe MeasurementUnit.Milliliter
+    }
+
+    test("10.0624 * 1.5") {
+      val m = Measurement(10.0624, MeasurementUnit.Milliliter)
+      val scaled = m.scaleAndRound(1.5)
+      scaled.amount shouldBe (15.125 plusOrMinus 0.001)
+      scaled.unit shouldBe MeasurementUnit.Milliliter
+    }
+
+    test(".125 / 2") {
+      val m = Measurement(0.125, MeasurementUnit.Cup)
+      val scaled = m.scaleAndRound(0.5)
+      scaled.amount shouldBe (0.125 plusOrMinus 0.001)
+      scaled.unit shouldBe MeasurementUnit.Cup
+    }
+  }
+
+  context("Comparison") {
+    //TODO
   }
 })
