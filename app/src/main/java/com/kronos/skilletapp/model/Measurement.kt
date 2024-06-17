@@ -13,7 +13,21 @@ data class Measurement(
   operator fun div(factor: Double) = scale(1 / factor)
   operator fun div(factor: Int) = scale(1 / factor.toDouble())
 
-  // TODO: add comparison operators
+  operator fun unaryMinus() = copy(amount = -amount)
+
+  operator fun plus(other: Measurement) = when (unit) {
+    other.unit -> copy(amount = amount + other.amount)
+    else -> copy(amount = amount + other.convert(unit).amount)
+  }
+  operator fun minus(other: Measurement) = when (unit) {
+    other.unit -> copy(amount = amount - other.amount)
+    else -> copy(amount = amount - other.convert(unit).amount)
+  }
+
+  operator fun inc() = copy(amount = amount + 1)
+  operator fun dec() = copy(amount = amount - 1)
+
+  operator fun compareTo(other: Measurement) = (amount * unit.factor).compareTo(other.amount * other.unit.factor)
 
   fun scale(factor: Double) = copy(amount = amount * factor)
 

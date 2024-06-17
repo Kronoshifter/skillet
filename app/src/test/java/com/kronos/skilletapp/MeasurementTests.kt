@@ -339,4 +339,8 @@ class MeasurementTests : FunSpec({
   context("Comparison") {
     //TODO
   }
+
+  context("Arithmetic") {
+    //TODO
+  }
 })
