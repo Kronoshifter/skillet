@@ -45,6 +45,11 @@ data class Measurement(
       } ?: false
     } ?: false
   }
+  override fun hashCode(): Int {
+    var result = amount.hashCode()
+    result = 31 * result + unit.hashCode()
+    return result
+  }
 
   fun scale(factor: Double) = copy(amount = amount * factor)
 
