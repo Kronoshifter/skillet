@@ -337,10 +337,224 @@ class MeasurementTests : FunSpec({
   }
 
   context("Comparison") {
-    //TODO
+    context("Same Unit") {
+      context("Equality") {
+        test("Teaspoon") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m1 == m2) shouldBe true
+        }
+
+        test("Tablespoon") {
+          val m1 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m1 == m2) shouldBe true
+        }
+
+        test("Cup") {
+          val m1 = Measurement(1.0, MeasurementUnit.Cup)
+          val m2 = Measurement(1.0, MeasurementUnit.Cup)
+          (m1 == m2) shouldBe true
+        }
+      }
+
+      context("Inequality") {
+        test("Teaspoon") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(2.0, MeasurementUnit.Teaspoon)
+          (m1 != m2) shouldBe true
+        }
+
+        test("Tablespoon") {
+          val m1 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          val m2 = Measurement(2.0, MeasurementUnit.Tablespoon)
+          (m1 != m2) shouldBe true
+        }
+
+        test("Cup") {
+          val m1 = Measurement(1.0, MeasurementUnit.Cup)
+          val m2 = Measurement(2.0, MeasurementUnit.Cup)
+          (m1 != m2) shouldBe true
+        }
+      }
+
+      context("Greater Than") {
+        test("Greater") {
+          val m1 = Measurement(2.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m1 > m2) shouldBe true
+        }
+
+        test("Not Greater") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m1 > m2) shouldBe false
+        }
+
+        test("Or Equal To") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m1 >= m2) shouldBe true
+        }
+      }
+
+      context("Less Than") {
+        test("Less") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(2.0, MeasurementUnit.Teaspoon)
+          (m1 < m2) shouldBe true
+        }
+
+        test("Not Less") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m1 < m2) shouldBe false
+        }
+
+        test("Or Equal To") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m1 <= m2) shouldBe true
+        }
+      }
+    }
+
+    context("Different Units") {
+      context("Equality") {
+        test("Teaspoon & Tablespoon") {
+          val m1 = Measurement(3.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m1 == m2) shouldBe true
+        }
+
+        test("Cup & Fluid Ounces") {
+          val m1 = Measurement(1.0, MeasurementUnit.Cup)
+          val m2 = Measurement(8.0, MeasurementUnit.FluidOunce)
+          (m1 == m2) shouldBe true
+        }
+
+        test("Fluid Ounces & Tablespoons") {
+          val m1 = Measurement(1.0, MeasurementUnit.FluidOunce)
+          val m2 = Measurement(2.0, MeasurementUnit.Tablespoon)
+          (m1 == m2) shouldBe true
+        }
+      }
+
+      context("Inequality") {
+        test("Teaspoon & Tablespoon") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m1 != m2) shouldBe true
+        }
+
+        test("Cup & Fluid Ounces") {
+          val m1 = Measurement(1.0, MeasurementUnit.Cup)
+          val m2 = Measurement(1.0, MeasurementUnit.FluidOunce)
+          (m1 != m2) shouldBe true
+        }
+
+        test("Fluid Ounces & Tablespoons") {
+          val m1 = Measurement(1.0, MeasurementUnit.FluidOunce)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m1 != m2) shouldBe true
+        }
+      }
+
+      context("Greater Than") {
+        test("Greater") {
+          val m1 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m1 > m2) shouldBe true
+        }
+
+        test("Not Greater") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m1 > m2) shouldBe false
+        }
+
+        test("Or Equal To") {
+          val m1 = Measurement(3.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m1 >= m2) shouldBe true
+        }
+      }
+
+      context("Less Than") {
+        test("Less") {
+          val m1 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          (m2 < m1) shouldBe true
+        }
+
+        test("Not") {
+          val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m2 < m1) shouldBe false
+        }
+
+        test("Or Equal To") {
+          val m1 = Measurement(3.0, MeasurementUnit.Teaspoon)
+          val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+          (m2 <= m1) shouldBe true
+        }
+      }
+    }
   }
 
   context("Arithmetic") {
-    //TODO
+    context("Addition") {
+      test("Teaspoon + Tablespoon") {
+        val m1 = Measurement(1.0, MeasurementUnit.Teaspoon)
+        val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+        val sum = m1 + m2
+        sum.amount shouldBe (4.0 plusOrMinus 0.001)
+        sum.unit shouldBe MeasurementUnit.Teaspoon
+      }
+
+      test("Tablespoon + Cup") {
+        val m1 = Measurement(8.0, MeasurementUnit.Tablespoon)
+        val m2 = Measurement(1.0, MeasurementUnit.Cup)
+        val sum = m1 + m2
+        sum.amount shouldBe (24.0 plusOrMinus 0.001)
+        sum.unit shouldBe MeasurementUnit.Tablespoon
+      }
+
+      test("Cup + Fluid Ounces") {
+        val m1 = Measurement(1.0, MeasurementUnit.Cup)
+        val m2 = Measurement(8.0, MeasurementUnit.FluidOunce)
+        val sum = m1 + m2
+        sum.amount shouldBe (2.0 plusOrMinus 0.001)
+        sum.unit shouldBe MeasurementUnit.Cup
+      }
+
+
+    }
+
+    context("Subtraction") {
+      test("Teaspoon - Tablespoon") {
+        val m1 = Measurement(4.0, MeasurementUnit.Teaspoon)
+        val m2 = Measurement(1.0, MeasurementUnit.Tablespoon)
+        val diff = m1 - m2
+        diff.amount shouldBe (1.0 plusOrMinus 0.001)
+        diff.unit shouldBe MeasurementUnit.Teaspoon
+      }
+
+      test("Cup - Tablespoon") {
+        val m1 = Measurement(2.0, MeasurementUnit.Cup)
+        val m2 = Measurement(8.0, MeasurementUnit.Tablespoon)
+        val diff = m1 - m2
+        diff.amount shouldBe (1.5 plusOrMinus 0.001)
+        diff.unit shouldBe MeasurementUnit.Cup
+      }
+
+      test("Cup - Fluid Ounces") {
+        val m1 = Measurement(2.0, MeasurementUnit.Cup)
+        val m2 = Measurement(8.0, MeasurementUnit.FluidOunce)
+        val diff = m1 - m2
+        diff.amount shouldBe (1.0 plusOrMinus 0.001)
+        diff.unit shouldBe MeasurementUnit.Cup
+      }
+    }
   }
 })

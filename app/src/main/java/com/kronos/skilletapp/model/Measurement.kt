@@ -2,6 +2,7 @@ package com.kronos.skilletapp.model
 
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
+import kotlin.math.roundToInt
 
 data class Measurement(
   val amount: Double,
@@ -27,7 +28,23 @@ data class Measurement(
   operator fun inc() = copy(amount = amount + 1)
   operator fun dec() = copy(amount = amount - 1)
 
-  operator fun compareTo(other: Measurement) = (amount * unit.factor).compareTo(other.amount * other.unit.factor)
+//  operator fun compareTo(other: Measurement) = (amount * unit.factor).compareTo(other.amount * other.unit.factor)
+  operator fun compareTo(other: Measurement): Int {
+    val result = this - other
+    return when {
+      result.amount in -0.001..0.001 -> 0
+      result.amount < 0 -> -1
+      else -> 1
+    }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return other?.let {
+      (it as? Measurement)?.let { that ->
+        (this - that).amount in -0.001..0.001
+      } ?: false
+    } ?: false
+  }
 
   fun scale(factor: Double) = copy(amount = amount * factor)
 
@@ -68,6 +85,7 @@ data class Measurement(
   }
 
   fun roundToEighth() = copy(amount = amount.roundToEighth())
+  fun round() = copy(amount = amount.roundToInt().toDouble())
 
   fun scaleAndRound(factor: Double) = scale(factor).roundToEighth()
 }
