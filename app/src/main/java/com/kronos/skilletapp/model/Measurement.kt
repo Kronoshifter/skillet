@@ -159,13 +159,12 @@ sealed class MeasurementUnit(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-    override val normalRange: OpenEndRange<Double>
   ) : MeasurementUnit(
     name = name,
     factor = factor,
     abbreviation = abbreviation,
     system = MeasurementSystem.Other,
-    normalRange = normalRange,
+    normalRange = 0.0..<Double.POSITIVE_INFINITY,
     type = MeasurementType.Other
   )
 
