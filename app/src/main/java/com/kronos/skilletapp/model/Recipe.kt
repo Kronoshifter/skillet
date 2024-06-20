@@ -9,7 +9,7 @@ data class Recipe(
   val time: RecipeTime,
   val source: RecipeSource,
   val ingredients: List<Ingredient>,
-//  val instructions: List<Instruction>,
+  val instructions: List<Instruction>,
   val equipment: List<Equipment>
 )
 
