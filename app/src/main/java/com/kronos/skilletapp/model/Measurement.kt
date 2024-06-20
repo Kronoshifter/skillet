@@ -5,7 +5,7 @@ import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
 
 data class Measurement(
-  val amount: Double,
+  val quantity: Double,
   val unit: MeasurementUnit,
 ) {
   operator fun times(factor: Double) = scale(factor)
@@ -14,26 +14,26 @@ data class Measurement(
   operator fun div(factor: Double) = scale(1 / factor)
   operator fun div(factor: Int) = scale(1 / factor.toDouble())
 
-  operator fun unaryMinus() = copy(amount = -amount)
+  operator fun unaryMinus() = copy(quantity = -quantity)
 
   operator fun plus(other: Measurement) = when (unit) {
-    other.unit -> copy(amount = amount + other.amount)
-    else -> copy(amount = amount + other.convert(unit).amount)
+    other.unit -> copy(quantity = quantity + other.quantity)
+    else -> copy(quantity = quantity + other.convert(unit).quantity)
   }
   operator fun minus(other: Measurement) = when (unit) {
-    other.unit -> copy(amount = amount - other.amount)
-    else -> copy(amount = amount - other.convert(unit).amount)
+    other.unit -> copy(quantity = quantity - other.quantity)
+    else -> copy(quantity = quantity - other.convert(unit).quantity)
   }
 
-  operator fun inc() = copy(amount = amount + 1)
-  operator fun dec() = copy(amount = amount - 1)
+  operator fun inc() = copy(quantity = quantity + 1)
+  operator fun dec() = copy(quantity = quantity - 1)
 
 //  operator fun compareTo(other: Measurement) = (amount * unit.factor).compareTo(other.amount * other.unit.factor)
   operator fun compareTo(other: Measurement): Int {
     val result = this - other
     return when {
-      result.amount in -0.001..0.001 -> 0
-      result.amount < 0 -> -1
+      result.quantity in -0.001..0.001 -> 0
+      result.quantity < 0 -> -1
       else -> 1
     }
   }
@@ -41,17 +41,17 @@ data class Measurement(
   override fun equals(other: Any?): Boolean {
     return other?.let {
       (it as? Measurement)?.let { that ->
-        (this - that).amount in -0.001..0.001
+        (this - that).quantity in -0.001..0.001
       } ?: false
     } ?: false
   }
   override fun hashCode(): Int {
-    var result = amount.hashCode()
+    var result = quantity.hashCode()
     result = 31 * result + unit.hashCode()
     return result
   }
 
-  fun scale(factor: Double) = copy(amount = amount * factor)
+  fun scale(factor: Double) = copy(quantity = quantity * factor)
 
   private fun convert(to: MeasurementUnit.Mass) = convert(to) {
     check(unit is MeasurementUnit.Mass)
@@ -69,28 +69,28 @@ data class Measurement(
     is MeasurementUnit.Custom -> copy(unit = to)
   }
 
-  fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(amount), unit = to)
+  fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(quantity), unit = to)
   
 
   fun scaleAndNormalize(factor: Double) = scale(factor).normalize()
 
   fun normalize(): Measurement {
     var normalized = copy()
-    while (normalized.amount !in normalized.unit.normalRange) {
+    while (normalized.quantity !in normalized.unit.normalRange) {
       val low = normalized.unit.normalRange.start
       val high = normalized.unit.normalRange.endExclusive
 
-      if (normalized.amount <= low) {
+      if (normalized.quantity <= low) {
         normalized = normalized.convert(normalized.unit.previous().unwrap())
-      } else if (normalized.amount >= high) {
+      } else if (normalized.quantity >= high) {
         normalized = normalized.convert(normalized.unit.next().unwrap())
       }
     }
     return normalized
   }
 
-  fun roundToEighth() = copy(amount = amount.roundToEighth())
-  fun round() = copy(amount = amount.roundToInt().toDouble())
+  fun roundToEighth() = copy(quantity = quantity.roundToEighth())
+  fun round() = copy(quantity = quantity.roundToInt().toDouble())
 
   fun scaleAndRound(factor: Double) = scale(factor).roundToEighth()
 }
