@@ -157,11 +157,10 @@ sealed class MeasurementUnit(
 
   data class Custom(
     override val name: String,
-    override val factor: Double,
     override val abbreviation: String,
   ) : MeasurementUnit(
     name = name,
-    factor = factor,
+    factor = 1.0,
     abbreviation = abbreviation,
     system = MeasurementSystem.Other,
     normalRange = 0.0..<Double.POSITIVE_INFINITY,
@@ -209,7 +208,7 @@ sealed class MeasurementUnit(
   data object Cup : Volume(
     factor = 236.588,
     name = "cup",
-    abbreviation = "C",
+    abbreviation = "cup",
     normalRange = 0.25..<Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
