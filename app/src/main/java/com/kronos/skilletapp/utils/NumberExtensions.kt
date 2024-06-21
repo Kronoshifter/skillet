@@ -14,3 +14,7 @@ import kotlin.math.roundToInt
 fun Double.roundToEighth() = (this * 8.0).roundToInt() / 8.0
 
 val ONE_EIGHTH = (BigDecimal(1) / BigDecimal(8)).setScale(3, RoundingMode.HALF_UP)
+
+fun gcd(a: Int, b: Int): Int {
+  return if (b == 0) a else gcd(b, a % b)
+}
