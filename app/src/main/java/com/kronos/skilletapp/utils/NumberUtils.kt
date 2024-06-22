@@ -32,6 +32,6 @@ fun Double.toFraction(): Fraction {
 
 val ONE_EIGHTH = (BigDecimal(1) / BigDecimal(8)).setScale(3, RoundingMode.HALF_UP)
 
-fun gcd(a: Int, b: Int): Int {
-  return if (b == 0) a else gcd(b, a % b)
-}
+fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
+
+fun lcm(a: Int, b: Int): Int = a * b / gcd(a, b)
