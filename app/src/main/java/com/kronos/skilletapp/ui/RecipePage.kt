@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.github.michaelbull.result.combine
 import com.kronos.skilletapp.Greeting
 import com.kronos.skilletapp.model.Ingredient
@@ -25,6 +26,7 @@ import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.roundToEighth
+import com.kronos.skilletapp.utils.toFraction
 import java.text.DecimalFormat
 
 @Composable
@@ -43,14 +45,24 @@ fun IngredientList(ingredients: List<Ingredient>) {
     return
   }
 
-  LazyColumn(
-    modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
-  ) {
-    items(ingredients) { ingredient ->
-      IngredientComponent(ingredient = ingredient)
+  Column {
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.padding(8.dp)
+    ) {
+      Text(text = "Scale")
+    }
+
+    LazyColumn(
+      modifier = Modifier.fillMaxSize(),
+      contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      items(ingredients) { ingredient ->
+        IngredientComponent(ingredient = ingredient)
+      }
     }
   }
 }
@@ -69,9 +81,12 @@ fun IngredientComponent(ingredient: Ingredient) {
         .background(MaterialTheme.colorScheme.primary),
       contentAlignment = Alignment.Center
     ) {
+      val quantity = ingredient.measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+
       Text(
-        text = DecimalFormat("#").format(ingredient.measurement.quantity.roundToEighth()), //TODO: replace with fraction
+        text = quantity,
         color = MaterialTheme.colorScheme.onPrimary,
+        fontSize = 18.sp,
         modifier = Modifier.align(Alignment.Center)
       )
     }
@@ -80,7 +95,7 @@ fun IngredientComponent(ingredient: Ingredient) {
       text = ingredient.measurement.unit.abbreviation,
       fontWeight = FontWeight.Bold
     )
-    Text(text = ingredient.name)
+    Text(text = ingredient.name.lowercase())
   }
 }
 
@@ -101,7 +116,7 @@ fun IngredientListPreview() {
     Ingredient("Garlic", "Garlic", Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))),
     Ingredient("Flour", "Flour", Measurement(2.0, MeasurementUnit.Tablespoon)),
     Ingredient("Chicken Broth", "Chicken Broth", Measurement(0.75, MeasurementUnit.Cup)),
-    Ingredient("Milk", "Milk", Measurement(0.75, MeasurementUnit.Cup)),
+    Ingredient("Milk", "Milk", Measurement(2.5, MeasurementUnit.Cup)),
   )
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

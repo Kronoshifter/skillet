@@ -31,7 +31,12 @@ data class Fraction(val numerator: Int, val denominator: Int) {
   operator fun div(other: Fraction): Fraction = Fraction(numerator * other.denominator, denominator * other.numerator)
   operator fun div(other: Int): Fraction = Fraction(numerator, denominator * other)
 
-  override fun toString(): String = if (whole == 0) "$numerator/$denominator" else "$whole $subNumerator/$denominator"
+  override fun toString(): String = when {
+    numerator == 0 -> "0"
+    whole == 0 -> fractionString(numerator, denominator)
+    subNumerator == 0 -> "$whole"
+    else -> "$whole ${fractionString(subNumerator, denominator)}"
+  }
 
   fun reduce(): Fraction {
     val gcd = gcd(numerator, denominator)
