@@ -26,7 +26,7 @@ private fun <T> SegmentedButton(
   options: List<SegmentedButtonOption<T>>,
   onSelectedChanged: ((T) -> Unit)?,
   modifier: Modifier = Modifier,
-  showSelectedCheck: Boolean = true,
+  selectedIcon: @Composable (() -> Unit)? = null,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -40,7 +40,7 @@ private fun <T> SegmentedButton(
         onSelectedChanged = onSelectedChanged,
         label = option.label,
         icon = option.icon,
-        showSelectedCheck = showSelectedCheck,
+        selectedIcon = selectedIcon,
         shape = when (option) {
           options.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
           options.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
@@ -57,12 +57,12 @@ fun <T> SegmentedButton(
   options: SegmentedButtonScope<T>.() -> Unit,
   onSelectedChanged: ((T) -> Unit)?,
   modifier: Modifier = Modifier,
-  showSelectedCheck: Boolean = true,
+  selectedIcon: @Composable (() -> Unit)? = null,
 ) = SegmentedButton(
   options = SegmentedButtonScopeImpl<T>().apply(options).options,
   onSelectedChanged = onSelectedChanged,
   modifier = modifier,
-  showSelectedCheck = showSelectedCheck
+  selectedIcon = selectedIcon
 )
 
 @Composable
@@ -74,7 +74,7 @@ private fun <T> SegmentedButtonSegment(
   shape: Shape = CircleShape,
   label: String? = null,
   icon: @Composable (() -> Unit)? = null,
-  showSelectedCheck: Boolean = true,
+  selectedIcon: @Composable (() -> Unit)? = null,
 ) {
   OutlinedButton(
     onClick = { onSelectedChanged?.invoke(option) },
@@ -85,9 +85,11 @@ private fun <T> SegmentedButtonSegment(
     contentPadding = PaddingValues(horizontal = 16.dp),
     modifier = modifier.width(IntrinsicSize.Max)
   ) {
-    if (selected && showSelectedCheck) {
-      Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-      Spacer(modifier = Modifier.width(8.dp))
+    if (selected && selectedIcon != null) {
+      CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSecondaryContainer) {
+        selectedIcon()
+        Spacer(modifier = Modifier.width(8.dp))
+      }
     } else {
       CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
         icon?.let {
@@ -185,7 +187,9 @@ private fun MultiselectSegmentedButtonPreview() {
           selected = "Option 3" in selection,
         )
       },
-      onSelectedChanged = { if (it in selection) selection.remove(it) else selection.add(it) }
+      onSelectedChanged = { if (it in selection) selection.remove(it) else selection.add(it) },
+      selectedIcon = { Icon(imageVector = Icons.Filled.Check, contentDescription = null) },
+      modifier = Modifier.width(IntrinsicSize.Min)
     )
   }
 }

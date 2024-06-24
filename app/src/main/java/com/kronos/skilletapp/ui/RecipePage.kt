@@ -22,9 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.michaelbull.result.combine
 import com.kronos.skilletapp.Greeting
-import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.Measurement
-import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.component.SegmentedButton
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.roundToEighth
@@ -32,83 +30,84 @@ import com.kronos.skilletapp.utils.toFraction
 import java.text.DecimalFormat
 
 @Composable
-fun RecipePage() {
+fun RecipePage(
+  recipe: Recipe
+) {
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      Column {
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+        ) {
+          val scaleOptions = 1..3
+          var scale by remember { mutableDoubleStateOf(scaleOptions.first().toDouble()) }
+          var servings by remember { mutableIntStateOf(recipe.servings) }
 
+          OutlinedIconButton(
+            onClick = {
+              servings = (servings - 1).coerceAtLeast(1)
+              scale = servings / recipe.servings.toDouble()
+            }
+          ) {
+            Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
+          }
+          Text(text = "$servings servings")
+
+          OutlinedIconButton(
+            onClick = {
+              servings++
+              scale = servings / recipe.servings.toDouble()
+            }
+          ) {
+            Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+          }
+
+          SegmentedButton(
+            options = {
+              scaleOptions.forEach { option ->
+                segment(
+                  option = option,
+                  label = "${option}x",
+                  selected = scale == option.toDouble(),
+                )
+              }
+            },
+            onSelectedChanged = {
+              scale = it.toDouble()
+              servings = recipe.servings * it
+            },
+            modifier = Modifier.width(IntrinsicSize.Min)
+          )
+        }
+
+        IngredientList(ingredients = recipe.ingredients)
+      }
     }
   }
 }
 
 @Composable
-fun IngredientList(ingredients: List<Ingredient>) {
+fun IngredientList(
+  ingredients: List<Ingredient>,
+) {
   if (ingredients.isEmpty()) {
     Text(text = "No Ingredients")
     return
   }
 
-  Column {
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier
-        .padding(8.dp)
-        .fillMaxWidth()
-        .height(IntrinsicSize.Min)
-    ) {
-      val scaleOptions = (1..3)
-      var scale by remember { mutableDoubleStateOf(scaleOptions.first().toDouble()) }
-
-      val numServings = 4
-      var servings by remember { mutableIntStateOf(numServings) }
-
-      OutlinedIconButton(
-        onClick = {
-          servings = (servings - 1).coerceAtLeast(1)
-          scale = servings / numServings.toDouble()
-        }
-      ) {
-        Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
-      }
-      Text(text = "$servings servings")
-
-      OutlinedIconButton(
-        onClick = {
-          servings++
-          scale = servings / numServings.toDouble()
-        }
-      ) {
-        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-      }
-
-      SegmentedButton(
-        options = {
-          scaleOptions.forEach { option ->
-            segment(
-              option = option,
-              label = "${option}x",
-              selected = scale == option.toDouble(),
-            )
-          }
-        },
-        onSelectedChanged = {
-          scale = it.toDouble()
-          servings = numServings * it
-        },
-        showSelectedCheck = false,
-        modifier = Modifier.width(IntrinsicSize.Min)
-      )
-    }
-
-    LazyColumn(
-      modifier = Modifier.fillMaxSize(),
-      contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp),
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-      items(ingredients) { ingredient ->
-        IngredientComponent(ingredient = ingredient)
-      }
+  LazyColumn(
+    modifier = Modifier.fillMaxSize(),
+    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    horizontalAlignment = Alignment.CenterHorizontally
+  ) {
+    items(ingredients) { ingredient ->
+      IngredientComponent(ingredient = ingredient)
     }
   }
 }
@@ -118,7 +117,9 @@ fun IngredientComponent(ingredient: Ingredient) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+    modifier = Modifier
+      .fillMaxWidth()
+      .height(IntrinsicSize.Min),
   ) {
     Box(
       modifier = Modifier
@@ -159,7 +160,26 @@ fun IngredientComponent(ingredient: Ingredient) {
 @Preview(showBackground = true, device = "spec:parent=pixel_5")
 @Composable
 fun RecipePagePreview() {
-  RecipePage()
+  val recipe = Recipe(
+    name = "Creamy Garlic Pasta Shells",
+    ingredients = listOf(
+      Ingredient("Mini Shells Pasta", "pasta", Measurement(8.0, MeasurementUnit.Ounce)),
+      Ingredient("Olive Oil", "Oil", Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Butter", "Butter", Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Garlic", "Garlic", Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))),
+      Ingredient("Flour", "Flour", Measurement(2.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Chicken Broth", "Chicken Broth", Measurement(0.75, MeasurementUnit.Cup)),
+      Ingredient("Milk", "Milk", Measurement(2.5, MeasurementUnit.Cup)),
+    ),
+    instructions = emptyList(),
+    equipment = emptyList(),
+    servings = 4,
+    description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    time = RecipeTime(15, 15),
+    source = RecipeSource("My Brain", "My Brain"),
+    notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  )
+  RecipePage(recipe = recipe)
 }
 
 @Preview
