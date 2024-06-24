@@ -7,9 +7,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +25,7 @@ import com.kronos.skilletapp.Greeting
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.ui.component.SegmentedButton
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.roundToEighth
 import com.kronos.skilletapp.utils.toFraction
@@ -51,19 +54,50 @@ fun IngredientList(ingredients: List<Ingredient>) {
       modifier = Modifier
         .padding(8.dp)
         .fillMaxWidth()
-        .height(IntrinsicSize.Max)
+        .height(IntrinsicSize.Min)
     ) {
-      //TODO: implement segmented button
-      Text(text = "Scale")
-      Text(text = "1x", modifier = Modifier.background(MaterialTheme.colorScheme.primary))
-      Text(text = "2x", modifier = Modifier.background(MaterialTheme.colorScheme.primary))
-      Text(text = "3x", modifier = Modifier.background(MaterialTheme.colorScheme.primary))
+      val scaleOptions = (1..3)
+      var scale by remember { mutableDoubleStateOf(scaleOptions.first().toDouble()) }
 
-      //TODO: implement serving scaling
-      Text(text = "Servings")
-      Text(text = "-", modifier = Modifier.background(MaterialTheme.colorScheme.primary))
-      Text(text = "1", modifier = Modifier.background(MaterialTheme.colorScheme.primary))
-      Text(text = "+", modifier = Modifier.background(MaterialTheme.colorScheme.primary))
+      val numServings = 4
+      var servings by remember { mutableIntStateOf(numServings) }
+
+      OutlinedIconButton(
+        onClick = {
+          servings = (servings - 1).coerceAtLeast(1)
+          scale = servings / numServings.toDouble()
+        }
+      ) {
+        Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
+      }
+      Text(text = "$servings servings")
+
+      OutlinedIconButton(
+        onClick = {
+          servings++
+          scale = servings / numServings.toDouble()
+        }
+      ) {
+        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+      }
+
+      SegmentedButton(
+        options = {
+          scaleOptions.forEach { option ->
+            segment(
+              option = option,
+              label = "${option}x",
+              selected = scale == option.toDouble(),
+            )
+          }
+        },
+        onSelectedChanged = {
+          scale = it.toDouble()
+          servings = numServings * it
+        },
+        showSelectedCheck = false,
+        modifier = Modifier.width(IntrinsicSize.Min)
+      )
     }
 
     LazyColumn(
@@ -84,7 +118,7 @@ fun IngredientComponent(ingredient: Ingredient) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier.fillMaxWidth(),
+    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
   ) {
     Box(
       modifier = Modifier

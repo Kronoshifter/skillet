@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontVariation.weight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
@@ -24,6 +26,7 @@ private fun <T> SegmentedButton(
   options: List<SegmentedButtonOption<T>>,
   onSelectedChanged: ((T) -> Unit)?,
   modifier: Modifier = Modifier,
+  showSelectedCheck: Boolean = true,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -35,7 +38,9 @@ private fun <T> SegmentedButton(
         option = option.option,
         selected = option.selected,
         onSelectedChanged = onSelectedChanged,
+        label = option.label,
         icon = option.icon,
+        showSelectedCheck = showSelectedCheck,
         shape = when (option) {
           options.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
           options.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
@@ -52,10 +57,12 @@ fun <T> SegmentedButton(
   options: SegmentedButtonScope<T>.() -> Unit,
   onSelectedChanged: ((T) -> Unit)?,
   modifier: Modifier = Modifier,
+  showSelectedCheck: Boolean = true,
 ) = SegmentedButton(
   options = SegmentedButtonScopeImpl<T>().apply(options).options,
   onSelectedChanged = onSelectedChanged,
-  modifier = modifier
+  modifier = modifier,
+  showSelectedCheck = showSelectedCheck
 )
 
 @Composable
@@ -65,7 +72,9 @@ private fun <T> SegmentedButtonSegment(
   onSelectedChanged: ((T) -> Unit)?,
   modifier: Modifier = Modifier,
   shape: Shape = CircleShape,
+  label: String? = null,
   icon: @Composable (() -> Unit)? = null,
+  showSelectedCheck: Boolean = true,
 ) {
   OutlinedButton(
     onClick = { onSelectedChanged?.invoke(option) },
@@ -74,21 +83,23 @@ private fun <T> SegmentedButtonSegment(
       containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
     ),
     contentPadding = PaddingValues(horizontal = 16.dp),
-    modifier = modifier
+    modifier = modifier.width(IntrinsicSize.Max)
   ) {
-    if (selected) {
+    if (selected && showSelectedCheck) {
       Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+      Spacer(modifier = Modifier.width(8.dp))
     } else {
       CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-        icon?.invoke()
+        icon?.let {
+          icon()
+          Spacer(modifier = Modifier.width(8.dp))
+        }
       }
     }
 
-    Spacer(modifier = Modifier.width(8.dp))
-
     Text(
-      text = option.toString(),
-      color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
+      text = label ?: option.toString(),
+      color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
     )
   }
 }
@@ -97,6 +108,7 @@ interface SegmentedButtonScope<T> {
   fun segment(
     option: T,
     selected: Boolean,
+    label: String? = null,
     icon: @Composable (() -> Unit)? = null,
   )
 }
@@ -107,21 +119,23 @@ private class SegmentedButtonScopeImpl<T> : SegmentedButtonScope<T> {
   override fun segment(
     option: T,
     selected: Boolean,
+    label: String?,
     icon: @Composable (() -> Unit)?,
   ) {
-    options.add(SegmentedButtonOption(option, selected, icon))
+    options.add(SegmentedButtonOption(option, selected, label, icon))
   }
 }
 
 class SegmentedButtonOption<T>(
   val option: T,
   val selected: Boolean,
+  val label: String? = null,
   val icon: @Composable (() -> Unit)? = null,
 )
 
 @Preview
 @Composable
-fun SegmentedButtonPreview() {
+private fun SegmentedButtonPreview() {
   var selectedOption by remember { mutableStateOf<String?>(null) }
 
   Surface {
@@ -142,14 +156,15 @@ fun SegmentedButtonPreview() {
           selected = selectedOption == "Option 3",
         )
       },
-      onSelectedChanged = { selectedOption = if (selectedOption != it) it else null }
+      onSelectedChanged = { selectedOption = if (selectedOption != it) it else null },
+      modifier = Modifier.width(IntrinsicSize.Min)
     )
   }
 }
 
 @Preview
 @Composable
-fun MultiselectSegmentedButtonPreview() {
+private fun MultiselectSegmentedButtonPreview() {
   val selection = remember { mutableStateListOf<String>() }
 
   Surface {
