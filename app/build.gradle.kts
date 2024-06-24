@@ -67,6 +67,7 @@ dependencies {
   implementation("androidx.compose.ui:ui-graphics")
   implementation("androidx.compose.ui:ui-tooling-preview")
   implementation("androidx.compose.material3:material3")
+  implementation("androidx.compose.material:material-icons-extended:1.6.8")
   testImplementation("junit:junit:4.13.2")
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
   testImplementation("io.kotest:kotest-assertions-core:5.9.1")
