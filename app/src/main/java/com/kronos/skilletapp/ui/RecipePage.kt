@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.util.rangeTo
 import com.github.michaelbull.result.combine
 import com.kronos.skilletapp.Greeting
 import com.kronos.skilletapp.model.*
@@ -28,6 +29,7 @@ import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.roundToEighth
 import com.kronos.skilletapp.utils.toFraction
 import java.text.DecimalFormat
+import kotlin.math.roundToInt
 
 @Composable
 fun RecipePage(
@@ -36,6 +38,10 @@ fun RecipePage(
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       Column {
+        val scaleOptions = (1..3)
+        var scale by remember { mutableDoubleStateOf(scaleOptions.first().toDouble()) }
+        var servings by remember { mutableIntStateOf(recipe.servings) }
+
         Row(
           horizontalArrangement = Arrangement.spacedBy(8.dp),
           verticalAlignment = Alignment.CenterVertically,
@@ -44,10 +50,6 @@ fun RecipePage(
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
         ) {
-          val scaleOptions = 1..3
-          var scale by remember { mutableDoubleStateOf(scaleOptions.first().toDouble()) }
-          var servings by remember { mutableIntStateOf(recipe.servings) }
-
           OutlinedIconButton(
             onClick = {
               servings = (servings - 1).coerceAtLeast(1)
@@ -85,7 +87,10 @@ fun RecipePage(
           )
         }
 
-        IngredientList(ingredients = recipe.ingredients)
+        IngredientList(
+          ingredients = recipe.ingredients,
+          scale = scale
+        )
       }
     }
   }
@@ -94,6 +99,7 @@ fun RecipePage(
 @Composable
 fun IngredientList(
   ingredients: List<Ingredient>,
+  scale: Double
 ) {
   if (ingredients.isEmpty()) {
     Text(text = "No Ingredients")
@@ -107,13 +113,19 @@ fun IngredientList(
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     items(ingredients) { ingredient ->
-      IngredientComponent(ingredient = ingredient)
+      IngredientComponent(
+        ingredient = ingredient,
+        scale = scale
+      )
     }
   }
 }
 
 @Composable
-fun IngredientComponent(ingredient: Ingredient) {
+fun IngredientComponent(
+  ingredient: Ingredient,
+  scale: Double
+) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -129,7 +141,8 @@ fun IngredientComponent(ingredient: Ingredient) {
         .clickable { /*TODO: implement ingredient box click*/ },
       contentAlignment = Alignment.Center
     ) {
-      val quantity = ingredient.measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+      val measurement = ingredient.measurement.scale(scale).normalize { it !is MeasurementUnit.FluidOunce }
+      val quantity = measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
 
       Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -142,7 +155,7 @@ fun IngredientComponent(ingredient: Ingredient) {
         )
 
         Text(
-          text = ingredient.measurement.unit.abbreviation,
+          text = measurement.unit.abbreviation,
           color = MaterialTheme.colorScheme.onPrimary,
           fontSize = 12.sp
         )
@@ -163,13 +176,13 @@ fun RecipePagePreview() {
   val recipe = Recipe(
     name = "Creamy Garlic Pasta Shells",
     ingredients = listOf(
-      Ingredient("Mini Shells Pasta", "pasta", Measurement(8.0, MeasurementUnit.Ounce)),
-      Ingredient("Olive Oil", "Oil", Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Butter", "Butter", Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Garlic", "Garlic", Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))),
-      Ingredient("Flour", "Flour", Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", "Chicken Broth", Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", "Milk", Measurement(2.5, MeasurementUnit.Cup)),
+      Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
+      Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Garlic", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))),
+      Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
+      Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
     ),
     instructions = emptyList(),
     equipment = emptyList(),
@@ -186,17 +199,17 @@ fun RecipePagePreview() {
 @Composable
 fun IngredientListPreview() {
   val ingredients = listOf(
-    Ingredient("Mini Shells Pasta", "pasta", Measurement(8.0, MeasurementUnit.Ounce)),
-    Ingredient("Olive Oil", "Oil", Measurement(1.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Butter", "Butter", Measurement(1.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Garlic", "Garlic", Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))),
-    Ingredient("Flour", "Flour", Measurement(2.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Chicken Broth", "Chicken Broth", Measurement(0.75, MeasurementUnit.Cup)),
-    Ingredient("Milk", "Milk", Measurement(2.5, MeasurementUnit.Cup)),
+    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
+    Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+    Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+    Ingredient("Garlic", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))),
+    Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+    Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
+    Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
   )
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    IngredientList(ingredients = ingredients)
+    IngredientList(ingredients = ingredients, scale = 1.0)
   }
 
 }
@@ -204,9 +217,9 @@ fun IngredientListPreview() {
 @Preview(widthDp = 400, heightDp = 800, showBackground = true, device = "spec:parent=pixel_5")
 @Composable
 fun IngredientComponentPreview() {
-  val ingredient = Ingredient("Mini Shells Pasta", "pasta", Measurement(8.0, MeasurementUnit.Ounce))
+  val ingredient = Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce))
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    IngredientComponent(ingredient = ingredient)
+    IngredientComponent(ingredient = ingredient, scale = 1.0)
   }
 }

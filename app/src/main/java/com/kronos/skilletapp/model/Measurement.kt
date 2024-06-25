@@ -74,16 +74,16 @@ data class Measurement(
 
   fun scaleAndNormalize(factor: Double) = scale(factor).normalize()
 
-  fun normalize(): Measurement {
+  fun normalize(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
     while (normalized.quantity !in normalized.unit.normalRange) {
       val low = normalized.unit.normalRange.start
       val high = normalized.unit.normalRange.endExclusive
 
       if (normalized.quantity <= low) {
-        normalized = normalized.convert(normalized.unit.previous().unwrap())
+        normalized = normalized.convert(normalized.unit.previous(filter).unwrap())
       } else if (normalized.quantity >= high) {
-        normalized = normalized.convert(normalized.unit.next().unwrap())
+        normalized = normalized.convert(normalized.unit.next(filter).unwrap())
       }
     }
     return normalized
@@ -95,13 +95,13 @@ data class Measurement(
   fun scaleAndRound(factor: Double) = scale(factor).roundToEighth()
 }
 
-fun MeasurementUnit.next(): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }
+fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
+  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }.filter { filter?.invoke(it) ?: true }
   return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr {  }
 }
 
-fun MeasurementUnit.previous(): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }
+fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
+  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }.filter { filter?.invoke(it) ?: true }
   return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr {  }
 }
 
