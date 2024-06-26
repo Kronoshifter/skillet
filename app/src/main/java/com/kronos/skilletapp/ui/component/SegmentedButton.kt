@@ -26,7 +26,7 @@ private fun <T> SegmentedButton(
   options: List<SegmentedButtonOption<T>>,
   onSelectedChanged: ((T) -> Unit)?,
   modifier: Modifier = Modifier,
-  selectedIcon: @Composable (() -> Unit)? = null,
+  selectedIcon: (@Composable () -> Unit)? = null,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -57,7 +57,7 @@ fun <T> SegmentedButton(
   options: SegmentedButtonScope<T>.() -> Unit,
   onSelectedChanged: ((T) -> Unit)?,
   modifier: Modifier = Modifier,
-  selectedIcon: @Composable (() -> Unit)? = null,
+  selectedIcon: (@Composable () -> Unit)? = null,
 ) = SegmentedButton(
   options = SegmentedButtonScopeImpl<T>().apply(options).options,
   onSelectedChanged = onSelectedChanged,
@@ -73,8 +73,8 @@ private fun <T> SegmentedButtonSegment(
   modifier: Modifier = Modifier,
   shape: Shape = CircleShape,
   label: String? = null,
-  icon: @Composable (() -> Unit)? = null,
-  selectedIcon: @Composable (() -> Unit)? = null,
+  icon: (@Composable () -> Unit)? = null,
+  selectedIcon: (@Composable () -> Unit)? = null,
 ) {
   OutlinedButton(
     onClick = { onSelectedChanged?.invoke(option) },
@@ -111,7 +111,7 @@ interface SegmentedButtonScope<T> {
     option: T,
     selected: Boolean,
     label: String? = null,
-    icon: @Composable (() -> Unit)? = null,
+    icon: (@Composable () -> Unit)? = null,
   )
 }
 
@@ -122,7 +122,7 @@ private class SegmentedButtonScopeImpl<T> : SegmentedButtonScope<T> {
     option: T,
     selected: Boolean,
     label: String?,
-    icon: @Composable (() -> Unit)?,
+    icon: (@Composable () -> Unit)?,
   ) {
     options.add(SegmentedButtonOption(option, selected, label, icon))
   }
@@ -132,7 +132,7 @@ class SegmentedButtonOption<T>(
   val option: T,
   val selected: Boolean,
   val label: String? = null,
-  val icon: @Composable (() -> Unit)? = null,
+  val icon: (@Composable () -> Unit)? = null,
 )
 
 @Preview
