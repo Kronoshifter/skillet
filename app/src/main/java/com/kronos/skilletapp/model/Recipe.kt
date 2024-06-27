@@ -8,10 +8,16 @@ data class Recipe(
   val servings: Int,
   val time: RecipeTime,
   val source: RecipeSource,
-  val ingredients: List<Ingredient>,
-  val instructions: List<Instruction>,
+  val ingredients: List<Ingredient>, // TODO: convert to ingredient sections
+  val instructions: List<Instruction>, // TODO: convert to instruction sections
   val equipment: List<Equipment>
-)
+) {
+//  val allIngredients
+//    get() = ingredients.flatMap { it.ingredients }
+
+//  val allInstructions
+//    get() = instructions.flatMap { it.instructions }
+}
 
 data class RecipeTime(
   val preparation: Int,

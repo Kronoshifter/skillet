@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.*
@@ -44,15 +43,37 @@ fun RecipePage(recipe: Recipe) {
       color = MaterialTheme.colorScheme.background
     ) {
       Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+          text = recipe.name,
+          style = MaterialTheme.typography.headlineLarge,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+        )
+
+        var scale by remember { mutableDoubleStateOf(1.0) }
+        var servings by remember { mutableIntStateOf(recipe.servings) }
+
+        RecipeControls(
+          scale = scale,
+          servings = servings,
+          baseServings = recipe.servings,
+          onServingsChanged = { servings = it },
+          onScaleChanged = { scale = it }
+        )
+
+        LaunchedEffect(scale) {
+          servings = (scale * recipe.servings).toInt()
+        }
+
+        LaunchedEffect(servings) {
+          scale = servings / recipe.servings.toDouble()
+        }
+
+        HorizontalDivider(modifier = Modifier.fillMaxWidth())
+
         PrimaryTabRow(
           selectedTabIndex = tab,
-          indicator = {
-            TabRowDefaults.PrimaryIndicator(
-              modifier = Modifier
-                .tabIndicatorOffset(tab, true),
-              width = Dp.Unspecified
-            )
-          },
           modifier = Modifier.fillMaxWidth()
         ) {
           Tab(
@@ -87,8 +108,8 @@ fun RecipePage(recipe: Recipe) {
             contentAlignment = Alignment.Center
           ) {
             when (page) {
-              RecipePage.INGREDIENTS -> IngredientsTab(recipe)
-              RecipePage.INSTRUCTIONS -> InstructionsTab(recipe)
+              RecipePage.INGREDIENTS -> IngredientsList(recipe.ingredients, scale)
+              RecipePage.INSTRUCTIONS -> InstructionsList(recipe.instructions, scale)
             }
           }
         }
@@ -99,82 +120,71 @@ fun RecipePage(recipe: Recipe) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IngredientsTab(
-  recipe: Recipe,
+fun RecipeControls(
+  scale: Double,
+  servings: Int,
+  baseServings: Int,
+  onServingsChanged: (servings: Int) -> Unit,
+  onScaleChanged: (scale: Double) -> Unit,
+  maxScale: Int = 3,
 ) {
-  Column {
-    val scaleOptions = (1..3)
-    var scale by remember { mutableDoubleStateOf(scaleOptions.first().toDouble()) }
-    var servings by remember { mutableIntStateOf(recipe.servings) }
+  val scaleOptions = 1..maxScale
 
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      modifier = Modifier
-        .padding(8.dp)
-        .fillMaxWidth()
-        .height(IntrinsicSize.Min)
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    modifier = Modifier
+      .padding(8.dp)
+      .fillMaxWidth()
+      .height(IntrinsicSize.Min)
+  ) {
+    OutlinedIconButton(
+      onClick = { onServingsChanged((servings - 1).coerceAtLeast(1)) }
     ) {
-      OutlinedIconButton(
-        onClick = {
-          servings = (servings - 1).coerceAtLeast(1)
-          scale = servings / recipe.servings.toDouble()
-        }
-      ) {
-        Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
-      }
-      Text(text = "$servings servings")
+      Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
+    }
+    Text(text = "$servings servings")
 
-      OutlinedIconButton(
-        onClick = {
-          servings++
-          scale = servings / recipe.servings.toDouble()
-        }
-      ) {
-        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-      }
+    OutlinedIconButton(
+      onClick = { onServingsChanged(servings + 1) }
+    ) {
+      Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+    }
 
-      SingleChoiceSegmentedButtonRow(
-        modifier = Modifier.width(IntrinsicSize.Min)
-      ) {
-        scaleOptions.forEach { option ->
-          val selected = scale == option.toDouble()
-          SegmentedButton(
-            selected = selected,
-            onClick = {
-              scale = option.toDouble()
-              servings = recipe.servings * option
-            },
-            shape = when (option) {
-              scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
-              scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
-              else -> RectangleShape
-            },
-            icon = {}
-          ) {
-            Text(
-              text = "${option}x",
-              color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
-            )
-          }
+    SingleChoiceSegmentedButtonRow(
+      modifier = Modifier.width(IntrinsicSize.Min)
+    ) {
+      scaleOptions.forEach { option ->
+        val selected = scale == option.toDouble()
+        SegmentedButton(
+          selected = selected,
+          onClick = { onScaleChanged(option.toDouble()) },
+          shape = when (option) {
+            scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
+            scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
+            else -> RectangleShape
+          },
+          icon = {} // this is silly, why isn't this nullable?
+        ) {
+          Text(
+            text = "${option}x",
+            color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
+          )
         }
       }
     }
-
-    IngredientList(
-      ingredients = recipe.ingredients,
-      scale = scale
-    )
   }
 }
 
 @Composable
-fun IngredientList(
+fun IngredientsList(
   ingredients: List<Ingredient>,
   scale: Double,
 ) {
   if (ingredients.isEmpty()) {
-    Text(text = "No Ingredients")
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Text(text = "No Ingredients", color = MaterialTheme.colorScheme.secondary)
+    }
     return
   }
 
@@ -244,8 +254,9 @@ fun IngredientComponent(
 }
 
 @Composable
-fun InstructionsTab(
-  recipe: Recipe,
+fun InstructionsList(
+  instructions: List<Instruction>,
+  scale: Double
 ) {
   Text(text = "Instructions")
 }
@@ -253,21 +264,23 @@ fun InstructionsTab(
 @Preview
 @Composable
 fun RecipePagePreview() {
+  val ingredients = listOf(
+    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
+    Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+    Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+    Ingredient(
+      "Garlic",
+      IngredientType.Dry,
+      measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+    ),
+    Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+    Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
+    Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+  )
+
   val recipe = Recipe(
     name = "Creamy Garlic Pasta Shells",
-    ingredients = listOf(
-      Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-      Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient(
-        "Garlic",
-        IngredientType.Dry,
-        measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-      ),
-      Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-    ),
+    ingredients = ingredients,
     instructions = emptyList(),
     equipment = emptyList(),
     servings = 4,
@@ -287,35 +300,12 @@ fun RecipePagePreview() {
 
 @Preview(showBackground = true, device = "spec:parent=pixel_5")
 @Composable
-fun IngredientsTabPreview() {
-  val recipe = Recipe(
-    name = "Creamy Garlic Pasta Shells",
-    ingredients = listOf(
-      Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-      Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient(
-        "Garlic",
-        IngredientType.Dry,
-        measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-      ),
-      Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-    ),
-    instructions = emptyList(),
-    equipment = emptyList(),
-    servings = 4,
-    description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    time = RecipeTime(15, 15),
-    source = RecipeSource("My Brain", "My Brain"),
-    notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  )
-
+fun IngredientsListEmptyPreview() {
+  val ingredients = emptyList<Ingredient>()
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      IngredientsTab(recipe = recipe)
+      IngredientsList(ingredients = ingredients, scale = 1.0)
     }
   }
 }
@@ -327,14 +317,18 @@ fun IngredientListPreview() {
     Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
     Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
     Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Garlic", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))),
+    Ingredient(
+      "Garlic",
+      IngredientType.Dry,
+      measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+    ),
     Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
     Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
     Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
   )
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    IngredientList(ingredients = ingredients, scale = 1.0)
+    IngredientsList(ingredients = ingredients, scale = 1.0)
   }
 
 }
