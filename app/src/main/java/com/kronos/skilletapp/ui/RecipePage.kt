@@ -14,12 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.*
-import com.kronos.skilletapp.ui.component.SegmentedButton
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.toFraction
 
@@ -67,6 +67,7 @@ fun RecipePage(recipe: Recipe) {
   }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IngredientsTab(
   recipe: Recipe,
@@ -103,22 +104,31 @@ fun IngredientsTab(
         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
       }
 
-      SegmentedButton(
-        options = {
-          scaleOptions.forEach { option ->
-            segment(
-              option = option,
-              label = "${option}x",
-              selected = scale == option.toDouble(),
+      SingleChoiceSegmentedButtonRow(
+        modifier = Modifier.width(IntrinsicSize.Min)
+      ) {
+        scaleOptions.forEach { option ->
+          val selected = scale == option.toDouble()
+          SegmentedButton(
+            selected = selected,
+            onClick = {
+              scale = option.toDouble()
+              servings = recipe.servings * option
+            },
+            shape = when (option) {
+              scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
+              scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
+              else -> RectangleShape
+            },
+            icon = {}
+          ) {
+            Text(
+              text = "${option}x",
+              color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
             )
           }
-        },
-        onSelectedChanged = {
-          scale = it.toDouble()
-          servings = recipe.servings * it
-        },
-        modifier = Modifier.width(IntrinsicSize.Min)
-      )
+        }
+      }
     }
 
     IngredientList(
@@ -237,7 +247,12 @@ fun RecipePagePreview() {
     notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
   )
 
-  RecipePage(recipe)
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      RecipePage(recipe)
+    }
+  }
 }
 
 @Preview(showBackground = true, device = "spec:parent=pixel_5")
@@ -266,7 +281,13 @@ fun IngredientsTabPreview() {
     source = RecipeSource("My Brain", "My Brain"),
     notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
   )
-  IngredientsTab(recipe = recipe)
+
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      IngredientsTab(recipe = recipe)
+    }
+  }
 }
 
 @Preview
