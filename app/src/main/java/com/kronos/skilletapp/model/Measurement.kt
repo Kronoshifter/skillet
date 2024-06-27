@@ -76,13 +76,10 @@ data class Measurement(
 
   fun normalize(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
-    while (normalized.quantity !in normalized.unit.normalRange) {
-      val low = normalized.unit.normalRange.start
-      val high = normalized.unit.normalRange.endExclusive
-
-      if (normalized.quantity <= low) {
+    while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
+      if (normalized.quantity <= normalized.unit.normalizationLow) {
         normalized = normalized.convert(normalized.unit.previous(filter).unwrap())
-      } else if (normalized.quantity >= high) {
+      } else if (normalized.quantity >= normalized.unit.normalizationHigh) {
         normalized = normalized.convert(normalized.unit.next(filter).unwrap())
       }
     }
@@ -122,7 +119,8 @@ sealed class MeasurementUnit(
   open val factor: Double,
   open val abbreviation: String,
   open val system: MeasurementSystem,
-  open val normalRange: OpenEndRange<Double>,
+  open val normalizationLow: Double,
+  open val normalizationHigh: Double,
   open val type: MeasurementType,
 ) {
 
@@ -130,28 +128,32 @@ sealed class MeasurementUnit(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-    override val normalRange: OpenEndRange<Double>,
+    override val normalizationLow: Double,
+    override val normalizationHigh: Double,
     override val system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
     factor = factor,
     abbreviation = abbreviation,
     system = system,
-    normalRange = normalRange,
+    normalizationLow = normalizationLow,
+    normalizationHigh = normalizationHigh,
     type = MeasurementType.Mass)
 
   sealed class Volume(
     override val name: String,
     override val factor: Double,
     override val abbreviation: String,
-    override val normalRange: OpenEndRange<Double>,
+    override val normalizationLow: Double,
+    override val normalizationHigh: Double,
     override val system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
     factor = factor,
     abbreviation = abbreviation,
     system = system,
-    normalRange = normalRange,
+    normalizationLow = normalizationLow,
+    normalizationHigh = normalizationHigh,
     type = MeasurementType.Volume
   )
 
@@ -163,7 +165,8 @@ sealed class MeasurementUnit(
     factor = 1.0,
     abbreviation = abbreviation,
     system = MeasurementSystem.Other,
-    normalRange = 0.0..<Double.POSITIVE_INFINITY,
+    normalizationLow = 0.0,
+    normalizationHigh = Double.POSITIVE_INFINITY,
     type = MeasurementType.Other
   )
 
@@ -175,7 +178,8 @@ sealed class MeasurementUnit(
     name = "milliliter",
     factor = 1.0,
     abbreviation = "mL",
-    normalRange = 0.0..<1000.0,
+    normalizationLow = 0.0,
+    normalizationHigh = 1000.0,
     system = MeasurementSystem.Metric
   )
 
@@ -183,7 +187,8 @@ sealed class MeasurementUnit(
     name = "liter",
     factor = 1000.0,
     abbreviation = "L",
-    normalRange = 0.5..<Double.POSITIVE_INFINITY,
+    normalizationLow = 0.5,
+    normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 
@@ -193,7 +198,8 @@ sealed class MeasurementUnit(
     factor = 4.92892,
     name = "teaspoon",
     abbreviation = "tsp",
-    normalRange = 0.0..<3.0,
+    normalizationLow = 0.0,
+    normalizationHigh = 3.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -201,7 +207,8 @@ sealed class MeasurementUnit(
     factor = 14.7868,
     name = "tablespoon",
     abbreviation = "tbsp",
-    normalRange = 0.334..<4.0,
+    normalizationLow = 0.334,
+    normalizationHigh = 4.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -209,7 +216,8 @@ sealed class MeasurementUnit(
     factor = 236.588,
     name = "cup",
     abbreviation = "cup",
-    normalRange = 0.25..<Double.POSITIVE_INFINITY,
+    normalizationLow = 0.25,
+    normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
 
@@ -217,7 +225,8 @@ sealed class MeasurementUnit(
     factor = 473.176,
     name = "pint",
     abbreviation = "pt",
-    normalRange = 0.5..<2.0,
+    normalizationLow = 0.5,
+    normalizationHigh = 2.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -225,7 +234,8 @@ sealed class MeasurementUnit(
     factor = 946.353,
     name = "quart",
     abbreviation = "qt",
-    normalRange = 0.5..<4.0,
+    normalizationLow = 0.5,
+    normalizationHigh = 4.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -233,7 +243,8 @@ sealed class MeasurementUnit(
     factor = 3785.41,
     name = "gallon",
     abbreviation = "gal",
-    normalRange = 0.25..<Double.POSITIVE_INFINITY,
+    normalizationLow = 0.25,
+    normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
 
@@ -241,7 +252,8 @@ sealed class MeasurementUnit(
     factor = 29.5735,
     name = "fluid ounce",
     abbreviation = "fl oz",
-    normalRange = 0.5..<8.0,
+    normalizationLow = 0.5,
+    normalizationHigh = 8.0,
     system = MeasurementSystem.Imperial
   )
 
@@ -253,7 +265,8 @@ sealed class MeasurementUnit(
     factor = 1.0,
     name = "gram",
     abbreviation = "g",
-    normalRange = 0.0..<1000.0,
+    normalizationLow = 0.0,
+    normalizationHigh = 1000.0,
     system = MeasurementSystem.Metric
   )
 
@@ -261,7 +274,8 @@ sealed class MeasurementUnit(
     factor = 1000.0,
     name = "kilogram",
     abbreviation = "kg",
-    normalRange = 0.5..<Double.POSITIVE_INFINITY,
+    normalizationLow = 0.5,
+    normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 
@@ -271,7 +285,8 @@ sealed class MeasurementUnit(
     factor = 28.3495,
     name = "ounce",
     abbreviation = "oz",
-    normalRange = 0.0..<16.0,
+    normalizationLow = 0.0,
+    normalizationHigh = 16.0,
     system = MeasurementSystem.Metric
   )
 
@@ -279,7 +294,8 @@ sealed class MeasurementUnit(
     factor = 453.592,
     name = "pound",
     abbreviation = "lb",
-    normalRange = 0.5..<Double.POSITIVE_INFINITY,
+    normalizationLow = 0.5,
+    normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 
