@@ -28,6 +28,7 @@ object RecipePage {
   const val INSTRUCTIONS = 1
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipePage(recipe: Recipe) {
   var tab by remember { mutableIntStateOf(RecipePage.INGREDIENTS) }
@@ -38,7 +39,7 @@ fun RecipePage(recipe: Recipe) {
       color = MaterialTheme.colorScheme.background
     ) {
       Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(
+        PrimaryTabRow(
           selectedTabIndex = tab,
           modifier = Modifier
             .fillMaxWidth()
@@ -177,12 +178,14 @@ fun IngredientComponent(
 
       Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround,
         modifier = Modifier.align(Alignment.Center)
       ) {
         Text(
           text = quantity,
           color = MaterialTheme.colorScheme.onPrimary,
-          fontSize = 18.sp
+          fontSize = 18.sp,
+          modifier = Modifier.offset(y = 4.dp)
         )
 
         Text(

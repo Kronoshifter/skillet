@@ -52,6 +52,7 @@ private fun <T> SegmentedButton(
   }
 }
 
+@Deprecated("Use native SegmentedButton instead")
 @Composable
 fun <T> SegmentedButton(
   options: SegmentedButtonScope<T>.() -> Unit,
