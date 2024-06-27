@@ -1,10 +1,13 @@
 package com.kronos.skilletapp.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -17,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.*
@@ -28,10 +32,11 @@ object RecipePage {
   const val INSTRUCTIONS = 1
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun RecipePage(recipe: Recipe) {
   var tab by remember { mutableIntStateOf(RecipePage.INGREDIENTS) }
+  val pagerState = rememberPagerState { 2 }
 
   SkilletAppTheme {
     Surface(
@@ -41,8 +46,14 @@ fun RecipePage(recipe: Recipe) {
       Column(modifier = Modifier.fillMaxSize()) {
         PrimaryTabRow(
           selectedTabIndex = tab,
-          modifier = Modifier
-            .fillMaxWidth()
+          indicator = {
+            TabRowDefaults.PrimaryIndicator(
+              modifier = Modifier
+                .tabIndicatorOffset(tab, true),
+              width = Dp.Unspecified
+            )
+          },
+          modifier = Modifier.fillMaxWidth()
         ) {
           Tab(
             selected = tab == RecipePage.INGREDIENTS,
@@ -50,6 +61,7 @@ fun RecipePage(recipe: Recipe) {
             text = { Text(text = "Ingredients") },
             modifier = Modifier
           )
+
           Tab(
             selected = tab == RecipePage.INSTRUCTIONS,
             onClick = { tab = RecipePage.INSTRUCTIONS },
@@ -58,9 +70,27 @@ fun RecipePage(recipe: Recipe) {
           )
         }
 
-        when (tab) {
-          RecipePage.INGREDIENTS -> IngredientsTab(recipe)
-          RecipePage.INSTRUCTIONS -> InstructionsTab(recipe)
+        LaunchedEffect(tab) {
+          pagerState.animateScrollToPage(tab)
+        }
+
+        LaunchedEffect(pagerState.targetPage) {
+          tab = pagerState.targetPage
+        }
+
+        HorizontalPager(
+          state = pagerState,
+          modifier = Modifier.fillMaxWidth()
+        ) { page ->
+          Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+          ) {
+            when (page) {
+              RecipePage.INGREDIENTS -> IngredientsTab(recipe)
+              RecipePage.INSTRUCTIONS -> InstructionsTab(recipe)
+            }
+          }
         }
       }
     }
@@ -215,7 +245,7 @@ fun IngredientComponent(
 
 @Composable
 fun InstructionsTab(
-  recipe: Recipe
+  recipe: Recipe,
 ) {
   Text(text = "Instructions")
 }
