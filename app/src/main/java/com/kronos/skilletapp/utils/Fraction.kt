@@ -31,6 +31,9 @@ data class Fraction(val numerator: Int, val denominator: Int) {
   operator fun div(other: Fraction): Fraction = Fraction(numerator * other.denominator, denominator * other.numerator)
   operator fun div(other: Int): Fraction = Fraction(numerator, denominator * other)
 
+  operator fun compareTo(other: Fraction): Int = decimal.compareTo(other.decimal)
+  operator fun compareTo(other: Int): Int = decimal.compareTo(other.toDouble())
+
   override fun toString(): String = when {
     numerator == 0 -> "0"
     whole == 0 -> fractionString(numerator, denominator)

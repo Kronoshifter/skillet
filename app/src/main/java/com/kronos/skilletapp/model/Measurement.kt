@@ -287,7 +287,7 @@ sealed class MeasurementUnit(
     abbreviation = "oz",
     normalizationLow = 0.0,
     normalizationHigh = 16.0,
-    system = MeasurementSystem.Metric
+    system = MeasurementSystem.Imperial
   )
 
   data object Pound : Mass(
@@ -296,7 +296,7 @@ sealed class MeasurementUnit(
     abbreviation = "lb",
     normalizationLow = 0.5,
     normalizationHigh = Double.POSITIVE_INFINITY,
-    system = MeasurementSystem.Metric
+    system = MeasurementSystem.Imperial
   )
 
   companion object {

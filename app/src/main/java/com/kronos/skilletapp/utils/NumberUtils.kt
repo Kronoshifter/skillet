@@ -1,9 +1,9 @@
 package com.kronos.skilletapp.utils
 
 import java.math.BigDecimal
+import java.math.MathContext
 import java.math.RoundingMode
-import kotlin.math.abs
-import kotlin.math.roundToInt
+import kotlin.math.*
 
 //fun Double.roundToEighth(): BigDecimal {
 //  val result = toBigDecimal().setScale(3, RoundingMode.CEILING) * BigDecimal(8)
@@ -13,6 +13,7 @@ import kotlin.math.roundToInt
 
 fun Double.roundToEighth() = (this * 8.0).roundToInt() / 8.0
 fun Double.roundToThird() = (this * 3.0).roundToInt() / 3.0
+
 fun Double.roundToNearestFraction(): Double {
   val eighthDiff = abs(this - roundToEighth())
   val thirdDiff = abs(this - roundToThird())
@@ -28,6 +29,8 @@ fun Double.toFraction(): Fraction {
   val denominator = 1000
   return Fraction(numerator, denominator).reduce()
 }
+
+fun Double.roundToSignificantFigures(places: Int) = toBigDecimal().round(MathContext(places, RoundingMode.HALF_UP)).toDouble()
 
 val ONE_EIGHTH = (BigDecimal(1) / BigDecimal(8)).setScale(3, RoundingMode.HALF_UP)
 
