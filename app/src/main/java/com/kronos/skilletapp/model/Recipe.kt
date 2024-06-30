@@ -12,11 +12,8 @@ data class Recipe(
   val instructions: List<Instruction>, // TODO: convert to instruction sections
   val equipment: List<Equipment>
 ) {
-//  val allIngredients
-//    get() = ingredients.flatMap { it.ingredients }
-
-//  val allInstructions
-//    get() = instructions.flatMap { it.instructions }
+//  val allIngredients by lazy { ingredients.flatMap { it.ingredients } }
+//  val allInstructions by lazy { instructions.flatMap { it.instructions } }
 }
 
 data class RecipeTime(

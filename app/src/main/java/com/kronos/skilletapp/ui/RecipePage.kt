@@ -2,12 +2,15 @@ package com.kronos.skilletapp.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -18,13 +21,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEachIndexed
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.toFraction
+import kotlin.math.roundToInt
 
 object RecipePage {
   const val INGREDIENTS = 0
@@ -54,21 +64,15 @@ fun RecipePage(recipe: Recipe) {
         var scale by remember { mutableDoubleStateOf(1.0) }
         var servings by remember { mutableIntStateOf(recipe.servings) }
 
-        RecipeControls(
+        ScalingControls(
           scale = scale,
           servings = servings,
           baseServings = recipe.servings,
-          onServingsChanged = { servings = it },
-          onScaleChanged = { scale = it }
+          onScalingChanged = { newScale, newServings ->
+            scale = newScale
+            servings = newServings
+          },
         )
-
-        LaunchedEffect(scale) {
-          servings = (scale * recipe.servings).toInt()
-        }
-
-        LaunchedEffect(servings) {
-          scale = servings / recipe.servings.toDouble()
-        }
 
         HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
@@ -120,12 +124,11 @@ fun RecipePage(recipe: Recipe) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeControls(
+fun ScalingControls(
   scale: Double,
   servings: Int,
   baseServings: Int,
-  onServingsChanged: (servings: Int) -> Unit,
-  onScaleChanged: (scale: Double) -> Unit,
+  onScalingChanged: (scale: Double, servings: Int) -> Unit,
   maxScale: Int = 3,
 ) {
   val scaleOptions = 1..maxScale
@@ -138,27 +141,68 @@ fun RecipeControls(
       .fillMaxWidth()
       .height(IntrinsicSize.Min)
   ) {
-    OutlinedIconButton(
-      onClick = { onServingsChanged((servings - 1).coerceAtLeast(1)) }
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      modifier = Modifier
+//        .weight(1f)
     ) {
-      Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
-    }
-    Text(text = "$servings servings")
+      OutlinedIconButton(
+        onClick = {
+          val newServings = (servings - 1).coerceAtLeast(1)
+          val newScale = newServings / baseServings.toDouble()
+          onScalingChanged(newScale, newServings)
+        },
+        enabled = servings > 1,
+//        modifier = Modifier.weight(1f)
+      ) {
+        Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
+      }
 
-    OutlinedIconButton(
-      onClick = { onServingsChanged(servings + 1) }
-    ) {
-      Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+      val textMeasurer = rememberTextMeasurer()
+      val result = textMeasurer.measure(
+        AnnotatedString("00 servings"),
+        style = LocalTextStyle.current
+      )
+      val textWidth = with(LocalDensity.current) {
+        result.size.width.toDp()
+      }
+
+      Text(
+        text = "$servings servings",
+        maxLines = 1,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+          .width(textWidth)
+//          .padding(horizontal = 8.dp)
+      )
+
+      OutlinedIconButton(
+        onClick = {
+          val newServings = servings + 1
+          val newScale = newServings / baseServings.toDouble()
+          onScalingChanged(newScale, newServings)
+        },
+//        modifier = Modifier.weight(1f)
+      ) {
+        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+      }
     }
 
     SingleChoiceSegmentedButtonRow(
-      modifier = Modifier.width(IntrinsicSize.Min)
+      modifier = Modifier
+        .width(IntrinsicSize.Min)
+        .weight(1f)
     ) {
       scaleOptions.forEach { option ->
         val selected = scale == option.toDouble()
         SegmentedButton(
           selected = selected,
-          onClick = { onScaleChanged(option.toDouble()) },
+          onClick = {
+            val newScale = option.toDouble()
+            val newServings = (baseServings * newScale).roundToInt()
+            onScalingChanged(newScale, newServings)
+          },
           shape = when (option) {
             scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
             scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
@@ -253,12 +297,110 @@ fun IngredientComponent(
   }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InstructionsList(
   instructions: List<Instruction>,
-  scale: Double
+  scale: Double,
 ) {
-  Text(text = "Instructions")
+  if (instructions.isEmpty()) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Text(text = "No Instructions", color = MaterialTheme.colorScheme.secondary)
+    }
+    return
+  }
+
+  LazyColumn(
+    modifier = Modifier.fillMaxSize(),
+    contentPadding = PaddingValues(vertical = 8.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    horizontalAlignment = Alignment.CenterHorizontally
+  ) {
+    itemsIndexed(instructions) { index, instruction ->
+      Text(
+        text = "Step ${index + 1}",
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 8.dp)
+      )
+
+      InstructionComponent(
+        instruction = instruction,
+        scale = scale
+      )
+
+      if (instruction != instructions.last()) {
+        HorizontalDivider()
+      }
+    }
+  }
+
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun InstructionComponent(
+  instruction: Instruction,
+  scale: Double,
+) {
+  Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+  ) {
+    Text(
+      text = instruction.text,
+      modifier = Modifier
+    )
+
+    if (instruction.ingredients.isNotEmpty()) {
+      FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+          .fillMaxWidth()
+      ) {
+        instruction.ingredients.forEach { ingredient ->
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+              .width(IntrinsicSize.Max)
+              .height(IntrinsicSize.Max)
+              .clip(CircleShape)
+              .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = CircleShape)
+              .clickable { /*TODO: implement ingredient box click*/ },
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+              modifier = Modifier
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary),
+            ) {
+              val measurement = ingredient.measurement.scale(scale).normalize { it !is MeasurementUnit.FluidOunce }
+              val quantity = measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+
+              Text(
+                text = "$quantity ${measurement.unit.abbreviation}",
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(8.dp)
+              )
+            }
+
+            Text(
+              text = ingredient.name,
+              modifier = Modifier
+                .padding(end = 16.dp)
+            )
+          }
+        }
+      }
+    }
+  }
 }
 
 @Preview
@@ -278,10 +420,42 @@ fun RecipePagePreview() {
     Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
   )
 
+  val instructions = listOf(
+    Instruction(
+      text = "Cook pasta in a pot of salted boiling water until al dente",
+      ingredients = listOf(
+        Ingredient(
+          "Pasta",
+          IngredientType.Dry,
+          measurement = Measurement(8.0, MeasurementUnit.Ounce)
+        )
+      )
+    ),
+    Instruction(
+      text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes.",
+      ingredients = listOf(
+        Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+        Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+        Ingredient(
+          "Garlic",
+          IngredientType.Dry,
+          measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+        ),
+        Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+        Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
+        Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+      )
+    ),
+    Instruction(
+      text = "Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth. Add cooked pasta then stir to combine. Taste then adjust salt and pepper if necessary, and then serve.",
+      ingredients = emptyList()
+    ),
+  )
+
   val recipe = Recipe(
     name = "Creamy Garlic Pasta Shells",
     ingredients = ingredients,
-    instructions = emptyList(),
+    instructions = instructions,
     equipment = emptyList(),
     servings = 4,
     description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -341,5 +515,91 @@ fun IngredientComponentPreview() {
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     IngredientComponent(ingredient = ingredient, scale = 1.0)
+  }
+}
+
+@Preview
+@Composable
+fun InstructionsListEmptyPreview() {
+  val instructions = listOf(
+    Instruction("Cook pasta in a pot of salted boiling water until al dente"),
+    Instruction("Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes."),
+    Instruction("Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth. Add cooked pasta then stir to combine. Taste then adjust salt and pepper if necessary, and then serve."),
+  )
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      InstructionsList(instructions = emptyList(), scale = 1.0)
+    }
+  }
+}
+
+@Preview
+@Composable
+fun InstructionsListPreview() {
+  val instructions = listOf(
+    Instruction(
+      text = "Cook pasta in a pot of salted boiling water until al dente",
+      ingredients = listOf(
+        Ingredient(
+          "Pasta",
+          IngredientType.Dry,
+          measurement = Measurement(8.0, MeasurementUnit.Ounce)
+        )
+      )
+    ),
+    Instruction(
+      text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes.",
+      ingredients = listOf(
+        Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+        Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+        Ingredient(
+          "Garlic",
+          IngredientType.Dry,
+          measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+        ),
+        Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+        Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
+        Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+      )
+    ),
+    Instruction(
+      text = "Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth. Add cooked pasta then stir to combine. Taste then adjust salt and pepper if necessary, and then serve.",
+      ingredients = emptyList()
+    ),
+  )
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      InstructionsList(instructions = instructions, scale = 1.0)
+    }
+  }
+}
+
+@Preview
+@Composable
+fun InstructionComponentPreview() {
+  val instruction = Instruction(
+    text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4-5 minutes.",
+    ingredients = listOf(
+      Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient(
+        "Garlic",
+        IngredientType.Dry,
+        measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+      ),
+      Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
+      Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+    )
+  )
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      Box(modifier = Modifier.padding(16.dp)) {
+        InstructionComponent(instruction = instruction, scale = 1.0)
+      }
+    }
   }
 }
