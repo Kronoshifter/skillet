@@ -31,14 +31,10 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.fastForEachIndexed
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
-import com.kronos.skilletapp.utils.roundToEighth
-import com.kronos.skilletapp.utils.roundToSignificantFigures
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -261,8 +257,6 @@ fun IngredientComponent(
   ingredient: Ingredient,
   scale: Double,
 ) {
-  val sheetState = rememberModalBottomSheetState()
-  val scope = rememberCoroutineScope()
   var showBottomSheet by remember { mutableStateOf(false) }
 
   val measurements = MeasurementUnit.values
@@ -289,7 +283,9 @@ fun IngredientComponent(
         .clickable(enabled = measurements.isNotEmpty()) { showBottomSheet = true },
       contentAlignment = Alignment.Center
     ) {
-      val measurement = selectedUnit?.let { ingredient.measurement.scale(scale).convert(it) } ?: ingredient.measurement.scale(scale).normalize { it !is MeasurementUnit.FluidOunce }
+      val measurement = ingredient.measurement.scale(scale).run {
+        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+      }
       val quantity = when (measurement.unit.system) {
         MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
         else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
@@ -321,76 +317,95 @@ fun IngredientComponent(
     )
   }
 
+  val sheetState = rememberModalBottomSheetState()
+  val scope = rememberCoroutineScope()
+
   if (showBottomSheet) {
-    ModalBottomSheet(
-      sheetState = sheetState,
+    UnitSelectionBottomSheet(
       onDismissRequest = { showBottomSheet = false },
+      onUnitSelect = {
+        selectedUnit = it.takeIf { selectedUnit != it }
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+          if (!sheetState.isVisible) {
+            showBottomSheet = false
+          }
+        }
+      },
+      ingredient = ingredient,
+      measurements = measurements,
+      selectedUnit = selectedUnit,
+      sheetState = sheetState
+    )
+  }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun UnitSelectionBottomSheet(
+  onDismissRequest: () -> Unit,
+  onUnitSelect: (MeasurementUnit) -> Unit,
+  ingredient: Ingredient,
+  measurements: List<Measurement>,
+  selectedUnit: MeasurementUnit?,
+  sheetState: SheetState = rememberModalBottomSheetState(),
+) {
+  ModalBottomSheet(
+    sheetState = sheetState,
+    onDismissRequest = onDismissRequest,
+  ) {
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp)
     ) {
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+      Text(
+        text = ingredient.name,
+        style = MaterialTheme.typography.titleLarge,
+      )
+
+      LazyVerticalGrid(
+        columns = GridCells.Adaptive(48.dp),
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(8.dp)
       ) {
-        Text(
-          text = ingredient.name,
-          style = MaterialTheme.typography.titleLarge,
-        )
+        items(measurements) { measurement ->
+          val quantity = when (measurement.unit.system) {
+            MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
+            else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+          }
 
-        LazyVerticalGrid(
-          columns = GridCells.Adaptive(48.dp),
-          contentPadding = PaddingValues(8.dp),
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-          verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-          items(measurements) { measurement ->
-            val quantity = when (measurement.unit.system) {
-              MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
-              else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
-            }
+          // TODO: indicate selected measurement unit
 
-            // TODO: indicate selected measurement unit
+          Box(
+            modifier = Modifier
+              .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+              .clip(RoundedCornerShape(percent = 25))
+              .background(MaterialTheme.colorScheme.primary)
+              .clickable { onUnitSelect(measurement.unit) }
+          ) {
 
-            Box(
+            Column(
+              horizontalAlignment = Alignment.CenterHorizontally,
+              verticalArrangement = Arrangement.SpaceAround,
               modifier = Modifier
-                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                .clip(RoundedCornerShape(percent = 25))
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable {
-                  selectedUnit = if (selectedUnit != measurement.unit) {
-                    measurement.unit
-                  } else {
-                    null
-                  }
-                  scope.launch { sheetState.hide() }.invokeOnCompletion {
-                      if (!sheetState.isVisible) {
-                        showBottomSheet = false
-                      }
-                    }
-                },
+                .align(Alignment.Center)
+                .padding(4.dp)
             ) {
+              Text(
+                text = quantity,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontSize = 18.sp,
+                modifier = Modifier.offset(y = 4.dp)
+              )
 
-              Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceAround,
-                modifier = Modifier
-                  .align(Alignment.Center)
-                  .padding(4.dp)
-              ) {
-                Text(
-                  text = quantity,
-                  color = MaterialTheme.colorScheme.onPrimary,
-                  fontSize = 18.sp,
-                  modifier = Modifier.offset(y = 4.dp)
-                )
-
-                Text(
-                  text = measurement.unit.abbreviation,
-                  color = MaterialTheme.colorScheme.onPrimary,
-                  fontSize = 12.sp
-                )
-              }
+              Text(
+                text = measurement.unit.abbreviation,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontSize = 12.sp
+              )
             }
           }
         }
@@ -439,7 +454,7 @@ fun InstructionsList(
   }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun InstructionComponent(
   instruction: Instruction,
@@ -464,6 +479,15 @@ fun InstructionComponent(
           .fillMaxWidth()
       ) {
         instruction.ingredients.forEach { ingredient ->
+          var showBottomSheet by remember { mutableStateOf(false) }
+
+          val measurements = MeasurementUnit.values
+            .filter { it.type == ingredient.measurement.unit.type }
+            .map { ingredient.measurement.convert(it).scale(scale) }
+            .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+
+          var selectedUnit by remember { mutableStateOf<MeasurementUnit?>(null) }
+
           Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -472,7 +496,7 @@ fun InstructionComponent(
               .height(IntrinsicSize.Max)
               .clip(CircleShape)
               .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = CircleShape)
-              .clickable { /*TODO: implement ingredient box click*/ },
+              .clickable { showBottomSheet = true },
           ) {
             Row(
               verticalAlignment = Alignment.CenterVertically,
@@ -481,8 +505,14 @@ fun InstructionComponent(
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary),
             ) {
-              val measurement = ingredient.measurement.scale(scale).normalize { it !is MeasurementUnit.FluidOunce }
-              val quantity = measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+              val measurement = ingredient.measurement.scale(scale).run {
+                selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+              }
+
+              val quantity = when (measurement.unit.system) {
+                MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
+                else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+              }
 
               Text(
                 text = "$quantity ${measurement.unit.abbreviation}",
@@ -496,6 +526,27 @@ fun InstructionComponent(
               text = ingredient.name,
               modifier = Modifier
                 .padding(end = 16.dp)
+            )
+          }
+
+          val sheetState = rememberModalBottomSheetState()
+          val scope = rememberCoroutineScope()
+
+          if (showBottomSheet) {
+            UnitSelectionBottomSheet(
+              onDismissRequest = { showBottomSheet = false },
+              onUnitSelect = {
+                selectedUnit = it.takeIf { selectedUnit != it }
+                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                  if (!sheetState.isVisible) {
+                    showBottomSheet = false
+                  }
+                }
+              },
+              ingredient = ingredient,
+              measurements = measurements,
+              selectedUnit = selectedUnit,
+              sheetState = sheetState
             )
           }
         }
