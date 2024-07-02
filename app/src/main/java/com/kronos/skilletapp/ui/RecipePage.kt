@@ -34,11 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
+import com.kronos.skilletapp.ui.viewmodel.RecipePageViewModel
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import org.koin.androidx.compose.getViewModel
 
 object RecipePage {
   const val INGREDIENTS = 0
@@ -47,7 +49,9 @@ object RecipePage {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun RecipePage(recipe: Recipe) {
+fun RecipePage(
+  recipe: Recipe,
+) {
   var tab by remember { mutableIntStateOf(RecipePage.INGREDIENTS) }
   val pagerState = rememberPagerState { 2 }
 
@@ -257,6 +261,8 @@ fun IngredientComponent(
   ingredient: Ingredient,
   scale: Double,
 ) {
+  val vm = getViewModel<RecipePageViewModel>()
+
   var showBottomSheet by remember { mutableStateOf(false) }
 
   val measurements = MeasurementUnit.values
@@ -264,7 +270,7 @@ fun IngredientComponent(
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
-  var selectedUnit by remember { mutableStateOf<MeasurementUnit?>(null) }
+//  var selectedUnit by remember { mutableStateOf<MeasurementUnit?>(null) }
 
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -284,7 +290,7 @@ fun IngredientComponent(
       contentAlignment = Alignment.Center
     ) {
       val measurement = ingredient.measurement.scale(scale).run {
-        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+        vm.selectedUnits[ingredient]?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
       }
       val quantity = when (measurement.unit.system) {
         MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
@@ -324,7 +330,9 @@ fun IngredientComponent(
     UnitSelectionBottomSheet(
       onDismissRequest = { showBottomSheet = false },
       onUnitSelect = {
-        selectedUnit = it.takeIf { selectedUnit != it }
+//        selectedUnit = it.takeIf { selectedUnit != it }
+        vm.selectedUnits[ingredient] = it.takeIf { vm.selectedUnits[ingredient] != it }
+
         scope.launch { sheetState.hide() }.invokeOnCompletion {
           if (!sheetState.isVisible) {
             showBottomSheet = false
@@ -333,7 +341,7 @@ fun IngredientComponent(
       },
       ingredient = ingredient,
       measurements = measurements,
-      selectedUnit = selectedUnit,
+      selectedUnit = vm.selectedUnits[ingredient],
       sheetState = sheetState
     )
   }
@@ -349,6 +357,8 @@ private fun UnitSelectionBottomSheet(
   selectedUnit: MeasurementUnit?,
   sheetState: SheetState = rememberModalBottomSheetState(),
 ) {
+  val vm = getViewModel<RecipePageViewModel>()
+
   ModalBottomSheet(
     sheetState = sheetState,
     onDismissRequest = onDismissRequest,
@@ -479,6 +489,8 @@ fun InstructionComponent(
           .fillMaxWidth()
       ) {
         instruction.ingredients.forEach { ingredient ->
+          val vm = getViewModel<RecipePageViewModel>()
+
           var showBottomSheet by remember { mutableStateOf(false) }
 
           val measurements = MeasurementUnit.values
@@ -486,7 +498,7 @@ fun InstructionComponent(
             .map { ingredient.measurement.convert(it).scale(scale) }
             .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
-          var selectedUnit by remember { mutableStateOf<MeasurementUnit?>(null) }
+//          var selectedUnit by remember { mutableStateOf<MeasurementUnit?>(null) }
 
           Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -506,7 +518,7 @@ fun InstructionComponent(
                 .background(MaterialTheme.colorScheme.primary),
             ) {
               val measurement = ingredient.measurement.scale(scale).run {
-                selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+                vm.selectedUnits[ingredient]?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
               }
 
               val quantity = when (measurement.unit.system) {
@@ -536,7 +548,7 @@ fun InstructionComponent(
             UnitSelectionBottomSheet(
               onDismissRequest = { showBottomSheet = false },
               onUnitSelect = {
-                selectedUnit = it.takeIf { selectedUnit != it }
+                vm.selectedUnits[ingredient] = it.takeIf { vm.selectedUnits[ingredient] != it }
                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                   if (!sheetState.isVisible) {
                     showBottomSheet = false
@@ -545,7 +557,7 @@ fun InstructionComponent(
               },
               ingredient = ingredient,
               measurements = measurements,
-              selectedUnit = selectedUnit,
+              selectedUnit = vm.selectedUnits[ingredient],
               sheetState = sheetState
             )
           }
