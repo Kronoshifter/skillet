@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -36,6 +37,7 @@ import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipePageViewModel
 import com.kronos.skilletapp.utils.Fraction
+import com.kronos.skilletapp.utils.applyIf
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -228,10 +230,12 @@ fun ScalingControls(
   }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IngredientsList(
   ingredients: List<Ingredient>,
   scale: Double,
+  vm: RecipePageViewModel = getViewModel(),
 ) {
   if (ingredients.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -240,6 +244,8 @@ fun IngredientsList(
     return
   }
 
+  var showBottomSheet by remember { mutableStateOf(false) }
+
   LazyColumn(
     modifier = Modifier.fillMaxSize(),
     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
@@ -247,10 +253,41 @@ fun IngredientsList(
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     items(ingredients) { ingredient ->
+      val selectedUnit = vm.selectedUnits[ingredient]
+      val measurements = MeasurementUnit.values
+        .filter { it.type == ingredient.measurement.unit.type }
+        .map { ingredient.measurement.convert(it).scale(scale) }
+        .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+
       IngredientComponent(
         ingredient = ingredient,
-        scale = scale
+        scale = scale,
+        selectedUnit = selectedUnit,
+        enabled = measurements.isNotEmpty(),
+        onClick = { showBottomSheet = true },
       )
+
+      val sheetState = rememberModalBottomSheetState()
+      val scope = rememberCoroutineScope()
+
+      if (showBottomSheet) {
+        UnitSelectionBottomSheet(
+          onDismissRequest = { showBottomSheet = false },
+          onUnitSelect = {
+            vm.selectedUnits[ingredient] = it.takeIf { selectedUnit != it }
+
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+              if (!sheetState.isVisible) {
+                showBottomSheet = false
+              }
+            }
+          },
+          ingredient = ingredient,
+          measurements = measurements,
+          selectedUnit = selectedUnit,
+          sheetState = sheetState
+        )
+      }
     }
   }
 }
@@ -260,18 +297,10 @@ fun IngredientsList(
 fun IngredientComponent(
   ingredient: Ingredient,
   scale: Double,
+  selectedUnit: MeasurementUnit?,
+  enabled: Boolean,
+  onClick: () -> Unit,
 ) {
-  val vm = getViewModel<RecipePageViewModel>()
-
-  var showBottomSheet by remember { mutableStateOf(false) }
-
-  val measurements = MeasurementUnit.values
-    .filter { it.type == ingredient.measurement.unit.type }
-    .map { ingredient.measurement.convert(it).scale(scale) }
-    .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
-
-//  var selectedUnit by remember { mutableStateOf<MeasurementUnit?>(null) }
-
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -286,12 +315,10 @@ fun IngredientComponent(
         .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
         .clip(RoundedCornerShape(percent = 25))
         .background(MaterialTheme.colorScheme.primary)
-        .clickable(enabled = measurements.isNotEmpty()) { showBottomSheet = true },
+        .clickable(enabled = enabled, onClick = onClick),
       contentAlignment = Alignment.Center
     ) {
-      val measurement = ingredient.measurement.scale(scale).run {
-        vm.selectedUnits[ingredient]?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
-      }
+      val measurement = ingredient.measurement.scale(scale).run { selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce } }
       val quantity = when (measurement.unit.system) {
         MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
         else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
@@ -323,28 +350,7 @@ fun IngredientComponent(
     )
   }
 
-  val sheetState = rememberModalBottomSheetState()
-  val scope = rememberCoroutineScope()
 
-  if (showBottomSheet) {
-    UnitSelectionBottomSheet(
-      onDismissRequest = { showBottomSheet = false },
-      onUnitSelect = {
-//        selectedUnit = it.takeIf { selectedUnit != it }
-        vm.selectedUnits[ingredient] = it.takeIf { vm.selectedUnits[ingredient] != it }
-
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-          if (!sheetState.isVisible) {
-            showBottomSheet = false
-          }
-        }
-      },
-      ingredient = ingredient,
-      measurements = measurements,
-      selectedUnit = vm.selectedUnits[ingredient],
-      sheetState = sheetState
-    )
-  }
 }
 
 @Composable
@@ -357,8 +363,6 @@ private fun UnitSelectionBottomSheet(
   selectedUnit: MeasurementUnit?,
   sheetState: SheetState = rememberModalBottomSheetState(),
 ) {
-  val vm = getViewModel<RecipePageViewModel>()
-
   ModalBottomSheet(
     sheetState = sheetState,
     onDismissRequest = onDismissRequest,
@@ -394,6 +398,7 @@ private fun UnitSelectionBottomSheet(
               .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
               .clip(RoundedCornerShape(percent = 25))
               .background(MaterialTheme.colorScheme.primary)
+              .applyIf(selectedUnit == measurement.unit) { border(width = 2.dp, color = Color.Black, RoundedCornerShape(percent = 25)) }
               .clickable { onUnitSelect(measurement.unit) }
           ) {
 
@@ -469,6 +474,7 @@ fun InstructionsList(
 fun InstructionComponent(
   instruction: Instruction,
   scale: Double,
+  vm: RecipePageViewModel = getViewModel(),
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -489,16 +495,12 @@ fun InstructionComponent(
           .fillMaxWidth()
       ) {
         instruction.ingredients.forEach { ingredient ->
-          val vm = getViewModel<RecipePageViewModel>()
-
           var showBottomSheet by remember { mutableStateOf(false) }
 
           val measurements = MeasurementUnit.values
             .filter { it.type == ingredient.measurement.unit.type }
             .map { ingredient.measurement.convert(it).scale(scale) }
             .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
-
-//          var selectedUnit by remember { mutableStateOf<MeasurementUnit?>(null) }
 
           Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -646,10 +648,11 @@ fun RecipePagePreview() {
 @Composable
 fun IngredientsListEmptyPreview() {
   val ingredients = emptyList<Ingredient>()
+  val vm = RecipePageViewModel()
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      IngredientsList(ingredients = ingredients, scale = 1.0)
+      IngredientsList(ingredients = ingredients, scale = 1.0, vm = vm)
     }
   }
 }
@@ -657,6 +660,8 @@ fun IngredientsListEmptyPreview() {
 @Preview
 @Composable
 fun IngredientListPreview() {
+  val vm = RecipePageViewModel()
+
   val ingredients = listOf(
     Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
     Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
@@ -672,7 +677,7 @@ fun IngredientListPreview() {
   )
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    IngredientsList(ingredients = ingredients, scale = 1.0)
+    IngredientsList(ingredients = ingredients, scale = 1.0, vm = vm)
   }
 
 }
@@ -684,7 +689,12 @@ fun IngredientComponentPreview() {
     Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce))
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    IngredientComponent(ingredient = ingredient, scale = 1.0)
+    IngredientComponent(
+      ingredient = ingredient,
+      scale = 1.0, null,
+      enabled = false,
+      onClick = {}
+    )
   }
 }
 
