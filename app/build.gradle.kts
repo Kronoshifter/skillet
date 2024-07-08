@@ -58,7 +58,6 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
-
   implementation("androidx.core:core-ktx:1.13.1")
   implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
   implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
@@ -70,6 +69,8 @@ dependencies {
   implementation("androidx.compose.material3:material3-android:1.2.1")
   implementation("androidx.compose.material:material-icons-extended:1.6.8")
   implementation("io.insert-koin:koin-androidx-compose:3.4.0")
+  implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
+
   testImplementation("junit:junit:4.13.2")
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
   testImplementation("io.kotest:kotest-assertions-core:5.9.1")
