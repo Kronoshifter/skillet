@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -391,14 +392,18 @@ private fun UnitSelectionBottomSheet(
             else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
           }
 
-          // TODO: indicate selected measurement unit
-
           Box(
             modifier = Modifier
               .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
               .clip(RoundedCornerShape(percent = 25))
               .background(MaterialTheme.colorScheme.primary)
-              .applyIf(selectedUnit == measurement.unit) { border(width = 2.dp, color = Color.Black, RoundedCornerShape(percent = 25)) }
+              .applyIf(selectedUnit == measurement.unit) {
+                border(
+                  width = 2.dp,
+                  color = Color.Black,
+                  shape = RoundedCornerShape(percent = 25)
+                )
+              }
               .clickable { onUnitSelect(measurement.unit) }
           ) {
 
@@ -434,6 +439,7 @@ private fun UnitSelectionBottomSheet(
 fun InstructionsList(
   instructions: List<Instruction>,
   scale: Double,
+  vm: RecipePageViewModel = getViewModel(),
 ) {
   if (instructions.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -459,7 +465,8 @@ fun InstructionsList(
 
       InstructionComponent(
         instruction = instruction,
-        scale = scale
+        scale = scale,
+        selectedUnits = vm.selectedUnits
       )
 
       if (instruction != instructions.last()) {
@@ -474,7 +481,8 @@ fun InstructionsList(
 fun InstructionComponent(
   instruction: Instruction,
   scale: Double,
-  vm: RecipePageViewModel = getViewModel(),
+  selectedUnits: SnapshotStateMap<Ingredient, MeasurementUnit?>,
+//  vm: RecipePageViewModel = getViewModel(),
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -520,7 +528,7 @@ fun InstructionComponent(
                 .background(MaterialTheme.colorScheme.primary),
             ) {
               val measurement = ingredient.measurement.scale(scale).run {
-                vm.selectedUnits[ingredient]?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+                selectedUnits[ingredient]?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
               }
 
               val quantity = when (measurement.unit.system) {
@@ -550,7 +558,7 @@ fun InstructionComponent(
             UnitSelectionBottomSheet(
               onDismissRequest = { showBottomSheet = false },
               onUnitSelect = {
-                vm.selectedUnits[ingredient] = it.takeIf { vm.selectedUnits[ingredient] != it }
+                selectedUnits[ingredient] = it.takeIf { selectedUnits[ingredient] != it }
                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                   if (!sheetState.isVisible) {
                     showBottomSheet = false
@@ -559,7 +567,7 @@ fun InstructionComponent(
               },
               ingredient = ingredient,
               measurements = measurements,
-              selectedUnit = vm.selectedUnits[ingredient],
+              selectedUnit = selectedUnits[ingredient],
               sheetState = sheetState
             )
           }
@@ -701,6 +709,8 @@ fun IngredientComponentPreview() {
 @Preview
 @Composable
 fun InstructionsListEmptyPreview() {
+  val vm = RecipePageViewModel()
+
   val instructions = listOf(
     Instruction("Cook pasta in a pot of salted boiling water until al dente"),
     Instruction("Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes."),
@@ -709,7 +719,7 @@ fun InstructionsListEmptyPreview() {
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsList(instructions = emptyList(), scale = 1.0)
+      InstructionsList(instructions = emptyList(), scale = 1.0, vm = vm)
     }
   }
 }
@@ -717,6 +727,8 @@ fun InstructionsListEmptyPreview() {
 @Preview
 @Composable
 fun InstructionsListPreview() {
+  val vm = RecipePageViewModel()
+
   val instructions = listOf(
     Instruction(
       text = "Cook pasta in a pot of salted boiling water until al dente",
@@ -725,7 +737,8 @@ fun InstructionsListPreview() {
           "Pasta",
           IngredientType.Dry,
           measurement = Measurement(8.0, MeasurementUnit.Ounce)
-        )
+        ),
+        Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
       )
     ),
     Instruction(
@@ -751,7 +764,7 @@ fun InstructionsListPreview() {
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsList(instructions = instructions, scale = 1.0)
+      InstructionsList(instructions = instructions, scale = 1.0, vm = vm)
     }
   }
 }
@@ -759,6 +772,8 @@ fun InstructionsListPreview() {
 @Preview
 @Composable
 fun InstructionComponentPreview() {
+  val vm = RecipePageViewModel()
+
   val instruction = Instruction(
     text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4-5 minutes.",
     ingredients = listOf(
@@ -778,7 +793,7 @@ fun InstructionComponentPreview() {
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       Box(modifier = Modifier.padding(16.dp)) {
-        InstructionComponent(instruction = instruction, scale = 1.0)
+        InstructionComponent(instruction = instruction, scale = 1.0, selectedUnits = vm.selectedUnits)
       }
     }
   }
