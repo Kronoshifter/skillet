@@ -245,8 +245,6 @@ fun IngredientsList(
     return
   }
 
-  var showBottomSheet by remember { mutableStateOf(false) }
-
   LazyColumn(
     modifier = Modifier.fillMaxSize(),
     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
@@ -259,6 +257,8 @@ fun IngredientsList(
         .filter { it.type == ingredient.measurement.unit.type }
         .map { ingredient.measurement.convert(it).scale(scale) }
         .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+
+      var showBottomSheet by remember { mutableStateOf(false) }
 
       IngredientComponent(
         ingredient = ingredient,
