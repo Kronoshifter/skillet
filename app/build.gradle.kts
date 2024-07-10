@@ -68,6 +68,7 @@ dependencies {
   implementation("androidx.compose.ui:ui-tooling-preview")
   implementation("androidx.compose.material3:material3-android:1.2.1")
   implementation("androidx.compose.material:material-icons-extended:1.6.8")
+  implementation("androidx.navigation:navigation-compose")
   implementation("io.insert-koin:koin-androidx-compose:3.4.0")
   implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
 

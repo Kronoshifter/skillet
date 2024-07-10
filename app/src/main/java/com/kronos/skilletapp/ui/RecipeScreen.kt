@@ -24,7 +24,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -44,87 +43,98 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import org.koin.androidx.compose.getViewModel
 
-object RecipePage {
+private object RecipeContentTab {
   const val INGREDIENTS = 0
   const val INSTRUCTIONS = 1
 }
 
+@Composable
+fun RecipeScreen(recipe: Recipe) {
+  SkilletAppTheme {
+    Scaffold { paddingValues ->
+      RecipeContent(
+        recipe = recipe,
+        modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues)
+      )
+    }
+  }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun RecipePage(
+fun RecipeContent(
   recipe: Recipe,
+  modifier: Modifier = Modifier
 ) {
-  var tab by remember { mutableIntStateOf(RecipePage.INGREDIENTS) }
+  var tab by remember { mutableIntStateOf(RecipeContentTab.INGREDIENTS) }
   val pagerState = rememberPagerState { 2 }
 
-  SkilletAppTheme {
-    Surface(
-      modifier = Modifier.fillMaxSize(),
-      color = MaterialTheme.colorScheme.background
-    ) {
-      Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-          text = recipe.name,
-          style = MaterialTheme.typography.headlineLarge,
+  Surface(
+    modifier = Modifier.fillMaxSize().then(modifier),
+    color = MaterialTheme.colorScheme.background
+  ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+      Text(
+        text = recipe.name,
+        style = MaterialTheme.typography.headlineLarge,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(16.dp)
+      )
+
+      var scale by remember { mutableDoubleStateOf(1.0) }
+      var servings by remember { mutableIntStateOf(recipe.servings) }
+
+      ScalingControls(
+        scale = scale,
+        servings = servings,
+        baseServings = recipe.servings,
+        onScalingChanged = { newScale, newServings ->
+          scale = newScale
+          servings = newServings
+        },
+      )
+
+      HorizontalDivider(modifier = Modifier.fillMaxWidth())
+
+      PrimaryTabRow(
+        selectedTabIndex = tab,
+        modifier = Modifier.fillMaxWidth()
+      ) {
+        Tab(
+          selected = tab == RecipeContentTab.INGREDIENTS,
+          onClick = { tab = RecipeContentTab.INGREDIENTS },
+          text = { Text(text = "Ingredients") },
           modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
         )
 
-        var scale by remember { mutableDoubleStateOf(1.0) }
-        var servings by remember { mutableIntStateOf(recipe.servings) }
-
-        ScalingControls(
-          scale = scale,
-          servings = servings,
-          baseServings = recipe.servings,
-          onScalingChanged = { newScale, newServings ->
-            scale = newScale
-            servings = newServings
-          },
+        Tab(
+          selected = tab == RecipeContentTab.INSTRUCTIONS,
+          onClick = { tab = RecipeContentTab.INSTRUCTIONS },
+          text = { Text(text = "Instructions") },
+          modifier = Modifier
         )
+      }
 
-        HorizontalDivider(modifier = Modifier.fillMaxWidth())
+      LaunchedEffect(tab) {
+        pagerState.animateScrollToPage(tab)
+      }
 
-        PrimaryTabRow(
-          selectedTabIndex = tab,
-          modifier = Modifier.fillMaxWidth()
+      LaunchedEffect(pagerState.targetPage) {
+        tab = pagerState.targetPage
+      }
+
+      HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxWidth()
+      ) { page ->
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.Center
         ) {
-          Tab(
-            selected = tab == RecipePage.INGREDIENTS,
-            onClick = { tab = RecipePage.INGREDIENTS },
-            text = { Text(text = "Ingredients") },
-            modifier = Modifier
-          )
-
-          Tab(
-            selected = tab == RecipePage.INSTRUCTIONS,
-            onClick = { tab = RecipePage.INSTRUCTIONS },
-            text = { Text(text = "Instructions") },
-            modifier = Modifier
-          )
-        }
-
-        LaunchedEffect(tab) {
-          pagerState.animateScrollToPage(tab)
-        }
-
-        LaunchedEffect(pagerState.targetPage) {
-          tab = pagerState.targetPage
-        }
-
-        HorizontalPager(
-          state = pagerState,
-          modifier = Modifier.fillMaxWidth()
-        ) { page ->
-          Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-          ) {
-            when (page) {
-              RecipePage.INGREDIENTS -> IngredientsList(recipe.ingredients, scale)
-              RecipePage.INSTRUCTIONS -> InstructionsList(recipe.instructions, scale)
-            }
+          when (page) {
+            RecipeContentTab.INGREDIENTS -> IngredientsList(recipe.ingredients, scale)
+            RecipeContentTab.INSTRUCTIONS -> InstructionsList(recipe.instructions, scale)
           }
         }
       }
@@ -315,7 +325,8 @@ fun IngredientComponent(
         .clickable(enabled = enabled, onClick = onClick),
       contentAlignment = Alignment.Center
     ) {
-      val measurement = ingredient.measurement.scale(scale).run { selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce } }
+      val measurement = ingredient.measurement.scale(scale)
+        .run { selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce } }
       val quantity = when (measurement.unit.system) {
         MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
         else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
@@ -507,7 +518,8 @@ fun InstructionComponent(
 
           val selectedUnit = selectedUnits[ingredient]
 
-          val borderColor = selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
+          val borderColor =
+            selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
 
           Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -646,7 +658,7 @@ fun RecipePagePreview() {
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      RecipePage(recipe)
+      RecipeContent(recipe)
     }
   }
 }
