@@ -40,7 +40,6 @@ import com.kronos.skilletapp.ui.viewmodel.RecipePageViewModel
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.applyIf
 import com.kronos.skilletapp.utils.toFraction
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import org.koin.androidx.compose.getViewModel
@@ -155,8 +154,6 @@ fun ScalingControls(
     Row(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = Modifier
-//        .weight(1f)
     ) {
       OutlinedIconButton(
         onClick = {
@@ -165,7 +162,6 @@ fun ScalingControls(
           onScalingChanged(newScale, newServings)
         },
         enabled = servings > 1,
-//        modifier = Modifier.weight(1f)
       ) {
         Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
       }
@@ -185,7 +181,6 @@ fun ScalingControls(
         textAlign = TextAlign.Center,
         modifier = Modifier
           .width(textWidth)
-//          .padding(horizontal = 8.dp)
       )
 
       OutlinedIconButton(
@@ -293,7 +288,6 @@ fun IngredientsList(
   }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IngredientComponent(
   ingredient: Ingredient,
@@ -309,13 +303,15 @@ fun IngredientComponent(
       .fillMaxWidth()
       .height(IntrinsicSize.Min),
   ) {
-    // TODO: indicate that unit is forced
 
     Box(
       modifier = Modifier
         .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
         .clip(RoundedCornerShape(percent = 25))
         .background(MaterialTheme.colorScheme.primary)
+        .applyIf(selectedUnit != null) {
+          border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, RoundedCornerShape(percent = 25))
+        }
         .clickable(enabled = enabled, onClick = onClick),
       contentAlignment = Alignment.Center
     ) {
@@ -400,7 +396,7 @@ private fun UnitSelectionBottomSheet(
               .applyIf(selectedUnit == measurement.unit) {
                 border(
                   width = 2.dp,
-                  color = Color.Black,
+                  color = MaterialTheme.colorScheme.onPrimaryContainer,
                   shape = RoundedCornerShape(percent = 25)
                 )
               }
@@ -482,7 +478,6 @@ fun InstructionComponent(
   instruction: Instruction,
   scale: Double,
   selectedUnits: SnapshotStateMap<Ingredient, MeasurementUnit?>,
-//  vm: RecipePageViewModel = getViewModel(),
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -510,6 +505,10 @@ fun InstructionComponent(
             .map { ingredient.measurement.convert(it).scale(scale) }
             .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
+          val selectedUnit = selectedUnits[ingredient]
+
+          val borderColor = selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
+
           Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -517,8 +516,8 @@ fun InstructionComponent(
               .width(IntrinsicSize.Max)
               .height(IntrinsicSize.Max)
               .clip(CircleShape)
-              .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = CircleShape)
-              .clickable { showBottomSheet = true },
+              .border(width = 2.dp, color = borderColor, shape = CircleShape)
+              .clickable(enabled = measurements.isNotEmpty()) { showBottomSheet = true },
           ) {
             Row(
               verticalAlignment = Alignment.CenterVertically,
@@ -528,7 +527,7 @@ fun InstructionComponent(
                 .background(MaterialTheme.colorScheme.primary),
             ) {
               val measurement = ingredient.measurement.scale(scale).run {
-                selectedUnits[ingredient]?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+                selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
               }
 
               val quantity = when (measurement.unit.system) {
@@ -558,7 +557,7 @@ fun InstructionComponent(
             UnitSelectionBottomSheet(
               onDismissRequest = { showBottomSheet = false },
               onUnitSelect = {
-                selectedUnits[ingredient] = it.takeIf { selectedUnits[ingredient] != it }
+                selectedUnits[ingredient] = it.takeIf { selectedUnit != it }
                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                   if (!sheetState.isVisible) {
                     showBottomSheet = false
@@ -567,7 +566,7 @@ fun InstructionComponent(
               },
               ingredient = ingredient,
               measurements = measurements,
-              selectedUnit = selectedUnits[ingredient],
+              selectedUnit = selectedUnit,
               sheetState = sheetState
             )
           }
@@ -579,7 +578,7 @@ fun InstructionComponent(
 
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
-// PREVIEWS
+//////////////////// PREVIEWS ///////////////////////
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
