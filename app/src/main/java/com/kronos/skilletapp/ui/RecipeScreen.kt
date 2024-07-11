@@ -49,14 +49,18 @@ private object RecipeContentTab {
 }
 
 @Composable
-fun RecipeScreen(recipe: Recipe) {
-  SkilletAppTheme {
-    Scaffold { paddingValues ->
-      RecipeContent(
-        recipe = recipe,
-        modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues)
-      )
-    }
+fun RecipeScreen(
+  id: String,
+  vm: RecipePageViewModel = getViewModel(),
+) {
+  val recipe = vm.fetchRecipe(id)
+  Scaffold { paddingValues ->
+    RecipeContent(
+      recipe = recipe,
+      modifier = Modifier
+        .padding(paddingValues)
+        .consumeWindowInsets(paddingValues)
+    )
   }
 }
 
@@ -64,13 +68,15 @@ fun RecipeScreen(recipe: Recipe) {
 @Composable
 fun RecipeContent(
   recipe: Recipe,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   var tab by remember { mutableIntStateOf(RecipeContentTab.INGREDIENTS) }
   val pagerState = rememberPagerState { 2 }
 
   Surface(
-    modifier = Modifier.fillMaxSize().then(modifier),
+    modifier = Modifier
+      .fillMaxSize()
+      .then(modifier),
     color = MaterialTheme.colorScheme.background
   ) {
     Column(modifier = Modifier.fillMaxSize()) {

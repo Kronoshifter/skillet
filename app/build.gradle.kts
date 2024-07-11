@@ -58,6 +58,8 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
+  val nav_version = "2.8.0-beta05"
+
   implementation("androidx.core:core-ktx:1.13.1")
   implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
   implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
@@ -68,7 +70,8 @@ dependencies {
   implementation("androidx.compose.ui:ui-tooling-preview")
   implementation("androidx.compose.material3:material3-android:1.2.1")
   implementation("androidx.compose.material:material-icons-extended:1.6.8")
-  implementation("androidx.navigation:navigation-compose")
+  implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
+  implementation("androidx.navigation:navigation-compose:$nav_version")
   implementation("io.insert-koin:koin-androidx-compose:3.4.0")
   implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
 
@@ -78,7 +81,7 @@ dependencies {
   testImplementation("io.kotest:kotest-property:5.9.1")
   androidTestImplementation("androidx.test.ext:junit:1.1.5")
   androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-  androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
+  androidTestImplementation(platform("androidx.compose:compose-bom:2024.06.00"))
   androidTestImplementation("androidx.compose.ui:ui-test-junit4")
   debugImplementation("androidx.compose.ui:ui-tooling")
   debugImplementation("androidx.compose.ui:ui-test-manifest")
