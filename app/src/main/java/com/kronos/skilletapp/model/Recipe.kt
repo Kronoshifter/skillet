@@ -1,6 +1,7 @@
 package com.kronos.skilletapp.model
 
 data class Recipe(
+  val id: String,
   val name: String,
   val description: String,
   val cover: String? = null, // cover photo

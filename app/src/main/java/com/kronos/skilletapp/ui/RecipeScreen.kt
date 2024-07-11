@@ -263,7 +263,7 @@ fun IngredientsList(
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     items(ingredients) { ingredient ->
-      val selectedUnit = vm.selectedUnits[ingredient]
+      val selectedUnit = vm.getSelectedUnit(ingredient)
       val measurements = MeasurementUnit.values
         .filter { it.type == ingredient.measurement.unit.type }
         .map { ingredient.measurement.convert(it).scale(scale) }
@@ -286,7 +286,7 @@ fun IngredientsList(
         UnitSelectionBottomSheet(
           onDismissRequest = { showBottomSheet = false },
           onUnitSelect = {
-            vm.selectedUnits[ingredient] = it.takeIf { selectedUnit != it }
+            vm.selectUnit(ingredient, it.takeIf { selectedUnit != it })
 
             scope.launch { sheetState.hide() }.invokeOnCompletion {
               if (!sheetState.isVisible) {
@@ -479,7 +479,6 @@ fun InstructionsList(
       InstructionComponent(
         instruction = instruction,
         scale = scale,
-        selectedUnits = vm.selectedUnits
       )
 
       if (instruction != instructions.last()) {
@@ -494,7 +493,7 @@ fun InstructionsList(
 fun InstructionComponent(
   instruction: Instruction,
   scale: Double,
-  selectedUnits: SnapshotStateMap<Ingredient, MeasurementUnit?>,
+  vm: RecipePageViewModel = getViewModel(),
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -522,7 +521,7 @@ fun InstructionComponent(
             .map { ingredient.measurement.convert(it).scale(scale) }
             .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
-          val selectedUnit = selectedUnits[ingredient]
+          val selectedUnit = vm.getSelectedUnit(ingredient)
 
           val borderColor =
             selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
@@ -575,7 +574,7 @@ fun InstructionComponent(
             UnitSelectionBottomSheet(
               onDismissRequest = { showBottomSheet = false },
               onUnitSelect = {
-                selectedUnits[ingredient] = it.takeIf { selectedUnit != it }
+                vm.selectUnit(ingredient, it.takeIf { selectedUnit != it })
                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                   if (!sheetState.isVisible) {
                     showBottomSheet = false
@@ -603,64 +602,8 @@ fun InstructionComponent(
 @Preview
 @Composable
 fun RecipePagePreview() {
-  val ingredients = listOf(
-    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-    Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-    Ingredient(
-      "Garlic",
-      IngredientType.Dry,
-      measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-    ),
-    Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-    Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-  )
-
-  val instructions = listOf(
-    Instruction(
-      text = "Cook pasta in a pot of salted boiling water until al dente",
-      ingredients = listOf(
-        Ingredient(
-          "Pasta",
-          IngredientType.Dry,
-          measurement = Measurement(8.0, MeasurementUnit.Ounce)
-        )
-      )
-    ),
-    Instruction(
-      text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes.",
-      ingredients = listOf(
-        Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-        Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-        Ingredient(
-          "Garlic",
-          IngredientType.Dry,
-          measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-        ),
-        Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-        Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-        Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-      )
-    ),
-    Instruction(
-      text = "Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth. Add cooked pasta then stir to combine. Taste then adjust salt and pepper if necessary, and then serve.",
-      ingredients = emptyList()
-    ),
-  )
-
-  val recipe = Recipe(
-    name = "Creamy Garlic Pasta Shells",
-    ingredients = ingredients,
-    instructions = instructions,
-    equipment = emptyList(),
-    servings = 4,
-    description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    time = RecipeTime(15, 15),
-    source = RecipeSource("My Brain", "My Brain"),
-    notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-  )
-
+  val vm = RecipePageViewModel()
+  val recipe = vm.fetchRecipe("test")
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -810,7 +753,7 @@ fun InstructionComponentPreview() {
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       Box(modifier = Modifier.padding(16.dp)) {
-        InstructionComponent(instruction = instruction, scale = 1.0, selectedUnits = vm.selectedUnits)
+        InstructionComponent(instruction = instruction, scale = 1.0, vm = vm)
       }
     }
   }

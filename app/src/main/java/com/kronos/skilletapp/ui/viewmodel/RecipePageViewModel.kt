@@ -8,7 +8,15 @@ import androidx.lifecycle.ViewModel
 import com.kronos.skilletapp.model.*
 
 class RecipePageViewModel : ViewModel() {
-  val selectedUnits = mutableStateMapOf<Ingredient, MeasurementUnit?>()
+  private val selectedUnits = mutableStateMapOf<Ingredient, MeasurementUnit?>()
+
+  fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
+    selectedUnits[ingredient] = unit
+  }
+
+  fun getSelectedUnit(ingredient: Ingredient): MeasurementUnit? {
+    return selectedUnits[ingredient]
+  }
 
   fun fetchRecipe(id: String): Recipe {
     val ingredients = listOf(
@@ -54,6 +62,7 @@ class RecipePageViewModel : ViewModel() {
     )
 
     val recipe = Recipe(
+      id = id,
       name = "Creamy Garlic Pasta Shells",
       ingredients = ingredients,
       instructions = instructions,
