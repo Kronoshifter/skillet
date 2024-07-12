@@ -4,20 +4,20 @@ import androidx.navigation.NavHostController
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class Routes {
-  @Serializable data object RecipeList : Routes()
-  @Serializable data class Recipe(val recipeId: String) : Routes()
-  @Serializable data class AddEditRecipe(val recipeId: String?) : Routes()
+sealed class Route {
+  @Serializable data object RecipeList : Route()
+  @Serializable data class Recipe(val recipeId: String) : Route()
+  @Serializable data class AddEditRecipe(val recipeId: String?) : Route()
 }
 
 class SkilletNavigationActions(private val navController: NavHostController) {
 
   fun navigateToRecipe(recipeId: String) {
-    navController.navigate(Routes.Recipe(recipeId))
+    navController.navigate(Route.Recipe(recipeId))
   }
 
   fun navigateToAddEditRecipe(recipeId: String?) {
-    navController.navigate(Routes.AddEditRecipe(recipeId)) {
+    navController.navigate(Route.AddEditRecipe(recipeId)) {
       popUpTo(navController.graph.startDestinationId) {
         inclusive = true
         saveState = true

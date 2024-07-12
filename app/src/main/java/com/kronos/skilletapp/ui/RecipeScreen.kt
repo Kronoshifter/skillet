@@ -16,7 +16,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -48,13 +51,31 @@ private object RecipeContentTab {
   const val INSTRUCTIONS = 1
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeScreen(
   id: String,
+  onBack: () -> Unit,
   vm: RecipePageViewModel = getViewModel(),
 ) {
   val recipe = vm.fetchRecipe(id)
-  Scaffold { paddingValues ->
+  Scaffold(
+    topBar = {
+      TopAppBar(
+        title = { /*Intentionally left empty*/ },
+        navigationIcon = {
+          IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+          }
+        },
+        actions = {
+          IconButton(onClick = { /*TODO*/ }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = "Add to favorites")
+          }
+        }
+      )
+    }
+  ) { paddingValues ->
     RecipeContent(
       recipe = recipe,
       modifier = Modifier

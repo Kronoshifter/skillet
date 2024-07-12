@@ -15,19 +15,24 @@ import com.kronos.skilletapp.ui.RecipeScreen
 fun SkilletNavGraph(
   modifier: Modifier = Modifier,
   navController: NavHostController = rememberNavController(),
-  startDestination: Routes = Routes.RecipeList,
+  startDestination: Route = Route.RecipeList,
   navActions: SkilletNavigationActions = remember(navController) { SkilletNavigationActions(navController) },
 ) {
   NavHost(navController = navController, startDestination = startDestination) {
-    composable<Routes.RecipeList> {
-      RecipeListScreen()
+    composable<Route.RecipeList> {
+      RecipeListScreen(
+        onRecipeClick = { navActions.navigateToRecipe("test") }
+      )
     }
-    composable<Routes.Recipe> { backStackEntry ->
-      val route = backStackEntry.toRoute<Routes.Recipe>()
-      RecipeScreen(id = route.recipeId)
+    composable<Route.Recipe> { backStackEntry ->
+      val route = backStackEntry.toRoute<Route.Recipe>()
+      RecipeScreen(
+        id = route.recipeId,
+        onBack = { navController.popBackStack() }
+      )
     }
-    composable<Routes.AddEditRecipe> { backStackEntry ->
-      val recipeId = backStackEntry.toRoute<Routes.AddEditRecipe>().recipeId
+    composable<Route.AddEditRecipe> { backStackEntry ->
+      val recipeId = backStackEntry.toRoute<Route.AddEditRecipe>().recipeId
 //      AddEditRecipeScreen(recipeId = recipeId)
     }
   }
