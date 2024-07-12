@@ -1,5 +1,7 @@
 package com.kronos.skilletapp
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -18,13 +20,26 @@ fun SkilletNavGraph(
   startDestination: Route = Route.RecipeList,
   navActions: SkilletNavigationActions = remember(navController) { SkilletNavigationActions(navController) },
 ) {
-  NavHost(navController = navController, startDestination = startDestination) {
+  NavHost(
+    navController = navController,
+    startDestination = startDestination,
+    popExitTransition = {
+      slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) + fadeOut()
+    },
+  ) {
     composable<Route.RecipeList> {
       RecipeListScreen(
         onRecipeClick = { navActions.navigateToRecipe("test") }
       )
     }
-    composable<Route.Recipe> { backStackEntry ->
+    composable<Route.Recipe>(
+      enterTransition = {
+        scaleIn() + fadeIn()
+      },
+      exitTransition = {
+        scaleOut() + fadeOut()
+      }
+    ) { backStackEntry ->
       val route = backStackEntry.toRoute<Route.Recipe>()
       RecipeScreen(
         id = route.recipeId,
