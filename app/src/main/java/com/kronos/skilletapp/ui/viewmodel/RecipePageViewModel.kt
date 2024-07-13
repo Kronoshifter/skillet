@@ -1,14 +1,30 @@
 package com.kronos.skilletapp.ui.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.github.michaelbull.result.*
+import com.kronos.skilletapp.data.RecipeRepository
+import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.model.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class RecipePageViewModel : ViewModel() {
+class RecipePageViewModel(
+  private val recipeRepository: RecipeRepository
+) : ViewModel() {
   private val selectedUnits = mutableStateMapOf<Ingredient, MeasurementUnit?>()
+
+  private var _recipe = MutableStateFlow<Result<Recipe, SkilletError>>(Err(SkilletError("No recipe found")))
+  val recipe: StateFlow<Result<Recipe, SkilletError>> = _recipe.asStateFlow()
+
+  var loading: Boolean by mutableStateOf(true)
+    private set
+
+  lateinit var recipeId: String
 
   fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
     selectedUnits[ingredient] = unit
@@ -18,62 +34,17 @@ class RecipePageViewModel : ViewModel() {
     return selectedUnits[ingredient]
   }
 
-  fun fetchRecipe(id: String): Recipe {
-    val ingredients = listOf(
-      Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-      Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient(
-        "Garlic",
-        IngredientType.Dry,
-        measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-      ),
-      Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-    )
+  fun fetchRecipe(id: String) {
+    loading = true
+    viewModelScope.launch {
+      val result = async { recipeRepository.fetchRecipe(id) }
+      _recipe.value = result.await()
+      recipeId = id
+      loading = false
+    }
+  }
 
-    val instructions = listOf(
-      Instruction(
-        text = "Cook pasta in a pot of salted boiling water until al dente",
-        ingredients = listOf(
-          Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-        )
-      ),
-      Instruction(
-        text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes.",
-        ingredients = listOf(
-          Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-          Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-          Ingredient(
-            "Garlic",
-            IngredientType.Dry,
-            measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-          ),
-          Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-          Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-          Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-        )
-      ),
-      Instruction(
-        text = "Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth. Add cooked pasta then stir to combine. Taste then adjust salt and pepper if necessary, and then serve.",
-        ingredients = emptyList()
-      ),
-    )
-
-    val recipe = Recipe(
-      id = id,
-      name = "Creamy Garlic Pasta Shells",
-      ingredients = ingredients,
-      instructions = instructions,
-      equipment = emptyList(),
-      servings = 4,
-      description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      time = RecipeTime(15, 15),
-      source = RecipeSource("My Brain", "My Brain"),
-      notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-    )
-
-    return recipe
+  fun refresh() {
+    fetchRecipe(recipeId)
   }
 }

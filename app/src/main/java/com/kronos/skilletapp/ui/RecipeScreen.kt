@@ -18,12 +18,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +34,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.github.michaelbull.result.*
+import com.kronos.skilletapp.data.RecipeRepository
+import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipePageViewModel
@@ -58,7 +60,9 @@ fun RecipeScreen(
   onBack: () -> Unit,
   vm: RecipePageViewModel = getViewModel(),
 ) {
-  val recipe = vm.fetchRecipe(id)
+  vm.fetchRecipe(id)
+  val recipeState by vm.recipe.collectAsStateWithLifecycle()
+
   Scaffold(
     topBar = {
       TopAppBar(
@@ -76,12 +80,18 @@ fun RecipeScreen(
       )
     }
   ) { paddingValues ->
-    RecipeContent(
-      recipe = recipe,
-      modifier = Modifier
-        .padding(paddingValues)
-        .consumeWindowInsets(paddingValues)
-    )
+    recipeState.onSuccess { recipe ->
+      RecipeContent(
+        recipe = recipe,
+        modifier = Modifier
+          .padding(paddingValues)
+          .fillMaxSize()
+      )
+    }.onFailure { error ->
+      Box(modifier = Modifier.padding(paddingValues).fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text = error.message)
+      }
+    }
   }
 }
 
@@ -100,6 +110,7 @@ fun RecipeContent(
       .then(modifier),
     color = MaterialTheme.colorScheme.background
   ) {
+
     Column(modifier = Modifier.fillMaxSize()) {
       Text(
         text = recipe.name,
@@ -623,12 +634,16 @@ fun InstructionComponent(
 @Preview
 @Composable
 fun RecipePagePreview() {
-  val vm = RecipePageViewModel()
-  val recipe = vm.fetchRecipe("test")
+  val vm = RecipePageViewModel(RecipeRepository())
+  vm.fetchRecipe("test")
+
+  val recipe by vm.recipe.collectAsState()
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      RecipeContent(recipe)
+      RecipeContent(
+        recipe = recipe.unwrap(),
+      )
     }
   }
 }
@@ -637,7 +652,7 @@ fun RecipePagePreview() {
 @Composable
 fun IngredientsListEmptyPreview() {
   val ingredients = emptyList<Ingredient>()
-  val vm = RecipePageViewModel()
+  val vm = RecipePageViewModel(RecipeRepository())
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -649,7 +664,7 @@ fun IngredientsListEmptyPreview() {
 @Preview
 @Composable
 fun IngredientListPreview() {
-  val vm = RecipePageViewModel()
+  val vm = RecipePageViewModel(RecipeRepository())
 
   val ingredients = listOf(
     Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
@@ -690,7 +705,7 @@ fun IngredientComponentPreview() {
 @Preview
 @Composable
 fun InstructionsListEmptyPreview() {
-  val vm = RecipePageViewModel()
+  val vm = RecipePageViewModel(RecipeRepository())
 
   val instructions = listOf(
     Instruction("Cook pasta in a pot of salted boiling water until al dente"),
@@ -708,7 +723,7 @@ fun InstructionsListEmptyPreview() {
 @Preview
 @Composable
 fun InstructionsListPreview() {
-  val vm = RecipePageViewModel()
+  val vm = RecipePageViewModel(RecipeRepository())
 
   val instructions = listOf(
     Instruction(
@@ -753,7 +768,7 @@ fun InstructionsListPreview() {
 @Preview
 @Composable
 fun InstructionComponentPreview() {
-  val vm = RecipePageViewModel()
+  val vm = RecipePageViewModel(RecipeRepository())
 
   val instruction = Instruction(
     text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4-5 minutes.",
