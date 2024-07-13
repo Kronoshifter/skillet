@@ -4,15 +4,26 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.toResultOr
 import com.kronos.skilletapp.model.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flow
+import org.koin.core.KoinApplication.Companion.init
 import kotlin.time.Duration.Companion.seconds
 
 class RecipeRepository {
   private val recipes = mutableMapOf<String, Recipe>()
 
-  suspend fun fetchRecipe(id: String): Result<Recipe, SkilletError> = withContext(Dispatchers.IO) {
+  suspend fun fetchRecipe(id: String): Result<Recipe, SkilletError> {
     delay(1.seconds)
-    return@withContext recipes[id].toResultOr { SkilletError("No recipe with id: $id") }
+    return recipes[id].toResultOr { SkilletError("No recipe with id: $id") }
   }
+
+  suspend fun fetchRecipes(): List<Recipe> {
+    delay(1.seconds)
+    return recipes.values.toList()
+  }
+
+  fun fetchRecipesStream(): Flow<List<Recipe>> = flow { emit(fetchRecipes()) }
 
   fun addRecipe(recipe: Recipe) {
     recipes[recipe.id] = recipe

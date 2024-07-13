@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class RecipePageViewModel(
+class RecipeViewModel(
   private val recipeRepository: RecipeRepository
 ) : ViewModel() {
   private val selectedUnits = mutableStateMapOf<Ingredient, MeasurementUnit?>()

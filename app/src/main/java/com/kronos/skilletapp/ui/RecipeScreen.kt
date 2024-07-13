@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
@@ -37,10 +39,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.data.RecipeRepository
-import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
-import com.kronos.skilletapp.ui.viewmodel.RecipePageViewModel
+import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.applyIf
 import com.kronos.skilletapp.utils.toFraction
@@ -58,7 +59,7 @@ private object RecipeContentTab {
 fun RecipeScreen(
   id: String,
   onBack: () -> Unit,
-  vm: RecipePageViewModel = getViewModel(),
+  vm: RecipeViewModel = getViewModel(),
 ) {
   vm.fetchRecipe(id)
   val recipeState by vm.recipe.collectAsStateWithLifecycle()
@@ -74,22 +75,32 @@ fun RecipeScreen(
         },
         actions = {
           IconButton(onClick = { /*TODO*/ }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = "Add to favorites")
+            Icon(Icons.Filled.Edit, contentDescription = "Edit")
+          }
+
+          IconButton(onClick = { /*TODO*/ }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
           }
         }
       )
     }
   ) { paddingValues ->
-    recipeState.onSuccess { recipe ->
-      RecipeContent(
-        recipe = recipe,
-        modifier = Modifier
-          .padding(paddingValues)
-          .fillMaxSize()
-      )
-    }.onFailure { error ->
-      Box(modifier = Modifier.padding(paddingValues).fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = error.message)
+    AnimatedContent(targetState = recipeState, label = "loading") { targetState ->
+      targetState.onSuccess { recipe ->
+        RecipeContent(
+          recipe = recipe,
+          modifier = Modifier
+            .padding(paddingValues)
+            .fillMaxSize()
+        )
+      }.onFailure { error ->
+        Box(
+          modifier = Modifier
+            .padding(paddingValues)
+            .fillMaxSize(), contentAlignment = Alignment.Center
+        ) {
+          CircularProgressIndicator()
+        }
       }
     }
   }
@@ -279,7 +290,7 @@ fun ScalingControls(
 fun IngredientsList(
   ingredients: List<Ingredient>,
   scale: Double,
-  vm: RecipePageViewModel = getViewModel(),
+  vm: RecipeViewModel = getViewModel(),
 ) {
   if (ingredients.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -484,7 +495,7 @@ private fun UnitSelectionBottomSheet(
 fun InstructionsList(
   instructions: List<Instruction>,
   scale: Double,
-  vm: RecipePageViewModel = getViewModel(),
+  vm: RecipeViewModel = getViewModel(),
 ) {
   if (instructions.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -525,7 +536,7 @@ fun InstructionsList(
 fun InstructionComponent(
   instruction: Instruction,
   scale: Double,
-  vm: RecipePageViewModel = getViewModel(),
+  vm: RecipeViewModel = getViewModel(),
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -634,7 +645,7 @@ fun InstructionComponent(
 @Preview
 @Composable
 fun RecipePagePreview() {
-  val vm = RecipePageViewModel(RecipeRepository())
+  val vm = RecipeViewModel(RecipeRepository())
   vm.fetchRecipe("test")
 
   val recipe by vm.recipe.collectAsState()
@@ -652,7 +663,7 @@ fun RecipePagePreview() {
 @Composable
 fun IngredientsListEmptyPreview() {
   val ingredients = emptyList<Ingredient>()
-  val vm = RecipePageViewModel(RecipeRepository())
+  val vm = RecipeViewModel(RecipeRepository())
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -664,7 +675,7 @@ fun IngredientsListEmptyPreview() {
 @Preview
 @Composable
 fun IngredientListPreview() {
-  val vm = RecipePageViewModel(RecipeRepository())
+  val vm = RecipeViewModel(RecipeRepository())
 
   val ingredients = listOf(
     Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
@@ -705,7 +716,7 @@ fun IngredientComponentPreview() {
 @Preview
 @Composable
 fun InstructionsListEmptyPreview() {
-  val vm = RecipePageViewModel(RecipeRepository())
+  val vm = RecipeViewModel(RecipeRepository())
 
   val instructions = listOf(
     Instruction("Cook pasta in a pot of salted boiling water until al dente"),
@@ -723,7 +734,7 @@ fun InstructionsListEmptyPreview() {
 @Preview
 @Composable
 fun InstructionsListPreview() {
-  val vm = RecipePageViewModel(RecipeRepository())
+  val vm = RecipeViewModel(RecipeRepository())
 
   val instructions = listOf(
     Instruction(
@@ -768,7 +779,7 @@ fun InstructionsListPreview() {
 @Preview
 @Composable
 fun InstructionComponentPreview() {
-  val vm = RecipePageViewModel(RecipeRepository())
+  val vm = RecipeViewModel(RecipeRepository())
 
   val instruction = Instruction(
     text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4-5 minutes.",
