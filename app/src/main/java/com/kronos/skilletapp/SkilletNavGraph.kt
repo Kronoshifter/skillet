@@ -29,6 +29,7 @@ fun SkilletNavGraph(
   ) {
     composable<Route.RecipeList> {
       RecipeListScreen(
+        onAddRecipe = { navActions.navigateToAddEditRecipe() },
         onRecipeClick = { navActions.navigateToRecipe("test") }
       )
     }

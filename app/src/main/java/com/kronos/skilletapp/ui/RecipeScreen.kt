@@ -108,7 +108,7 @@ fun RecipeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun RecipeContent(
+private fun RecipeContent(
   recipe: Recipe,
   modifier: Modifier = Modifier,
 ) {
@@ -193,7 +193,7 @@ fun RecipeContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScalingControls(
+private fun ScalingControls(
   scale: Double,
   servings: Int,
   baseServings: Int,
@@ -287,7 +287,7 @@ fun ScalingControls(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IngredientsList(
+private fun IngredientsList(
   ingredients: List<Ingredient>,
   scale: Double,
   vm: RecipeViewModel = getViewModel(),
@@ -348,7 +348,7 @@ fun IngredientsList(
 }
 
 @Composable
-fun IngredientComponent(
+private fun IngredientComponent(
   ingredient: Ingredient,
   scale: Double,
   selectedUnit: MeasurementUnit?,
@@ -492,7 +492,7 @@ private fun UnitSelectionBottomSheet(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun InstructionsList(
+private fun InstructionsList(
   instructions: List<Instruction>,
   scale: Double,
   vm: RecipeViewModel = getViewModel(),
@@ -533,7 +533,7 @@ fun InstructionsList(
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun InstructionComponent(
+private fun InstructionComponent(
   instruction: Instruction,
   scale: Double,
   vm: RecipeViewModel = getViewModel(),
@@ -644,7 +644,7 @@ fun InstructionComponent(
 
 @Preview
 @Composable
-fun RecipePagePreview() {
+private fun RecipePagePreview() {
   val vm = RecipeViewModel(RecipeRepository())
   vm.fetchRecipe("test")
 
@@ -661,7 +661,7 @@ fun RecipePagePreview() {
 
 @Preview(showBackground = true, device = "spec:parent=pixel_5")
 @Composable
-fun IngredientsListEmptyPreview() {
+private fun IngredientsListEmptyPreview() {
   val ingredients = emptyList<Ingredient>()
   val vm = RecipeViewModel(RecipeRepository())
 
@@ -674,7 +674,7 @@ fun IngredientsListEmptyPreview() {
 
 @Preview
 @Composable
-fun IngredientListPreview() {
+private fun IngredientListPreview() {
   val vm = RecipeViewModel(RecipeRepository())
 
   val ingredients = listOf(
@@ -699,7 +699,7 @@ fun IngredientListPreview() {
 
 @Preview(showBackground = true)
 @Composable
-fun IngredientComponentPreview() {
+private fun IngredientComponentPreview() {
   val ingredient =
     Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce))
 
@@ -715,7 +715,7 @@ fun IngredientComponentPreview() {
 
 @Preview
 @Composable
-fun InstructionsListEmptyPreview() {
+private fun InstructionsListEmptyPreview() {
   val vm = RecipeViewModel(RecipeRepository())
 
   val instructions = listOf(
@@ -733,7 +733,7 @@ fun InstructionsListEmptyPreview() {
 
 @Preview
 @Composable
-fun InstructionsListPreview() {
+private fun InstructionsListPreview() {
   val vm = RecipeViewModel(RecipeRepository())
 
   val instructions = listOf(
@@ -778,7 +778,7 @@ fun InstructionsListPreview() {
 
 @Preview
 @Composable
-fun InstructionComponentPreview() {
+private fun InstructionComponentPreview() {
   val vm = RecipeViewModel(RecipeRepository())
 
   val instruction = Instruction(

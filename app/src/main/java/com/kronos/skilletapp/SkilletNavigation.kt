@@ -16,7 +16,7 @@ class SkilletNavigationActions(private val navController: NavHostController) {
     navController.navigate(Route.Recipe(recipeId))
   }
 
-  fun navigateToAddEditRecipe(recipeId: String?) {
+  fun navigateToAddEditRecipe(recipeId: String? = null) {
     navController.navigate(Route.AddEditRecipe(recipeId)) {
       popUpTo(navController.graph.startDestinationId) {
         inclusive = true
