@@ -1,11 +1,13 @@
 package com.kronos.skilletapp.ui.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -19,9 +21,13 @@ data class RecipeListState(
 
 class RecipeListViewModel(
   private val recipeRepository: RecipeRepository,
+  private val handle: SavedStateHandle
 ) : ViewModel() {
   private val _isRefreshing = MutableStateFlow(false)
   val isRefreshing = _isRefreshing.asStateFlow()
+
+  private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
+
   private val _isLoading = MutableStateFlow(false)
   private val _recipesAsync = recipeRepository.fetchRecipesStream()
     .map { UiState.Success(it) }
@@ -48,5 +54,6 @@ class RecipeListViewModel(
       recipeRepository.refreshRecipes()
     }.invokeOnCompletion { _isRefreshing.value = false }
   }
-
 }
+
+const val RECIPES_SORT_TYPE_KEY = "RECIPES_SORT_TYPE_KEY"

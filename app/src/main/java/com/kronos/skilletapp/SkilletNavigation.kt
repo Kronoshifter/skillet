@@ -3,11 +3,10 @@ package com.kronos.skilletapp
 import androidx.navigation.NavHostController
 import kotlinx.serialization.Serializable
 
-@Serializable
-sealed class Route {
-  @Serializable data object RecipeList : Route()
-  @Serializable data class Recipe(val recipeId: String) : Route()
-  @Serializable data class AddEditRecipe(val recipeId: String?) : Route()
+sealed interface Route {
+  @Serializable data object RecipeList : Route
+  @Serializable data class Recipe(val recipeId: String) : Route
+  @Serializable data class AddEditRecipe(val recipeId: String?) : Route
 }
 
 class SkilletNavigationActions(private val navController: NavHostController) {

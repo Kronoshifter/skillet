@@ -1,7 +1,6 @@
 package com.kronos.skilletapp
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -10,8 +9,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.kronos.skilletapp.ui.RecipeListScreen
-import com.kronos.skilletapp.ui.RecipeScreen
+import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
+import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
 
 @Composable
 fun SkilletNavGraph(
