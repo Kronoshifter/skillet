@@ -1,12 +1,10 @@
-package com.kronos.skilletapp.ui
+package com.kronos.skilletapp.ui.screen.recipelist
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -17,8 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,8 +23,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.RefreshingContent
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
-import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
 

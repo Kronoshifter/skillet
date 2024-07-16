@@ -1,4 +1,4 @@
-package com.kronos.skilletapp.ui
+package com.kronos.skilletapp.ui.screen.recipe
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
