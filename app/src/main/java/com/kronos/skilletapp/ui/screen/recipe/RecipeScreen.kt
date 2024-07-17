@@ -1,6 +1,5 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,14 +39,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.applyIf
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 import org.koin.androidx.compose.getViewModel
+import java.text.Normalizer.normalize
 
 private object RecipeContentTab {
   const val INGREDIENTS = 0
@@ -57,13 +59,9 @@ private object RecipeContentTab {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeScreen(
-  id: String,
   onBack: () -> Unit,
   vm: RecipeViewModel = getViewModel(),
 ) {
-  vm.fetchRecipe(id)
-  val recipeState by vm.recipe.collectAsStateWithLifecycle()
-
   Scaffold(
     topBar = {
       TopAppBar(
@@ -85,23 +83,23 @@ fun RecipeScreen(
       )
     }
   ) { paddingValues ->
-    AnimatedContent(targetState = recipeState, label = "loading") { targetState ->
-      targetState.onSuccess { recipe ->
-        RecipeContent(
-          recipe = recipe,
-          modifier = Modifier
-            .padding(paddingValues)
-            .fillMaxSize()
-        )
-      }.onFailure { error ->
-        Box(
-          modifier = Modifier
-            .padding(paddingValues)
-            .fillMaxSize(), contentAlignment = Alignment.Center
-        ) {
-          CircularProgressIndicator()
-        }
-      }
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val selectedUnits by vm.selectedUnits.collectAsStateWithLifecycle()
+
+    LoadingContent(
+      state = uiState,
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(paddingValues),
+    ) { data ->
+      RecipeContent(
+        recipe = data.recipe,
+        selectedUnits = selectedUnits,
+        onUnitSelect = vm::selectUnit,
+//        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
+        modifier = Modifier
+          .fillMaxSize()
+      )
     }
   }
 }
@@ -110,6 +108,8 @@ fun RecipeScreen(
 @Composable
 private fun RecipeContent(
   recipe: Recipe,
+  selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var tab by remember { mutableIntStateOf(RecipeContentTab.INGREDIENTS) }
@@ -182,8 +182,19 @@ private fun RecipeContent(
           contentAlignment = Alignment.Center
         ) {
           when (page) {
-            RecipeContentTab.INGREDIENTS -> IngredientsList(recipe.ingredients, scale)
-            RecipeContentTab.INSTRUCTIONS -> InstructionsList(recipe.instructions, scale)
+            RecipeContentTab.INGREDIENTS -> IngredientsList(
+              ingredients = recipe.ingredients,
+              scale = scale,
+              selectedUnits = selectedUnits,
+              onUnitSelect = onUnitSelect
+            )
+
+            RecipeContentTab.INSTRUCTIONS -> InstructionsList(
+              instructions = recipe.instructions,
+              scale = scale,
+              selectedUnits = selectedUnits,
+              onUnitSelect = onUnitSelect
+            )
           }
         }
       }
@@ -290,7 +301,8 @@ private fun ScalingControls(
 private fun IngredientsList(
   ingredients: List<Ingredient>,
   scale: Double,
-  vm: RecipeViewModel = getViewModel(),
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
 ) {
   if (ingredients.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -306,7 +318,7 @@ private fun IngredientsList(
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     items(ingredients) { ingredient ->
-      val selectedUnit = vm.getSelectedUnit(ingredient)
+      val selectedUnit = selectedUnits[ingredient]
       val measurements = MeasurementUnit.values
         .filter { it.type == ingredient.measurement.unit.type }
         .map { ingredient.measurement.convert(it).scale(scale) }
@@ -329,7 +341,7 @@ private fun IngredientsList(
         UnitSelectionBottomSheet(
           onDismissRequest = { showBottomSheet = false },
           onUnitSelect = {
-            vm.selectUnit(ingredient, it.takeIf { selectedUnit != it })
+            onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
 
             scope.launch { sheetState.hide() }.invokeOnCompletion {
               if (!sheetState.isVisible) {
@@ -495,7 +507,8 @@ private fun UnitSelectionBottomSheet(
 private fun InstructionsList(
   instructions: List<Instruction>,
   scale: Double,
-  vm: RecipeViewModel = getViewModel(),
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
 ) {
   if (instructions.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -522,6 +535,8 @@ private fun InstructionsList(
       InstructionComponent(
         instruction = instruction,
         scale = scale,
+        selectedUnits = selectedUnits,
+        onUnitSelect = onUnitSelect
       )
 
       if (instruction != instructions.last()) {
@@ -536,7 +551,8 @@ private fun InstructionsList(
 private fun InstructionComponent(
   instruction: Instruction,
   scale: Double,
-  vm: RecipeViewModel = getViewModel(),
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -557,82 +573,93 @@ private fun InstructionComponent(
           .fillMaxWidth()
       ) {
         instruction.ingredients.forEach { ingredient ->
-          var showBottomSheet by remember { mutableStateOf(false) }
-
-          val measurements = MeasurementUnit.values
-            .filter { it.type == ingredient.measurement.unit.type }
-            .map { ingredient.measurement.convert(it).scale(scale) }
-            .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
-
-          val selectedUnit = vm.getSelectedUnit(ingredient)
-
-          val borderColor =
-            selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
-
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-              .width(IntrinsicSize.Max)
-              .height(IntrinsicSize.Max)
-              .clip(CircleShape)
-              .border(width = 2.dp, color = borderColor, shape = CircleShape)
-              .clickable(enabled = measurements.isNotEmpty()) { showBottomSheet = true },
-          ) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(8.dp),
-              modifier = Modifier
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
-            ) {
-              val measurement = ingredient.measurement.scale(scale).run {
-                selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
-              }
-
-              val quantity = when (measurement.unit.system) {
-                MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
-                else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
-              }
-
-              Text(
-                text = "$quantity ${measurement.unit.abbreviation}",
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 18.sp,
-                modifier = Modifier.padding(8.dp)
-              )
-            }
-
-            Text(
-              text = ingredient.name,
-              modifier = Modifier
-                .padding(end = 16.dp)
-            )
-          }
-
-          val sheetState = rememberModalBottomSheetState()
-          val scope = rememberCoroutineScope()
-
-          if (showBottomSheet) {
-            UnitSelectionBottomSheet(
-              onDismissRequest = { showBottomSheet = false },
-              onUnitSelect = {
-                vm.selectUnit(ingredient, it.takeIf { selectedUnit != it })
-                scope.launch { sheetState.hide() }.invokeOnCompletion {
-                  if (!sheetState.isVisible) {
-                    showBottomSheet = false
-                  }
-                }
-              },
-              ingredient = ingredient,
-              measurements = measurements,
-              selectedUnit = selectedUnit,
-              sheetState = sheetState
-            )
-          }
+          InstructionIngredientPill(ingredient, scale, selectedUnits, onUnitSelect)
         }
       }
     }
+  }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun InstructionIngredientPill(
+  ingredient: Ingredient,
+  scale: Double,
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+) {
+  var showBottomSheet by remember { mutableStateOf(false) }
+
+  val measurements = MeasurementUnit.values
+    .filter { it.type == ingredient.measurement.unit.type }
+    .map { ingredient.measurement.convert(it).scale(scale) }
+    .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+
+  val selectedUnit = selectedUnits[ingredient]
+
+  val borderColor =
+    selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
+
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = Modifier
+      .width(IntrinsicSize.Max)
+      .height(IntrinsicSize.Max)
+      .clip(CircleShape)
+      .border(width = 2.dp, color = borderColor, shape = CircleShape)
+      .clickable(enabled = measurements.isNotEmpty()) { showBottomSheet = true },
+  ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      modifier = Modifier
+        .clip(CircleShape)
+        .background(MaterialTheme.colorScheme.primary),
+    ) {
+      val measurement = ingredient.measurement.scale(scale).run {
+        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+      }
+
+      val quantity = when (measurement.unit.system) {
+        MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
+        else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+      }
+
+      Text(
+        text = "$quantity ${measurement.unit.abbreviation}",
+        color = MaterialTheme.colorScheme.onPrimary,
+        fontSize = 18.sp,
+        modifier = Modifier.padding(8.dp)
+      )
+    }
+
+    Text(
+      text = ingredient.name,
+      modifier = Modifier
+        .padding(end = 16.dp)
+    )
+  }
+
+  val sheetState = rememberModalBottomSheetState()
+  val scope = rememberCoroutineScope()
+
+  if (showBottomSheet) {
+    UnitSelectionBottomSheet(
+      onDismissRequest = { showBottomSheet = false },
+      onUnitSelect = {
+        onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+          if (!sheetState.isVisible) {
+            showBottomSheet = false
+          }
+        }
+      },
+      ingredient = ingredient,
+      measurements = measurements,
+      selectedUnit = selectedUnit,
+      sheetState = sheetState
+    )
   }
 }
 
@@ -645,15 +672,17 @@ private fun InstructionComponent(
 @Preview
 @Composable
 private fun RecipePagePreview() {
-  val vm = RecipeViewModel(RecipeRepository())
-  vm.fetchRecipe("test")
+  val repository = RecipeRepository()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
-  val recipe by vm.recipe.collectAsState()
+  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       RecipeContent(
         recipe = recipe.unwrap(),
+        selectedUnits = selectedUnits,
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
       )
     }
   }
@@ -663,11 +692,16 @@ private fun RecipePagePreview() {
 @Composable
 private fun IngredientsListEmptyPreview() {
   val ingredients = emptyList<Ingredient>()
-  val vm = RecipeViewModel(RecipeRepository())
+  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      IngredientsList(ingredients = ingredients, scale = 1.0, vm = vm)
+      IngredientsList(
+        ingredients = ingredients,
+        scale = 1.0,
+        selectedUnits = selectedUnits,
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+      )
     }
   }
 }
@@ -675,24 +709,32 @@ private fun IngredientsListEmptyPreview() {
 @Preview
 @Composable
 private fun IngredientListPreview() {
-  val vm = RecipeViewModel(RecipeRepository())
+  val repository = RecipeRepository()
 
-  val ingredients = listOf(
-    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-    Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-    Ingredient(
-      "Garlic",
-      IngredientType.Dry,
-      measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-    ),
-    Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-    Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-    Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-  )
+//  val ingredients = listOf(
+//    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
+//    Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+//    Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+//    Ingredient(
+//      "Garlic",
+//      IngredientType.Dry,
+//      measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+//    ),
+//    Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+//    Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
+//    Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+//  )
+
+  val ingredients = runBlocking { repository.fetchRecipe("test").unwrap().ingredients }
+  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    IngredientsList(ingredients = ingredients, scale = 1.0, vm = vm)
+    IngredientsList(
+      ingredients = ingredients,
+      scale = 1.0,
+      selectedUnits = selectedUnits,
+      onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+    )
   }
 
 }
@@ -716,17 +758,9 @@ private fun IngredientComponentPreview() {
 @Preview
 @Composable
 private fun InstructionsListEmptyPreview() {
-  val vm = RecipeViewModel(RecipeRepository())
-
-  val instructions = listOf(
-    Instruction("Cook pasta in a pot of salted boiling water until al dente"),
-    Instruction("Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes."),
-    Instruction("Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth. Add cooked pasta then stir to combine. Taste then adjust salt and pepper if necessary, and then serve."),
-  )
-
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsList(instructions = emptyList(), scale = 1.0, vm = vm)
+      InstructionsList(instructions = emptyList(), scale = 1.0, selectedUnits = emptyMap(), onUnitSelect = { _, _ -> })
     }
   }
 }
@@ -734,44 +768,18 @@ private fun InstructionsListEmptyPreview() {
 @Preview
 @Composable
 private fun InstructionsListPreview() {
-  val vm = RecipeViewModel(RecipeRepository())
-
-  val instructions = listOf(
-    Instruction(
-      text = "Cook pasta in a pot of salted boiling water until al dente",
-      ingredients = listOf(
-        Ingredient(
-          "Pasta",
-          IngredientType.Dry,
-          measurement = Measurement(8.0, MeasurementUnit.Ounce)
-        ),
-        Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      )
-    ),
-    Instruction(
-      text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes.",
-      ingredients = listOf(
-        Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-        Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-        Ingredient(
-          "Garlic",
-          IngredientType.Dry,
-          measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-        ),
-        Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-        Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-        Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-      )
-    ),
-    Instruction(
-      text = "Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth. Add cooked pasta then stir to combine. Taste then adjust salt and pepper if necessary, and then serve.",
-      ingredients = emptyList()
-    ),
-  )
+  val repository = RecipeRepository()
+  val instructions = runBlocking { repository.fetchRecipe("test").unwrap().instructions }
+  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsList(instructions = instructions, scale = 1.0, vm = vm)
+      InstructionsList(
+        instructions = instructions,
+        scale = 1.0,
+        selectedUnits = selectedUnits,
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+      )
     }
   }
 }
@@ -779,8 +787,6 @@ private fun InstructionsListPreview() {
 @Preview
 @Composable
 private fun InstructionComponentPreview() {
-  val vm = RecipeViewModel(RecipeRepository())
-
   val instruction = Instruction(
     text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4-5 minutes.",
     ingredients = listOf(
@@ -797,10 +803,17 @@ private fun InstructionComponentPreview() {
     )
   )
 
+  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
+
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       Box(modifier = Modifier.padding(16.dp)) {
-        InstructionComponent(instruction = instruction, scale = 1.0, vm = vm)
+        InstructionComponent(
+          instruction = instruction,
+          scale = 1.0,
+          selectedUnits = selectedUnits,
+          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+        )
       }
     }
   }
