@@ -17,6 +17,10 @@ class RecipeRepository {
     return recipeSource[id].toResultOr { SkilletError("No recipe with id: $id") }
   }
 
+  fun fetchRecipeStream(id: String): Flow<Result<Recipe, SkilletError>> = flow {
+    emit(fetchRecipe(id))
+  }
+
   suspend fun fetchRecipes(): List<Recipe> {
     delay(1.seconds)
     return recipeSource.values.toList()

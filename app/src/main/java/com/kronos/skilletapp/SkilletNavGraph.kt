@@ -39,10 +39,8 @@ fun SkilletNavGraph(
       exitTransition = {
         scaleOut() + fadeOut()
       }
-    ) { backStackEntry ->
-      val route = backStackEntry.toRoute<Route.Recipe>()
+    ) {
       RecipeScreen(
-        id = route.recipeId,
         onBack = { navController.popBackStack() }
       )
     }

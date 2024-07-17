@@ -1,50 +1,79 @@
 package com.kronos.skilletapp.ui.viewmodel
 
 import androidx.compose.runtime.*
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.github.michaelbull.result.*
+import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
+import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
+data class RecipeUiState(
+  val recipe: Recipe,
+)
+
 class RecipeViewModel(
-  private val recipeRepository: RecipeRepository
+  private val recipeRepository: RecipeRepository,
+  private val handle: SavedStateHandle
 ) : ViewModel() {
-  private val selectedUnits = mutableStateMapOf<Ingredient, MeasurementUnit?>()
 
-  private var _recipe = MutableStateFlow<Result<Recipe, SkilletError>>(Err(SkilletError("No recipe found")))
-  val recipe: StateFlow<Result<Recipe, SkilletError>> = _recipe.asStateFlow()
+  private val args = handle.toRoute<Route.Recipe>()
+  private val recipeId = args.recipeId
 
-  var loading: Boolean by mutableStateOf(true)
-    private set
+  private val _selectedUnits = mutableStateMapOf<Ingredient, MeasurementUnit?>()
+  val selectedUnits = snapshotFlow { _selectedUnits.toMap() }.stateIn(
+    scope = viewModelScope,
+    started = SharingStarted.WhileSubscribed(5000L),
+    initialValue = emptyMap()
+  )
 
-  lateinit var recipeId: String
+  private val _isLoading = MutableStateFlow(false)
+  private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
+    .map { result ->
+      result.mapBoth(
+        success = { UiState.Success(it) },
+        failure = { UiState.Error(it) }
+      )
+    }
+    .catch { emit(UiState.Error(SkilletError(it.message?: "Unknown error"))) }
+
+  val uiState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
+    when {
+      loading -> UiState.Loading
+      else -> when (recipeAsync) {
+        UiState.Loading -> UiState.Loading
+        is UiState.Error -> recipeAsync
+        is UiState.Success -> UiState.Success(
+          RecipeUiState(
+            recipe = recipeAsync.data,
+          )
+        )
+      }
+    }
+  }.stateIn(
+    scope = viewModelScope,
+    started = SharingStarted.WhileSubscribed(5000L),
+    initialValue = UiState.Loading
+  )
 
   fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
-    selectedUnits[ingredient] = unit
+    _selectedUnits[ingredient] = unit
   }
 
-  fun getSelectedUnit(ingredient: Ingredient): MeasurementUnit? {
-    return selectedUnits[ingredient]
-  }
-
-  fun fetchRecipe(id: String) {
-    loading = true
-    viewModelScope.launch {
-      val result = async { recipeRepository.fetchRecipe(id) }
-      _recipe.value = result.await()
-      recipeId = id
-      loading = false
-    }
-  }
+  fun getSelectedUnit(ingredient: Ingredient): MeasurementUnit? = _selectedUnits[ingredient]
 
   fun refresh() {
-    fetchRecipe(recipeId)
+    _isLoading.value = true
+    viewModelScope.launch {
+//      recipeRepository.refreshRecipe()
+      _isLoading.value = false
+    }
   }
 }
