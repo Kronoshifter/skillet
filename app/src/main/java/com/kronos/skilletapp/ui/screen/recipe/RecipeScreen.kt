@@ -36,7 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.michaelbull.result.*
+import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.LoadingContent
@@ -47,9 +47,9 @@ import com.kronos.skilletapp.utils.applyIf
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlin.math.roundToInt
 import org.koin.androidx.compose.getViewModel
-import java.text.Normalizer.normalize
+import kotlin.collections.set
+import kotlin.math.roundToInt
 
 private object RecipeContentTab {
   const val INGREDIENTS = 0

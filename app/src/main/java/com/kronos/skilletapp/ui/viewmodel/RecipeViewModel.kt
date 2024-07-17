@@ -1,19 +1,22 @@
 package com.kronos.skilletapp.ui.viewmodel
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.github.michaelbull.result.*
+import com.github.michaelbull.result.mapBoth
 import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.Recipe
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlin.collections.set
 
 data class RecipeUiState(
   val recipe: Recipe,
@@ -21,7 +24,7 @@ data class RecipeUiState(
 
 class RecipeViewModel(
   private val recipeRepository: RecipeRepository,
-  private val handle: SavedStateHandle
+  private val handle: SavedStateHandle,
 ) : ViewModel() {
 
   private val args = handle.toRoute<Route.Recipe>()
@@ -42,7 +45,7 @@ class RecipeViewModel(
         failure = { UiState.Error(it) }
       )
     }
-    .catch { emit(UiState.Error(SkilletError(it.message?: "Unknown error"))) }
+    .catch { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
 
   val uiState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
     when {
