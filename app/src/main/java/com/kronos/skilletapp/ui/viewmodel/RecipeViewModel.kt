@@ -30,12 +30,9 @@ class RecipeViewModel(
   private val args = handle.toRoute<Route.Recipe>()
   private val recipeId = args.recipeId
 
-  private val _selectedUnits = mutableStateMapOf<Ingredient, MeasurementUnit?>()
-  val selectedUnits = snapshotFlow { _selectedUnits.toMap() }.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5000L),
-    initialValue = emptyMap()
-  )
+  private val _selectedUnits = mutableMapOf<Ingredient, MeasurementUnit?>()
+  private val _selectedUnitsFlow = MutableStateFlow<Map<Ingredient, MeasurementUnit?>>(emptyMap())
+  val selectedUnits = _selectedUnitsFlow.asStateFlow()
 
   private val _isLoading = MutableStateFlow(false)
   private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
@@ -67,7 +64,8 @@ class RecipeViewModel(
   )
 
   fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
-    _selectedUnits[ingredient] = unit
+      _selectedUnits[ingredient] = unit
+      _selectedUnitsFlow.value = _selectedUnits.toMap()
   }
 
   fun getSelectedUnit(ingredient: Ingredient): MeasurementUnit? = _selectedUnits[ingredient]

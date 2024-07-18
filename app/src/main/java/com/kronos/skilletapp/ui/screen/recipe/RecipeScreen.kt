@@ -61,6 +61,7 @@ private object RecipeContentTab {
 @Composable
 fun RecipeScreen(
   onBack: () -> Unit,
+  onEdit: () -> Unit = {},
   vm: RecipeViewModel = getViewModel(),
 ) {
   Scaffold(
