@@ -3,6 +3,7 @@ package com.kronos.skilletapp.model
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
+import com.kronos.skilletapp.model.IngredientType.*
 
 data class Measurement(
   val quantity: Double,
@@ -194,11 +195,29 @@ sealed class MeasurementUnit(
 
   //// Imperial
 
+  data object Pinch : Volume(
+    factor = 0.3080575,
+    name = "pinch",
+    abbreviation = "pinch",
+    normalizationLow = 0.0,
+    normalizationHigh = 2.0,
+    system = MeasurementSystem.Imperial
+  )
+
+  data object Dash : Volume(
+    factor = 0.616115,
+    name = "dash",
+    abbreviation = "dash",
+    normalizationLow = 0.5,
+    normalizationHigh = 2.0,
+    system = MeasurementSystem.Imperial
+  )
+
   data object Teaspoon : Volume(
     factor = 4.92892,
     name = "teaspoon",
     abbreviation = "tsp",
-    normalizationLow = 0.0,
+    normalizationLow = 0.25,
     normalizationHigh = 3.0,
     system = MeasurementSystem.Imperial
   )
@@ -304,6 +323,8 @@ sealed class MeasurementUnit(
       listOf(
         Milliliter,
         Liter,
+        Pinch,
+        Dash,
         Teaspoon,
         Tablespoon,
         FluidOunce,
@@ -317,5 +338,27 @@ sealed class MeasurementUnit(
         Pound,
       ).sortedBy { it.factor }
     }
+
+    private val wet = listOf(Wet)
+    private val dry = listOf(Dry)
+    private val either = listOf(Wet, Dry)
+
+    val allowedIngredientTypes = mapOf(
+      Milliliter to either,
+      Liter to either,
+      Pinch to dry,
+      Dash to wet,
+      Teaspoon to either,
+      Tablespoon to either,
+      FluidOunce to wet,
+      Cup to either,
+      Pint to either,
+      Quart to either,
+      Gallon to either,
+      Gram to either,
+      Kilogram to either,
+      Ounce to either,
+      Pound to either,
+    )
   }
 }

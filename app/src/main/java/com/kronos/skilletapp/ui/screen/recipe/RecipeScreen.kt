@@ -387,8 +387,9 @@ private fun IngredientComponent(
         .clickable(enabled = enabled, onClick = onClick),
       contentAlignment = Alignment.Center
     ) {
-      val measurement = ingredient.measurement.scale(scale)
-        .run { selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce } }
+      val measurement = ingredient.measurement.scale(scale).run {
+        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce && MeasurementUnit.allowedIngredientTypes[it]?.contains(ingredient.type) == true }
+      }
       val quantity = when (measurement.unit.system) {
         MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
         else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
@@ -619,7 +620,7 @@ private fun InstructionIngredientPill(
         .background(MaterialTheme.colorScheme.primary),
     ) {
       val measurement = ingredient.measurement.scale(scale).run {
-        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce && MeasurementUnit.allowedIngredientTypes[it]?.contains(ingredient.type) == true }
       }
 
       val quantity = when (measurement.unit.system) {
