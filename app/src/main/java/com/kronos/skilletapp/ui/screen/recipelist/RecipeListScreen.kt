@@ -83,7 +83,7 @@ fun RecipeListScreen(
 }
 
 @Composable
-fun RecipeListContent(
+private fun RecipeListContent(
   recipes: List<Recipe>,
   onRecipeClick: (id: String) -> Unit,
   onAddRecipe: () -> Unit,
