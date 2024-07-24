@@ -68,6 +68,7 @@ data class Measurement(
     is MeasurementUnit.Mass -> convert(to as MeasurementUnit.Mass)
     is MeasurementUnit.Volume -> convert(to as MeasurementUnit.Volume)
     is MeasurementUnit.Custom -> copy(unit = to)
+    MeasurementUnit.None -> copy(unit = to)
   }
 
   fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(quantity), unit = to)
@@ -165,6 +166,16 @@ sealed class MeasurementUnit(
     name = name,
     factor = 1.0,
     abbreviation = abbreviation,
+    system = MeasurementSystem.Other,
+    normalizationLow = 0.0,
+    normalizationHigh = Double.POSITIVE_INFINITY,
+    type = MeasurementType.Other
+  )
+
+  data object None : MeasurementUnit(
+    name = "none",
+    factor = 1.0,
+    abbreviation = "none",
     system = MeasurementSystem.Other,
     normalizationLow = 0.0,
     normalizationHigh = Double.POSITIVE_INFINITY,

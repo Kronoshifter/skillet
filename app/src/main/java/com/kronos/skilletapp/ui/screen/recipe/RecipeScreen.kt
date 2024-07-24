@@ -388,7 +388,7 @@ private fun IngredientComponent(
       contentAlignment = Alignment.Center
     ) {
       val measurement = ingredient.measurement.scale(scale).run {
-        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce && MeasurementUnit.allowedIngredientTypes[it]?.contains(ingredient.type) == true }
+        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
       }
       val quantity = when (measurement.unit.system) {
         MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
@@ -620,7 +620,7 @@ private fun InstructionIngredientPill(
         .background(MaterialTheme.colorScheme.primary),
     ) {
       val measurement = ingredient.measurement.scale(scale).run {
-        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce && MeasurementUnit.allowedIngredientTypes[it]?.contains(ingredient.type) == true }
+        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
       }
 
       val quantity = when (measurement.unit.system) {
@@ -745,7 +745,7 @@ private fun IngredientListPreview() {
 @Composable
 private fun IngredientComponentPreview() {
   val ingredient =
-    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce))
+    Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce))
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     IngredientComponent(
@@ -792,16 +792,15 @@ private fun InstructionComponentPreview() {
   val instruction = Instruction(
     text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4-5 minutes.",
     ingredients = listOf(
-      Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Butter", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
       Ingredient(
         "Garlic",
-        IngredientType.Dry,
         measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
       ),
-      Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+      Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
+      Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup)),
     )
   )
 

@@ -44,39 +44,37 @@ class RecipeRepository {
 
   private fun initFakeRecipes() {
     val ingredients = listOf(
-      Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-      Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce)),
+      Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Butter", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
       Ingredient(
         "Garlic",
-        IngredientType.Dry,
         measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
       ),
-      Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+      Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
+      Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup)),
     )
 
     val instructions = listOf(
       Instruction(
         text = "Cook pasta in a pot of salted boiling water until al dente",
         ingredients = listOf(
-          Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
+          Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce)),
         )
       ),
       Instruction(
         text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4.-5 minutes.",
         ingredients = listOf(
-          Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-          Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+          Ingredient("Butter", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+          Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
           Ingredient(
             "Garlic",
-            IngredientType.Dry,
             measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
           ),
-          Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-          Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-          Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
+          Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
+          Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
+          Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup)),
         )
       ),
       Instruction(
