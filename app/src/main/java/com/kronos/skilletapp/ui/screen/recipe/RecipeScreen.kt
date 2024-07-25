@@ -384,7 +384,7 @@ private fun IngredientComponent(
 
     val boxSize = 56.dp
 
-    if (measurement.quantity > 0 && measurement.unit != MeasurementUnit.None) {
+    if (measurement.quantity > 0) {
       Box(
         modifier = Modifier
           .sizeIn(minWidth = boxSize, minHeight = boxSize)
@@ -412,14 +412,17 @@ private fun IngredientComponent(
             text = quantity,
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp,
-            modifier = Modifier.offset(y = 4.dp)
+            modifier = Modifier
+              .applyIf(measurement.unit !is MeasurementUnit.None) { offset(y = 4.dp) }
           )
 
-          Text(
-            text = measurement.unit.abbreviation,
-            color = MaterialTheme.colorScheme.onPrimary,
-            fontSize = 12.sp
-          )
+          if (measurement.unit !is MeasurementUnit.None) {
+            Text(
+              text = measurement.unit.abbreviation,
+              color = MaterialTheme.colorScheme.onPrimary,
+              fontSize = 12.sp
+            )
+          }
 
         }
       }
