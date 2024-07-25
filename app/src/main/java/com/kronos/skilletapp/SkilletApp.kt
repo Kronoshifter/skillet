@@ -1,9 +1,9 @@
 package com.kronos.skilletapp
 
 import android.app.Application
-import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
-import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.data.RecipeRepository
+import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
+import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.context.startKoin
@@ -24,6 +24,7 @@ class SkilletApp : Application() {
 
 val appModule = module {
   singleOf(::RecipeRepository)
+//  single { IngredientAiParser(androidContext()) }
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)

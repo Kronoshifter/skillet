@@ -75,6 +75,9 @@ dependencies {
   implementation("io.insert-koin:koin-androidx-compose:3.4.0")
   implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
   implementation("org.antlr:antlr4:4.13.0")
+  implementation("com.google.android.gms:play-services-tflite-java:16.1.0")
+  implementation("com.google.android.gms:play-services-tflite-support:16.1.0")
+  implementation("com.google.android.gms:play-services-tflite-gpu:16.2.0")
 
   testImplementation("junit:junit:4.13.2")
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
