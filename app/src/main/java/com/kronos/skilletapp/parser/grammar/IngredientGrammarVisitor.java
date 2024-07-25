@@ -47,6 +47,12 @@ public interface IngredientGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFraction(IngredientGrammarParser.FractionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IngredientGrammarParser#range}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRange(IngredientGrammarParser.RangeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link IngredientGrammarParser#name}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

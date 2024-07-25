@@ -89,6 +89,18 @@ public class IngredientGrammarBaseListener implements IngredientGrammarListener 
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterRange(IngredientGrammarParser.RangeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitRange(IngredientGrammarParser.RangeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterName(IngredientGrammarParser.NameContext ctx) { }
 	/**
 	 * {@inheritDoc}

@@ -80,9 +80,9 @@ data class Measurement(
     var normalized = copy()
     while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
       if (normalized.quantity <= normalized.unit.normalizationLow) {
-        normalized = normalized.convert(normalized.unit.previous(filter).unwrap())
+        normalized = normalized.convert(normalized.unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" })
       } else if (normalized.quantity >= normalized.unit.normalizationHigh) {
-        normalized = normalized.convert(normalized.unit.next(filter).unwrap())
+        normalized = normalized.convert(normalized.unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" })
       }
     }
     return normalized

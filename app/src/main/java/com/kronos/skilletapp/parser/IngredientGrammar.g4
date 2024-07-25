@@ -6,13 +6,13 @@ recipe : ingredient+ EOF ;
 
 ingredient : measurement WHITESPACE name comment? NEWLINE ;
 
-measurement : quantity WHITESPACE WORD? ;
+measurement : quantity (WHITESPACE WORD)? ;
 
-quantity : (decimal | fraction) ;
+quantity : (decimal | fraction | range) ;
 
 decimal : NUMBER ;
 fraction : (NUMBER WHITESPACE)? NUMBER '/' NUMBER ;
-//range : RANGE ;
+range : (decimal | fraction) ('-' | WHITESPACE)+ (decimal | fraction) ;
 
 name : (WORD | WHITESPACE)*? WORD WHITESPACE? ;
 

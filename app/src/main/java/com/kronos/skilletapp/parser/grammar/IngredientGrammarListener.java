@@ -68,6 +68,16 @@ public interface IngredientGrammarListener extends ParseTreeListener {
 	 */
 	void exitFraction(IngredientGrammarParser.FractionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link IngredientGrammarParser#range}.
+	 * @param ctx the parse tree
+	 */
+	void enterRange(IngredientGrammarParser.RangeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link IngredientGrammarParser#range}.
+	 * @param ctx the parse tree
+	 */
+	void exitRange(IngredientGrammarParser.RangeContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link IngredientGrammarParser#name}.
 	 * @param ctx the parse tree
 	 */
