@@ -4,7 +4,7 @@ grammar IngredientGrammar;
 
 recipe : ingredient+ EOF ;
 
-ingredient : measurement WHITESPACE name comment? NEWLINE ;
+ingredient : (measurement WHITESPACE)? name comment? NEWLINE ;
 
 measurement : quantity (WHITESPACE WORD)? ;
 

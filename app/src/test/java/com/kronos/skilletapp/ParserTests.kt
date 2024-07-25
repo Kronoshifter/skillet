@@ -44,5 +44,25 @@ class ParserTests : FunSpec({
         ingredient.measurement.quantity shouldBe (1.5 plusOrMinus 0.01)
       }
     }
+
+    context("No Unit") {
+      test("Decimal") {
+        val ingredient = IngredientParser.parseIngredient("1 onion\n")
+        ingredient.measurement.unit shouldBe MeasurementUnit.None
+        ingredient.measurement.quantity shouldBe 1.0
+      }
+
+      test("Fractional") {
+        val ingredient = IngredientParser.parseIngredient("1/2 onion\n")
+        ingredient.measurement.unit shouldBe MeasurementUnit.None
+        ingredient.measurement.quantity shouldBe 0.5
+      }
+
+      test("No Quantity") {
+        val ingredient = IngredientParser.parseIngredient("onion\n")
+        ingredient.measurement.unit shouldBe MeasurementUnit.None
+        ingredient.measurement.quantity shouldBe 0.0
+      }
+    }
   }
 })
