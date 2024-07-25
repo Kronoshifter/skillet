@@ -378,8 +378,8 @@ private fun IngredientComponent(
 
     Box(
       modifier = Modifier
-        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-        .clip(RoundedCornerShape(percent = 25))
+        .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
+        .clip(MaterialTheme.shapes.medium)
         .background(MaterialTheme.colorScheme.primary)
         .applyIf(selectedUnit != null) {
           border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, RoundedCornerShape(percent = 25))
@@ -400,25 +400,39 @@ private fun IngredientComponent(
         verticalArrangement = Arrangement.SpaceAround,
         modifier = Modifier.align(Alignment.Center)
       ) {
-        Text(
-          text = quantity,
-          color = MaterialTheme.colorScheme.onPrimary,
-          fontSize = 18.sp,
-          modifier = Modifier.offset(y = 4.dp)
-        )
+        if (measurement.quantity > 0 && measurement.unit != MeasurementUnit.None) {
+          Text(
+            text = quantity,
+            color = MaterialTheme.colorScheme.onPrimary,
+            fontSize = 18.sp,
+            modifier = Modifier.offset(y = 4.dp)
+          )
 
-        Text(
-          text = measurement.unit.abbreviation,
-          color = MaterialTheme.colorScheme.onPrimary,
-          fontSize = 12.sp
-        )
+          Text(
+            text = measurement.unit.abbreviation,
+            color = MaterialTheme.colorScheme.onPrimary,
+            fontSize = 12.sp
+          )
+        }
       }
     }
 
-    Text(
-      text = ingredient.name.lowercase(),
-      fontWeight = FontWeight.Bold
-    )
+    Column(
+      modifier = Modifier
+    ) {
+      Text(
+        text = ingredient.name.lowercase(),
+        fontWeight = FontWeight.Bold
+      )
+
+      ingredient.comment?.let {
+        Text(
+          text = it.lowercase(),
+          color = MaterialTheme.colorScheme.secondary,
+          fontSize = 14.sp
+        )
+      }
+    }
   }
 
 

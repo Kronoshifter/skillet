@@ -53,7 +53,8 @@ class RecipeRepository {
       ),
       Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
       Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup)),
+      Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup), comment = "separated"),
+      Ingredient("Salt", measurement = Measurement(0.0, MeasurementUnit.None)),
     )
 
     val instructions = listOf(
