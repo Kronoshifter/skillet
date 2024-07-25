@@ -312,6 +312,8 @@ private fun IngredientsList(
     return
   }
 
+  //TODO: sort ingredients so that quantity-based ingredients come first
+
   LazyColumn(
     modifier = Modifier.fillMaxSize(),
     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
@@ -376,31 +378,36 @@ private fun IngredientComponent(
       .height(IntrinsicSize.Min),
   ) {
 
-    Box(
-      modifier = Modifier
-        .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
-        .clip(MaterialTheme.shapes.medium)
-        .background(MaterialTheme.colorScheme.primary)
-        .applyIf(selectedUnit != null) {
-          border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, RoundedCornerShape(percent = 25))
-        }
-        .clickable(enabled = enabled, onClick = onClick),
-      contentAlignment = Alignment.Center
-    ) {
-      val measurement = ingredient.measurement.scale(scale).run {
-        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
-      }
-      val quantity = when (measurement.unit.system) {
-        MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
-        else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
-      }
+    val measurement = ingredient.measurement.scale(scale).run {
+      selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+    }
 
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceAround,
-        modifier = Modifier.align(Alignment.Center)
+    val boxSize = 56.dp
+
+    if (measurement.quantity > 0 && measurement.unit != MeasurementUnit.None) {
+      Box(
+        modifier = Modifier
+          .sizeIn(minWidth = boxSize, minHeight = boxSize)
+          .clip(MaterialTheme.shapes.medium)
+          .background(MaterialTheme.colorScheme.primary)
+          .applyIf(selectedUnit != null) {
+            border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, RoundedCornerShape(percent = 25))
+          }
+          .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center
       ) {
-        if (measurement.quantity > 0 && measurement.unit != MeasurementUnit.None) {
+
+        val quantity = when (measurement.unit.system) {
+          MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
+          else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+        }
+
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.SpaceAround,
+          modifier = Modifier.align(Alignment.Center)
+        ) {
+
           Text(
             text = quantity,
             color = MaterialTheme.colorScheme.onPrimary,
@@ -413,13 +420,14 @@ private fun IngredientComponent(
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 12.sp
           )
+
         }
       }
+    } else {
+      Spacer(modifier = Modifier.size(boxSize))
     }
 
-    Column(
-      modifier = Modifier
-    ) {
+    Column {
       Text(
         text = ingredient.name.lowercase(),
         fontWeight = FontWeight.Bold
