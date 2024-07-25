@@ -268,6 +268,15 @@ class MeasurementTests : FunSpec({
         }
       }
     }
+
+    context("Misc") {
+      test("Normalization of no unit") {
+        val measurement = Measurement(0.0, MeasurementUnit.None)
+        val normalized = measurement.normalize()
+        normalized.quantity shouldBe 0.0
+        normalized.unit shouldBe MeasurementUnit.None
+      }
+    }
   }
 
   context("Normalizing") {
