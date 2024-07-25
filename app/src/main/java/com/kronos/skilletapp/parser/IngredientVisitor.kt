@@ -18,8 +18,8 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
 
     val unit = ctx.measurement()?.WORD()?.text?.let { unit ->
       MeasurementUnit.values.firstOrNull {
-        it.name == unit || it.abbreviation == unit
-      } ?: MeasurementUnit.Custom(unit, unit)
+        it.name == unit || it.aliases.contains(unit)
+      } ?: MeasurementUnit.Custom(unit)
     } ?: MeasurementUnit.None
     val quantity = with(ctx.measurement()?.quantity()) {
       this?.decimal()?.text?.toDoubleOrNull() ?: this?.fraction()?.let {

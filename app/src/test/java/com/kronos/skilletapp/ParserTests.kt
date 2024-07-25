@@ -59,9 +59,38 @@ class ParserTests : FunSpec({
       }
 
       test("No Quantity") {
-        val ingredient = IngredientParser.parseIngredient("onion\n")
+        val ingredient = IngredientParser.parseIngredient("salt\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.None
         ingredient.measurement.quantity shouldBe 0.0
+      }
+    }
+
+    context("Ingredient Name") {
+      test("Single Word") {
+        val ingredient = IngredientParser.parseIngredient("1 cup butter\n")
+        ingredient.name shouldBe "butter"
+      }
+
+      test("Multi-words") {
+        val ingredient = IngredientParser.parseIngredient("1 cup red onion, chopped\n")
+        ingredient.name shouldBe "red onion"
+      }
+    }
+
+    context("Comment") {
+      test("Comma") {
+        val ingredient = IngredientParser.parseIngredient("1 cup butter, separated\n")
+        ingredient.comment shouldBe "separated"
+      }
+
+      test("Parenthesis") {
+        val ingredient = IngredientParser.parseIngredient("1 cup butter (sliced)\n")
+        ingredient.comment shouldBe "sliced"
+      }
+
+      test("Multi-words") {
+        val ingredient = IngredientParser.parseIngredient("1 onion, thinly sliced\n")
+        ingredient.comment shouldBe "thinly sliced"
       }
     }
   }

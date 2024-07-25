@@ -119,7 +119,7 @@ enum class MeasurementSystem {
 sealed class MeasurementUnit(
   open val name: String,
   open val factor: Double,
-  open val abbreviation: String,
+  open val aliases: List<String>, //TODO: replace with list of aliases
   open val system: MeasurementSystem,
   open val normalizationLow: Double,
   open val normalizationHigh: Double,
@@ -129,14 +129,14 @@ sealed class MeasurementUnit(
   sealed class Mass(
     override val name: String,
     override val factor: Double,
-    override val abbreviation: String,
+    override val aliases: List<String>,
     override val normalizationLow: Double,
     override val normalizationHigh: Double,
     override val system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
     factor = factor,
-    abbreviation = abbreviation,
+    aliases = aliases,
     system = system,
     normalizationLow = normalizationLow,
     normalizationHigh = normalizationHigh,
@@ -145,14 +145,14 @@ sealed class MeasurementUnit(
   sealed class Volume(
     override val name: String,
     override val factor: Double,
-    override val abbreviation: String,
+    override val aliases: List<String>,
     override val normalizationLow: Double,
     override val normalizationHigh: Double,
     override val system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
     factor = factor,
-    abbreviation = abbreviation,
+    aliases = aliases,
     system = system,
     normalizationLow = normalizationLow,
     normalizationHigh = normalizationHigh,
@@ -161,11 +161,10 @@ sealed class MeasurementUnit(
 
   data class Custom(
     override val name: String,
-    override val abbreviation: String,
   ) : MeasurementUnit(
     name = name,
     factor = 1.0,
-    abbreviation = abbreviation,
+    aliases = listOf(name),
     system = MeasurementSystem.Other,
     normalizationLow = 0.0,
     normalizationHigh = Double.POSITIVE_INFINITY,
@@ -175,7 +174,7 @@ sealed class MeasurementUnit(
   data object None : MeasurementUnit(
     name = "none",
     factor = 1.0,
-    abbreviation = "none",
+    aliases = listOf("none"),
     system = MeasurementSystem.Other,
     normalizationLow = 0.0,
     normalizationHigh = Double.POSITIVE_INFINITY,
@@ -189,7 +188,7 @@ sealed class MeasurementUnit(
   data object Milliliter : Volume(
     name = "milliliter",
     factor = 1.0,
-    abbreviation = "mL",
+    aliases = listOf("mL"),
     normalizationLow = 0.0,
     normalizationHigh = 1000.0,
     system = MeasurementSystem.Metric
@@ -198,7 +197,7 @@ sealed class MeasurementUnit(
   data object Liter : Volume(
     name = "liter",
     factor = 1000.0,
-    abbreviation = "L",
+    aliases = listOf("L"),
     normalizationLow = 0.5,
     normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
@@ -209,7 +208,7 @@ sealed class MeasurementUnit(
   data object Pinch : Volume(
     factor = 0.3080575,
     name = "pinch",
-    abbreviation = "pinch",
+    aliases = listOf("pinch"),
     normalizationLow = 0.0,
     normalizationHigh = 2.0,
     system = MeasurementSystem.Imperial
@@ -218,7 +217,7 @@ sealed class MeasurementUnit(
   data object Dash : Volume(
     factor = 0.616115,
     name = "dash",
-    abbreviation = "dash",
+    aliases = listOf("dash"),
     normalizationLow = 0.5,
     normalizationHigh = 2.0,
     system = MeasurementSystem.Imperial
@@ -227,7 +226,7 @@ sealed class MeasurementUnit(
   data object Teaspoon : Volume(
     factor = 4.92892,
     name = "teaspoon",
-    abbreviation = "tsp",
+    aliases = listOf("tsp", "t", "teaspoons"),
     normalizationLow = 0.25,
     normalizationHigh = 3.0,
     system = MeasurementSystem.Imperial
@@ -236,7 +235,7 @@ sealed class MeasurementUnit(
   data object Tablespoon : Volume(
     factor = 14.7868,
     name = "tablespoon",
-    abbreviation = "tbsp",
+    aliases = listOf("tbsp", "Tbsp", "T", "tbs", "Tbs", "tablespoons", "Tablespoons"),
     normalizationLow = 0.334,
     normalizationHigh = 4.0,
     system = MeasurementSystem.Imperial
@@ -245,7 +244,7 @@ sealed class MeasurementUnit(
   data object Cup : Volume(
     factor = 236.588,
     name = "cup",
-    abbreviation = "cup",
+    aliases = listOf("c", "C", "cups"),
     normalizationLow = 0.25,
     normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
@@ -254,7 +253,7 @@ sealed class MeasurementUnit(
   data object Pint : Volume(
     factor = 473.176,
     name = "pint",
-    abbreviation = "pt",
+    aliases = listOf("pt", "pints", "Pint"),
     normalizationLow = 0.5,
     normalizationHigh = 2.0,
     system = MeasurementSystem.Imperial
@@ -263,7 +262,7 @@ sealed class MeasurementUnit(
   data object Quart : Volume(
     factor = 946.353,
     name = "quart",
-    abbreviation = "qt",
+    aliases = listOf("qt", "quarts", "Quart"),
     normalizationLow = 0.5,
     normalizationHigh = 4.0,
     system = MeasurementSystem.Imperial
@@ -272,7 +271,7 @@ sealed class MeasurementUnit(
   data object Gallon : Volume(
     factor = 3785.41,
     name = "gallon",
-    abbreviation = "gal",
+    aliases = listOf("gal", "gallons", "Gallon"),
     normalizationLow = 0.25,
     normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
@@ -281,7 +280,7 @@ sealed class MeasurementUnit(
   data object FluidOunce : Volume(
     factor = 29.5735,
     name = "fluid ounce",
-    abbreviation = "fl oz",
+    aliases = listOf("fl oz"),
     normalizationLow = 0.5,
     normalizationHigh = 8.0,
     system = MeasurementSystem.Imperial
@@ -294,7 +293,7 @@ sealed class MeasurementUnit(
   data object Gram : Mass(
     factor = 1.0,
     name = "gram",
-    abbreviation = "g",
+    aliases = listOf("g", "grams"),
     normalizationLow = 0.0,
     normalizationHigh = 1000.0,
     system = MeasurementSystem.Metric
@@ -303,7 +302,7 @@ sealed class MeasurementUnit(
   data object Kilogram : Mass(
     factor = 1000.0,
     name = "kilogram",
-    abbreviation = "kg",
+    aliases = listOf("kg", "kilograms"),
     normalizationLow = 0.5,
     normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
@@ -314,7 +313,7 @@ sealed class MeasurementUnit(
   data object Ounce : Mass(
     factor = 28.3495,
     name = "ounce",
-    abbreviation = "oz",
+    aliases = listOf("oz", "ounces", "Ounce"),
     normalizationLow = 0.0,
     normalizationHigh = 16.0,
     system = MeasurementSystem.Imperial
@@ -323,7 +322,7 @@ sealed class MeasurementUnit(
   data object Pound : Mass(
     factor = 453.592,
     name = "pound",
-    abbreviation = "lb",
+    aliases = listOf("lb", "lbs", "pounds", "Pound"),
     normalizationLow = 0.5,
     normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial

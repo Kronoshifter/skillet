@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
+import org.stringtemplate.v4.compiler.Bytecode.instructions
 import kotlin.time.Duration.Companion.seconds
 
 class RecipeRepository {
@@ -49,7 +50,7 @@ class RecipeRepository {
       Ingredient("Butter", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
       Ingredient(
         "Garlic",
-        measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+        measurement = Measurement(2.0, MeasurementUnit.Custom("clove"))
       ),
       Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
       Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
@@ -71,7 +72,7 @@ class RecipeRepository {
           Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
           Ingredient(
             "Garlic",
-            measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+            measurement = Measurement(2.0, MeasurementUnit.Custom("clove"))
           ),
           Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
           Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),

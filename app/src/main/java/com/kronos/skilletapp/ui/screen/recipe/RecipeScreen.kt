@@ -50,7 +50,6 @@ import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 import org.koin.androidx.compose.getViewModel
 import kotlin.collections.set
-import kotlin.math.roundToInt
 
 private object RecipeContentTab {
   const val INGREDIENTS = 0
@@ -418,7 +417,7 @@ private fun IngredientComponent(
 
           if (measurement.unit !is MeasurementUnit.None) {
             Text(
-              text = measurement.unit.abbreviation,
+              text = measurement.unit.aliases.first(),
               color = MaterialTheme.colorScheme.onPrimary,
               fontSize = 12.sp
             )
@@ -517,7 +516,7 @@ private fun UnitSelectionBottomSheet(
               )
 
               Text(
-                text = measurement.unit.abbreviation,
+                text = measurement.unit.aliases.first(),
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 12.sp
               )
@@ -654,7 +653,7 @@ private fun InstructionIngredientPill(
       }
 
       Text(
-        text = "$quantity ${measurement.unit.abbreviation}",
+        text = "$quantity ${measurement.unit.aliases}",
         color = MaterialTheme.colorScheme.onPrimary,
         fontSize = 18.sp,
         modifier = Modifier.padding(8.dp)
@@ -821,7 +820,7 @@ private fun InstructionComponentPreview() {
       Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
       Ingredient(
         "Garlic",
-        measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
+        measurement = Measurement(2.0, MeasurementUnit.Custom("clove"))
       ),
       Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
       Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
