@@ -8,14 +8,15 @@ import org.antlr.v4.runtime.CommonTokenStream
 
 object IngredientParser {
 
-  fun parseIngredient(text: String): Ingredient {
-    val stream = CharStreams.fromString(text)
-    val lexer = IngredientGrammarLexer(stream)
-    val tokens = CommonTokenStream(lexer)
-    val parser = IngredientGrammarParser(tokens)
-
-    val context = parser.ingredient()
-    val visitor = IngredientVisitor()
-    return visitor.visitIngredient(context)
-  }
+  fun parseIngredient(text: String): Ingredient = IngredientVisitor().visitIngredient(
+    IngredientGrammarParser(
+      CommonTokenStream(
+        IngredientGrammarLexer(
+          CharStreams.fromString(
+            text
+          )
+        )
+      )
+    ).ingredient()
+  )
 }
