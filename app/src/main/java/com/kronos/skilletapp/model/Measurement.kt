@@ -68,7 +68,7 @@ data class Measurement(
     is MeasurementUnit.Mass -> convert(to as MeasurementUnit.Mass)
     is MeasurementUnit.Volume -> convert(to as MeasurementUnit.Volume)
     is MeasurementUnit.Custom -> copy(unit = to)
-    MeasurementUnit.None -> copy(unit = to)
+    MeasurementUnit.None -> this
   }
 
   fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(quantity), unit = to)
@@ -244,7 +244,7 @@ sealed class MeasurementUnit(
   data object Cup : Volume(
     factor = 236.588,
     name = "cup",
-    aliases = listOf("c", "C", "cups"),
+    aliases = listOf("cup", "c", "C", "cups"),
     normalizationLow = 0.25,
     normalizationHigh = Double.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
