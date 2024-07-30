@@ -157,7 +157,7 @@ fun IngredientPill(
       }
 
       Text(
-        text = "$quantity ${measurement.unit.aliases}",
+        text = "$quantity ${measurement.unit.aliases.first()}",
         color = MaterialTheme.colorScheme.onPrimary,
         fontSize = 18.sp,
         modifier = Modifier.padding(8.dp)

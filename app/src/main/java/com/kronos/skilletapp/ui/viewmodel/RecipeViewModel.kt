@@ -1,12 +1,10 @@
 package com.kronos.skilletapp.ui.viewmodel
 
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.github.michaelbull.result.mapBoth
+import com.github.michaelbull.result.mapOrElse
 import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
@@ -16,7 +14,6 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlin.collections.set
 
 data class RecipeUiState(
   val recipe: Recipe,
@@ -30,17 +27,15 @@ class RecipeViewModel(
   private val args = handle.toRoute<Route.Recipe>()
   private val recipeId = args.recipeId
 
-  private val _selectedUnits = mutableMapOf<Ingredient, MeasurementUnit?>()
-  private val _selectedUnitsFlow = MutableStateFlow<Map<Ingredient, MeasurementUnit?>>(emptyMap())
-  val selectedUnits = _selectedUnitsFlow.asStateFlow()
+  private val _selectedUnits = MutableStateFlow<Map<Ingredient, MeasurementUnit?>>(emptyMap())
+  val selectedUnits = _selectedUnits.asStateFlow()
 
   private val _isLoading = MutableStateFlow(false)
   private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
     .map { result ->
-      result.mapBoth(
-        success = { UiState.Success(it) },
-        failure = { UiState.Error(it) }
-      )
+      result.mapOrElse({ UiState.Error(it) }) {
+        UiState.Success(it)
+      }
     }
     .catch { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
 
@@ -64,11 +59,10 @@ class RecipeViewModel(
   )
 
   fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
-      _selectedUnits[ingredient] = unit
-      _selectedUnitsFlow.value = _selectedUnits.toMap()
+    _selectedUnits.update {
+      it + (ingredient to unit)
+    }
   }
-
-  fun getSelectedUnit(ingredient: Ingredient): MeasurementUnit? = _selectedUnits[ingredient]
 
   fun refresh() {
     _isLoading.value = true
