@@ -1,13 +1,13 @@
 package com.kronos.skilletapp.data
 
 import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.toResultOr
 import com.kronos.skilletapp.model.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
-import org.stringtemplate.v4.compiler.Bytecode.instructions
+import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 class RecipeRepository {
@@ -29,8 +29,66 @@ class RecipeRepository {
 
   fun fetchRecipesStream(): Flow<List<Recipe>> = flow { emit(fetchRecipes()) }
 
-  fun addRecipe(recipe: Recipe) {
+  fun upsert(recipe: Recipe) {
     recipeSource[recipe.id] = recipe
+  }
+
+  suspend fun createRecipe(
+    name: String,
+    description: String,
+    notes: String,
+    servings: Int,
+    prepTime: Int,
+    cookTime: Int,
+    source: String,
+    sourceName: String,
+    ingredients: List<Ingredient>,
+    instructions: List<Instruction>,
+    equipment: List<Equipment>,
+  ) {
+    val recipe = Recipe(
+      id = UUID.randomUUID().toString(),
+      name = name,
+      description = description,
+      notes = notes,
+      servings = servings,
+      time = RecipeTime(prepTime, cookTime),
+      source = RecipeSource(sourceName, source),
+      ingredients = ingredients,
+      instructions = instructions,
+      equipment = equipment
+    )
+
+    upsert(recipe)
+  }
+
+  suspend fun updateRecipe(
+    id: String,
+    name: String,
+    description: String,
+    notes: String,
+    servings: Int,
+    prepTime: Int,
+    cookTime: Int,
+    source: String,
+    sourceName: String,
+    ingredients: List<Ingredient>,
+    instructions: List<Instruction>,
+    equipment: List<Equipment>,
+  ) {
+    val recipe = fetchRecipe(id).expect { "No recipe with id: $id" }.copy(
+      name = name,
+      description = description,
+      notes = notes,
+      servings = servings,
+      time = RecipeTime(prepTime, cookTime),
+      source = RecipeSource(sourceName, source),
+      ingredients = ingredients,
+      instructions = instructions,
+      equipment = equipment
+    )
+
+    upsert(recipe)
   }
 
   suspend fun refreshRecipes() {
@@ -98,10 +156,10 @@ class RecipeRepository {
       notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
     )
 
-    addRecipe(recipe)
+    upsert(recipe)
 
     repeat(10) {
-      addRecipe(
+      upsert(
         Recipe(
           id = "recipe-$it",
           name = "Recipe $it",

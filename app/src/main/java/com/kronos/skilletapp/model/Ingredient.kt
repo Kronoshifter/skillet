@@ -1,9 +1,12 @@
 package com.kronos.skilletapp.model
 
+import java.util.*
+
 data class Ingredient(
   val name: String,
-  val comment: String? = null,
   val measurement: Measurement,
+  val comment: String? = null,
+  val id: String = UUID.randomUUID().toString(),
 )
 
 enum class IngredientType {

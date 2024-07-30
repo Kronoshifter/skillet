@@ -41,6 +41,11 @@ import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.viewmodel.dsl.viewModelOf
+import org.koin.core.KoinApplication
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.KoinAppDeclaration
+import org.koin.dsl.module
 import kotlin.collections.set
 import kotlin.math.roundToInt
 
@@ -440,7 +445,7 @@ private fun InstructionComponent(
 
 @Preview
 @Composable
-private fun RecipePagePreview() {
+private fun RecipeContentPreview() {
   val repository = RecipeRepository()
   val recipe = runBlocking { repository.fetchRecipe("test") }
 
