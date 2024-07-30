@@ -18,8 +18,8 @@ data class Recipe(
 }
 
 data class RecipeTime(
-  val preparation: Int,
-  val cooking: Int,
+  val preparation: Int = 0,
+  val cooking: Int = 0,
 ) {
 
   val total: Int
@@ -27,6 +27,6 @@ data class RecipeTime(
 }
 
 data class RecipeSource(
-  val name: String,
-  val source: String
+  val name: String = "",
+  val source: String = ""
 )
