@@ -127,7 +127,7 @@ class AddEditRecipeViewModel(
   fun updateIngredient(ingredient: Ingredient) {
     _addEditRecipeUiState.update { state ->
       state.copy(
-        ingredients = updateList(state.ingredients, ingredient) { it.id == ingredient.id }
+        ingredients = state.ingredients.update(ingredient) { it.id }
       )
     }
   }
@@ -141,7 +141,7 @@ class AddEditRecipeViewModel(
   fun updateInstruction(instruction: Instruction) {
     _addEditRecipeUiState.update { state ->
       state.copy(
-        instructions = updateList(state.instructions, instruction) { it.id == instruction.id }
+        instructions = state.instructions.update(instruction) { it.id }
       )
     }
   }
@@ -155,7 +155,7 @@ class AddEditRecipeViewModel(
   fun updateEquipment(equipment: Equipment) {
     _addEditRecipeUiState.update { state ->
       state.copy(
-        equipment = updateList(state.equipment, equipment) { it.id == equipment.id }
+        equipment = state.equipment.update(equipment) { it.id }
       )
     }
   }
@@ -166,13 +166,14 @@ class AddEditRecipeViewModel(
     }
   }
 
-  private fun <T> updateList(
-    list: List<T>,
+  private fun <T, R : Comparable<R>> List<T>.update(
     item: T,
-    check: (T) -> Boolean = { true }
-  ) = list.find(check)?.let {
-    list.map { i -> if (check(i)) item else i }
-  } ?: (list + item)
+    selector: (T) -> R
+  ) = if (any { selector(it) == selector(item) }) {
+    map { i -> if (selector(i) == selector(item)) item else i }
+  } else {
+    this + item
+  }
 
   private fun createRecipe() = viewModelScope.launch {
     with(_addEditRecipeUiState.value) {
