@@ -71,7 +71,7 @@ fun RecipeScreen(
           }
         },
         actions = {
-          IconButton(onClick = { /*TODO*/ }) {
+          IconButton(onClick = onEdit) {
             Icon(Icons.Filled.Edit, contentDescription = "Edit")
           }
 

@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 sealed interface Route {
   @Serializable data object RecipeList : Route
   @Serializable data class Recipe(val recipeId: String) : Route
-  @Serializable data class AddEditRecipe(val recipeId: String?) : Route
+  @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null) : Route
 }
 
 class SkilletNavigationActions(private val navController: NavHostController) {
@@ -15,8 +15,8 @@ class SkilletNavigationActions(private val navController: NavHostController) {
     navController.navigate(Route.Recipe(recipeId))
   }
 
-  fun navigateToAddEditRecipe(recipeId: String? = null) {
-    navController.navigate(Route.AddEditRecipe(recipeId)) {
+  fun navigateToAddEditRecipe(title: String, recipeId: String? = null) {
+    navController.navigate(Route.AddEditRecipe(title, recipeId)) {
       popUpTo(navController.graph.startDestinationId) {
         inclusive = true
         saveState = true

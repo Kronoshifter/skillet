@@ -34,6 +34,7 @@ class AddEditRecipeViewModel(
 ) : ViewModel() {
   private val args = handle.toRoute<Route.AddEditRecipe>()
   private val recipeId = args.recipeId
+  private lateinit var createdId: String
 
   private val _isLoading = MutableStateFlow(false)
   private val _addEditRecipeUiState: MutableStateFlow<AddEditRecipeUiState> = MutableStateFlow(AddEditRecipeUiState())
@@ -53,6 +54,10 @@ class AddEditRecipeViewModel(
     recipeId?.let {
       loadRecipe(it)
     }
+  }
+
+  fun getRecipeId(): String {
+    return recipeId ?: createdId
   }
 
   fun saveRecipe() {
@@ -166,6 +171,12 @@ class AddEditRecipeViewModel(
     }
   }
 
+  fun userMessageShown() {
+    _addEditRecipeUiState.update {
+      it.copy(userMessage = null)
+    }
+  }
+
   private fun <T, R : Comparable<R>> List<T>.update(
     item: T,
     selector: (T) -> R
@@ -176,7 +187,7 @@ class AddEditRecipeViewModel(
   }
 
   private fun createRecipe() = viewModelScope.launch {
-    with(_addEditRecipeUiState.value) {
+    createdId = with(_addEditRecipeUiState.value) {
       recipeRepository.createRecipe(
         name = name,
         description = description,

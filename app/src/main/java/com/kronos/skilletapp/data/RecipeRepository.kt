@@ -45,7 +45,7 @@ class RecipeRepository {
     ingredients: List<Ingredient>,
     instructions: List<Instruction>,
     equipment: List<Equipment>,
-  ) {
+  ): String {
     val recipe = Recipe(
       id = UUID.randomUUID().toString(),
       name = name,
@@ -60,6 +60,8 @@ class RecipeRepository {
     )
 
     upsert(recipe)
+
+    return recipe.id
   }
 
   suspend fun updateRecipe(

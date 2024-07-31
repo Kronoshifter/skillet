@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
 
@@ -28,7 +29,7 @@ fun SkilletNavGraph(
   ) {
     composable<Route.RecipeList> {
       RecipeListScreen(
-        onAddRecipe = { navActions.navigateToAddEditRecipe() },
+        onAddRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
         onRecipeClick = { navActions.navigateToRecipe(it) }
       )
     }
@@ -40,13 +41,21 @@ fun SkilletNavGraph(
         scaleOut() + fadeOut()
       }
     ) {
+      val args = it.toRoute<Route.Recipe>()
       RecipeScreen(
-        onBack = { navController.popBackStack() }
+        onBack = { navController.popBackStack() },
+        onEdit = { navActions.navigateToAddEditRecipe("Edit Recipe", args.recipeId) }
       )
     }
     composable<Route.AddEditRecipe> { backStackEntry ->
-      val recipeId = backStackEntry.toRoute<Route.AddEditRecipe>().recipeId
-//      AddEditRecipeScreen(recipeId = recipeId)
+      val args = backStackEntry.toRoute<Route.AddEditRecipe>()
+      AddEditRecipeScreen(
+        title = args.title,
+        onBack = { navController.popBackStack() },
+        onRecipeUpdate = { recipeId ->
+          navActions.navigateToRecipe(recipeId)
+        },
+      )
     }
   }
 }
