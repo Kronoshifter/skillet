@@ -125,12 +125,10 @@ class AddEditRecipeViewModel(
   }
 
   fun updateIngredient(ingredient: Ingredient) {
-    _addEditRecipeUiState.update {
-      if (it.ingredients.contains(ingredient)) {
-        it.copy(ingredients = it.ingredients.map { i -> if (i.id == ingredient.id) ingredient else i })
-      } else {
-        it.copy(ingredients = it.ingredients + ingredient)
-      }
+    _addEditRecipeUiState.update { state ->
+      state.copy(
+        ingredients = updateList(state.ingredients, ingredient) { it.id == ingredient.id }
+      )
     }
   }
 
@@ -141,12 +139,10 @@ class AddEditRecipeViewModel(
   }
 
   fun updateInstruction(instruction: Instruction) {
-    _addEditRecipeUiState.update {
-      if (it.instructions.contains(instruction)) {
-        it.copy(instructions = it.instructions.map { i -> if (i.id == instruction.id) instruction else i })
-      } else {
-        it.copy(instructions = it.instructions + instruction)
-      }
+    _addEditRecipeUiState.update { state ->
+      state.copy(
+        instructions = updateList(state.instructions, instruction) { it.id == instruction.id }
+      )
     }
   }
 
@@ -155,6 +151,28 @@ class AddEditRecipeViewModel(
       it.copy(instructions = it.instructions - instruction)
     }
   }
+
+  fun updateEquipment(equipment: Equipment) {
+    _addEditRecipeUiState.update { state ->
+      state.copy(
+        equipment = updateList(state.equipment, equipment) { it.id == equipment.id }
+      )
+    }
+  }
+
+  fun removeEquipment(equipment: Equipment) {
+    _addEditRecipeUiState.update {
+      it.copy(equipment = it.equipment - equipment)
+    }
+  }
+
+  private fun <T> updateList(
+    list: List<T>,
+    item: T,
+    check: (T) -> Boolean = { true }
+  ) = list.find(check)?.let {
+    list.map { i -> if (check(i)) item else i }
+  } ?: (list + item)
 
   private fun createRecipe() = viewModelScope.launch {
     with(_addEditRecipeUiState.value) {
