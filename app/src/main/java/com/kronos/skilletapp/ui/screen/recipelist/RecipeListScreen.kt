@@ -52,7 +52,7 @@ fun RecipeListScreen(
       )
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = { /*TODO*/ }) {
+      FloatingActionButton(onClick = onAddRecipe) {
         Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
       }
     },
