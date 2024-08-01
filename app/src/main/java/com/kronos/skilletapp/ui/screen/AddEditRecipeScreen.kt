@@ -221,10 +221,12 @@ private fun IngredientsContent(
       modifier = Modifier.fillMaxWidth(),
       placeholder = { Text(text = "Add an ingredient") },
       trailingIcon = {
-        IconButton(
-          onClick = { ingredientInput = "" }
-        ) {
-          Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+        if (ingredientInput.isNotBlank()) {
+          IconButton(
+            onClick = { ingredientInput = "" }
+          ) {
+            Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+          }
         }
       },
       singleLine = true,
