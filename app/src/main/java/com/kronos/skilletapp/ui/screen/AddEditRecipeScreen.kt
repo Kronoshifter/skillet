@@ -1,20 +1,25 @@
 package com.kronos.skilletapp.ui.screen
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import org.koin.androidx.compose.getViewModel
@@ -72,6 +77,9 @@ fun AddEditRecipeScreen(
         ingredients = data.ingredients,
         instructions = data.instructions,
         equipment = data.equipment,
+        onNameChanged = vm::updateName,
+        onDescriptionChanged = vm::updateDescription,
+        onIngredientChanged = vm::updateIngredient,
       )
 
       LaunchedEffect(data.isRecipeSaved) {
@@ -103,15 +111,103 @@ fun AddEditRecipeContent(
   ingredients: List<Ingredient>,
   instructions: List<Instruction>,
   equipment: List<Equipment>,
-  modifier: Modifier = Modifier
+  onNameChanged: (String) -> Unit = {},
+  onDescriptionChanged: (String) -> Unit = {},
+  onNotesChanged: (String) -> Unit = {},
+  onServingsChanged: (Int) -> Unit = {},
+  onPrepTimeChanged: (Int) -> Unit = {},
+  onCookTimeChanged: (Int) -> Unit = {},
+  onSourceChanged: (String) -> Unit = {},
+  onSourceNameChanged: (String) -> Unit = {},
+  onIngredientChanged: (Ingredient) -> Unit = {},
+  onRemoveIngredient: (Ingredient) -> Unit = {},
+  onInstructionChanged: (Instruction) -> Unit = {},
+  onRemoveInstruction: (Instruction) -> Unit = {},
+  onEquipmentChanged: (Equipment) -> Unit = {},
+  onRemoveEquipment: (Equipment) -> Unit = {},
+  modifier: Modifier = Modifier,
 ) {
   Surface(
     modifier = modifier,
     color = MaterialTheme.colorScheme.background
   ) {
     Column(
-      
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(8.dp)
+        .verticalScroll(rememberScrollState())
     ) {
+      val keyboard = LocalSoftwareKeyboardController.current
+
+      Text(
+        text = "Title",
+        style = MaterialTheme.typography.titleLarge
+      )
+
+      OutlinedTextField(
+        value = name,
+        onValueChange = onNameChanged,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(text = "Name") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+          capitalization = KeyboardCapitalization.Words,
+          imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+      )
+
+      Text(
+        text = "Description",
+        style = MaterialTheme.typography.titleLarge
+      )
+
+      OutlinedTextField(
+        value = description,
+        onValueChange = onDescriptionChanged,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(text = "Description") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+          capitalization = KeyboardCapitalization.Words,
+          imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+      )
+
+      Text(
+        text = "Ingredients",
+        style = MaterialTheme.typography.titleLarge
+      )
+
+      var ingredientInput by remember { mutableStateOf("") }
+
+      OutlinedTextField(
+        value = ingredientInput,
+        onValueChange = { ingredientInput = it },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text(text = "Add an ingredient") },
+        trailingIcon = {
+          IconButton(
+            onClick = { ingredientInput = "" }
+          ) {
+            Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+          }
+        },
+        keyboardOptions = KeyboardOptions(
+          imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+          onDone = {
+            onIngredientChanged(IngredientParser.parseIngredient(ingredientInput))
+            keyboard?.hide()
+            ingredientInput = ""
+          }
+        )
+      )
+
+//      IngredientList(ingredients)
 
     }
   }

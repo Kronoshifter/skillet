@@ -61,9 +61,9 @@ class AddEditRecipeViewModel(
   }
 
   fun saveRecipe() {
-    if (_addEditRecipeUiState.value.name.isBlank() || _addEditRecipeUiState.value.description.isBlank()) {
+    checkForInvalidForm()?.let { msg ->
       _addEditRecipeUiState.update {
-        it.copy(userMessage = "Recipe name and description are required")
+        it.copy(userMessage = msg)
       }
       return
     }
@@ -257,6 +257,19 @@ class AddEditRecipeViewModel(
         }
 
       _isLoading.update { false }
+    }
+  }
+
+  private fun checkForInvalidForm(): String? = with(_addEditRecipeUiState.value) {
+    return when {
+      name.isBlank() -> "Name cannot be blank"
+      description.isBlank() -> "Description cannot be blank"
+      ingredients.isEmpty() -> "At least one ingredient is required"
+      instructions.isEmpty() -> "At least one instruction is required"
+      equipment.isEmpty() -> "At least one equipment is required"
+      servings <= 0 -> "Servings must be greater than 0"
+      cookTime <= 0 -> "Cook time must be greater than 0"
+      else -> null
     }
   }
 }
