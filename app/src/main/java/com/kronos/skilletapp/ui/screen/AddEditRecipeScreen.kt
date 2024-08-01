@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -21,6 +22,7 @@ import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import org.koin.androidx.compose.getViewModel
 
@@ -176,39 +178,77 @@ fun AddEditRecipeContent(
         keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
       )
 
-      Text(
-        text = "Ingredients",
-        style = MaterialTheme.typography.titleLarge
-      )
-
-      var ingredientInput by remember { mutableStateOf("") }
-
-      OutlinedTextField(
-        value = ingredientInput,
-        onValueChange = { ingredientInput = it },
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text(text = "Add an ingredient") },
-        trailingIcon = {
-          IconButton(
-            onClick = { ingredientInput = "" }
-          ) {
-            Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
-          }
-        },
-        keyboardOptions = KeyboardOptions(
-          imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(
-          onDone = {
-            onIngredientChanged(IngredientParser.parseIngredient(ingredientInput))
-            keyboard?.hide()
-            ingredientInput = ""
-          }
-        )
-      )
-
-//      IngredientList(ingredients)
+      IngredientsContent(onIngredientChanged, ingredients)
 
     }
   }
+}
+
+@Composable
+private fun IngredientsContent(
+  onIngredientChanged: (Ingredient) -> Unit,
+  ingredients: List<Ingredient>,
+) {
+  val keyboard = LocalSoftwareKeyboardController.current
+  
+  Text(
+    text = "Ingredients",
+    style = MaterialTheme.typography.titleLarge
+  )
+
+  var ingredientInput by remember { mutableStateOf("") }
+
+  OutlinedTextField(
+    value = ingredientInput,
+    onValueChange = { ingredientInput = it },
+    modifier = Modifier.fillMaxWidth(),
+    placeholder = { Text(text = "Add an ingredient") },
+    trailingIcon = {
+      IconButton(
+        onClick = { ingredientInput = "" }
+      ) {
+        Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+      }
+    },
+    keyboardOptions = KeyboardOptions(
+      imeAction = ImeAction.Done
+    ),
+    keyboardActions = KeyboardActions(
+      onDone = {
+        onIngredientChanged(IngredientParser.parseIngredient(ingredientInput))
+        keyboard?.hide()
+        ingredientInput = ""
+      }
+    )
+  )
+
+  Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(start = 8.dp)
+  ) {
+    ingredients.forEach { ingredient ->
+      var editing by remember { mutableStateOf(false) }
+
+      if (!editing) {
+        IngredientRow(
+          ingredient = ingredient,
+          onClick = { editing = true },
+        )
+      } else {
+        IngredientEdit(
+          ingredient = ingredient.toString()
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun IngredientEdit(
+  ingredient: String,
+) {
+  var ingredientInput by remember { mutableStateOf(ingredient) }
+//  OutlinedTextField(value =, onValueChange =) //TODO: finish this
 }

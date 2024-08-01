@@ -25,7 +25,7 @@ fun ItemRow(
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = modifier
+    modifier = modifier.clickable(enabled = enabled, onClick = onClick)
   ) {
     val boxSize = 56.dp
 
@@ -37,8 +37,7 @@ fun ItemRow(
           .background(MaterialTheme.colorScheme.primary)
           .applyIf(decoration) {
             border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, MaterialTheme.shapes.medium)
-          }
-          .clickable(enabled = enabled, onClick = onClick),
+          },
         contentAlignment = Alignment.Center,
         content = detail
       )

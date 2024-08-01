@@ -7,7 +7,11 @@ data class Ingredient(
   val measurement: Measurement,
   val comment: String? = null,
   val id: String = UUID.randomUUID().toString(),
-)
+) {
+  override fun toString(): String {
+    return "$measurement $name${comment?.let { ", $it" } ?: ""}"
+  }
+}
 
 enum class IngredientType {
   Wet,
