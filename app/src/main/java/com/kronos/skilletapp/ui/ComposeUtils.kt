@@ -31,7 +31,7 @@ fun <T> LoadingContent(
   ) { targetState ->
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
       when (targetState) {
-        is UiState.Loading -> loadingContent()
+        UiState.Loading -> loadingContent()
         is UiState.Error -> errorContent(targetState.error)
         is UiState.Loaded -> content(targetState.data)
       }

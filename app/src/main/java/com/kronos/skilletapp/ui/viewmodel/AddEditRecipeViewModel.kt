@@ -12,11 +12,6 @@ import com.kronos.skilletapp.model.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-data class AddEditRecipeUiState(
-  val userMessage: String? = null,
-  val isRecipeSaved: Boolean = false,
-)
-
 data class RecipeState(
   val name: String = "",
   val description: String = "",
@@ -29,6 +24,8 @@ data class RecipeState(
   val ingredients: List<Ingredient> = emptyList(),
   val instructions: List<Instruction> = emptyList(),
   val equipment: List<Equipment> = emptyList(),
+  val userMessage: String? = null,
+  val isRecipeSaved: Boolean = false,
 )
 
 class AddEditRecipeViewModel(
@@ -39,22 +36,10 @@ class AddEditRecipeViewModel(
   private val recipeId = args.recipeId
   private lateinit var createdId: String
 
-  private val _isLoading = MutableStateFlow(false)
-  private val _uiState: MutableStateFlow<AddEditRecipeUiState> = MutableStateFlow(AddEditRecipeUiState())
+  private val _uiState: MutableStateFlow<UiState<Unit>> = MutableStateFlow(UiState.Loaded(Unit))
   private val _recipeState: MutableStateFlow<RecipeState> = MutableStateFlow(RecipeState())
+  val uiState = _uiState.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
-//  val uiState = _addEditRecipeUiState.asStateFlow()
-
-  val uiState = combine(_isLoading, _uiState) { loading, uiState ->
-    when {
-      loading -> UiState.Loading
-      else -> UiState.Loaded(uiState)
-    }
-  }.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5000L),
-    initialValue = UiState.Loaded(AddEditRecipeUiState())
-  )
 
   init {
     recipeId?.let {
@@ -68,7 +53,7 @@ class AddEditRecipeViewModel(
 
   fun saveRecipe() {
     checkForInvalidForm()?.let { msg ->
-      _uiState.update {
+      _recipeState.update {
         it.copy(userMessage = msg)
       }
       return
@@ -172,13 +157,13 @@ class AddEditRecipeViewModel(
   }
 
   fun showMessage(message: String) {
-    _uiState.update {
+    _recipeState.update {
       it.copy(userMessage = message)
     }
   }
 
   fun userMessageShown() {
-    _uiState.update {
+    _recipeState.update {
       it.copy(userMessage = null)
     }
   }
@@ -209,7 +194,7 @@ class AddEditRecipeViewModel(
       )
     }
 
-    _uiState.update {
+    _recipeState.update {
       it.copy(isRecipeSaved = true)
     }
   }
@@ -237,14 +222,14 @@ class AddEditRecipeViewModel(
         )
       }
 
-      _uiState.update {
+      _recipeState.update {
         it.copy(isRecipeSaved = true)
       }
     }
   }
 
   private fun loadRecipe(id: String) {
-    _isLoading.update { true }
+    _uiState.update { UiState.Loading }
     viewModelScope.launch {
       recipeRepository.fetchRecipe(id).onSuccess { recipe ->
         _recipeState.update {
@@ -262,7 +247,7 @@ class AddEditRecipeViewModel(
         }
       }
 
-      _isLoading.update { false }
+      _uiState.update { UiState.Loaded(Unit) }
     }
   }
 

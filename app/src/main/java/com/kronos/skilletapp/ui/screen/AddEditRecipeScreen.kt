@@ -67,7 +67,7 @@ fun AddEditRecipeScreen(
       modifier = Modifier
         .fillMaxSize()
         .padding(paddingValues),
-    ) { state ->
+    ) {
       val recipeState by vm.recipeState.collectAsStateWithLifecycle()
 
       AddEditRecipeContent(
@@ -89,13 +89,13 @@ fun AddEditRecipeScreen(
         onUserMessage = vm::showMessage,
       )
 
-      LaunchedEffect(state.isRecipeSaved) {
-        if (state.isRecipeSaved) {
+      LaunchedEffect(recipeState.isRecipeSaved) {
+        if (recipeState.isRecipeSaved) {
           onRecipeUpdate(vm.getRecipeId())
         }
       }
 
-      state.userMessage?.let {
+      recipeState.userMessage?.let {
         LaunchedEffect(snackbarHostState, vm, it) {
           snackbarHostState.showSnackbar(it)
           vm.userMessageShown()
@@ -238,11 +238,11 @@ private fun IngredientsContent(
           runCatching { IngredientParser.parseIngredient(ingredientInput) }
             .onSuccess {
               onIngredientChanged(it)
-              keyboard?.hide()
               ingredientInput = ""
             }.onFailure {
               onUserMessage("Failed to parse ingredient: ${it.message}")
             }
+          keyboard?.hide()
         }
       )
     )
