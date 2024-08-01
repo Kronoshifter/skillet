@@ -67,19 +67,21 @@ fun AddEditRecipeScreen(
       modifier = Modifier
         .fillMaxSize()
         .padding(paddingValues),
-    ) { data ->
+    ) { state ->
+      val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+
       AddEditRecipeContent(
-        name = data.name,
-        description = data.description,
-        notes = data.notes,
-        servings = data.servings,
-        prepTime = data.prepTime,
-        cookTime = data.cookTime,
-        source = data.source,
-        sourceName = data.sourceName,
-        ingredients = data.ingredients,
-        instructions = data.instructions,
-        equipment = data.equipment,
+        name = recipeState.name,
+        description = recipeState.description,
+        notes = recipeState.notes,
+        servings = recipeState.servings,
+        prepTime = recipeState.prepTime,
+        cookTime = recipeState.cookTime,
+        source = recipeState.source,
+        sourceName = recipeState.sourceName,
+        ingredients = recipeState.ingredients,
+        instructions = recipeState.instructions,
+        equipment = recipeState.equipment,
         onNameChanged = vm::updateName,
         onDescriptionChanged = vm::updateDescription,
         onIngredientChanged = vm::updateIngredient,
@@ -87,13 +89,13 @@ fun AddEditRecipeScreen(
         onUserMessage = vm::showMessage,
       )
 
-      LaunchedEffect(data.isRecipeSaved) {
-        if (data.isRecipeSaved) {
+      LaunchedEffect(state.isRecipeSaved) {
+        if (state.isRecipeSaved) {
           onRecipeUpdate(vm.getRecipeId())
         }
       }
 
-      data.userMessage?.let {
+      state.userMessage?.let {
         LaunchedEffect(snackbarHostState, vm, it) {
           snackbarHostState.showSnackbar(it)
           vm.userMessageShown()

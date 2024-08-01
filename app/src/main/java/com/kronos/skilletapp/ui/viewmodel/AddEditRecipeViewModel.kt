@@ -11,9 +11,13 @@ import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.koin.core.KoinApplication.Companion.init
 
 data class AddEditRecipeUiState(
+  val userMessage: String? = null,
+  val isRecipeSaved: Boolean = false,
+)
+
+data class RecipeState(
   val name: String = "",
   val description: String = "",
   val notes: String = "",
@@ -25,8 +29,6 @@ data class AddEditRecipeUiState(
   val ingredients: List<Ingredient> = emptyList(),
   val instructions: List<Instruction> = emptyList(),
   val equipment: List<Equipment> = emptyList(),
-  val userMessage: String? = null,
-  val isRecipeSaved: Boolean = false
 )
 
 class AddEditRecipeViewModel(
@@ -38,18 +40,20 @@ class AddEditRecipeViewModel(
   private lateinit var createdId: String
 
   private val _isLoading = MutableStateFlow(false)
-  private val _addEditRecipeUiState: MutableStateFlow<AddEditRecipeUiState> = MutableStateFlow(AddEditRecipeUiState())
+  private val _uiState: MutableStateFlow<AddEditRecipeUiState> = MutableStateFlow(AddEditRecipeUiState())
+  private val _recipeState: MutableStateFlow<RecipeState> = MutableStateFlow(RecipeState())
+  val recipeState = _recipeState.asStateFlow()
 //  val uiState = _addEditRecipeUiState.asStateFlow()
 
-  val uiState = combine(_isLoading, _addEditRecipeUiState) { loading, uiState ->
+  val uiState = combine(_isLoading, _uiState) { loading, uiState ->
     when {
       loading -> UiState.Loading
-      else -> UiState.Success(uiState)
+      else -> UiState.Loaded(uiState)
     }
   }.stateIn(
     scope = viewModelScope,
     started = SharingStarted.WhileSubscribed(5000L),
-    initialValue = UiState.Success(AddEditRecipeUiState())
+    initialValue = UiState.Loaded(AddEditRecipeUiState())
   )
 
   init {
@@ -64,7 +68,7 @@ class AddEditRecipeViewModel(
 
   fun saveRecipe() {
     checkForInvalidForm()?.let { msg ->
-      _addEditRecipeUiState.update {
+      _uiState.update {
         it.copy(userMessage = msg)
       }
       return
@@ -78,55 +82,55 @@ class AddEditRecipeViewModel(
   }
 
   fun updateName(name: String) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(name = name)
     }
   }
 
   fun updateDescription(description: String) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(description = description)
     }
   }
 
   fun updateNotes(notes: String) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(notes = notes)
     }
   }
 
   fun updateServings(servings: Int) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(servings = servings)
     }
   }
 
   fun updatePrepTime(prepTime: Int) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(prepTime = prepTime)
     }
   }
 
   fun updateCookTime(cookTime: Int) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(cookTime = cookTime)
     }
   }
 
   fun updateSource(source: String) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(source = source)
     }
   }
 
   fun updateSourceName(sourceName: String) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(sourceName = sourceName)
     }
   }
 
   fun updateIngredient(ingredient: Ingredient) {
-    _addEditRecipeUiState.update { state ->
+    _recipeState.update { state ->
       state.copy(
         ingredients = state.ingredients.update(ingredient) { it.id }
       )
@@ -134,13 +138,13 @@ class AddEditRecipeViewModel(
   }
 
   fun removeIngredient(ingredient: Ingredient) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(ingredients = it.ingredients - ingredient)
     }
   }
 
   fun updateInstruction(instruction: Instruction) {
-    _addEditRecipeUiState.update { state ->
+    _recipeState.update { state ->
       state.copy(
         instructions = state.instructions.update(instruction) { it.id }
       )
@@ -148,13 +152,13 @@ class AddEditRecipeViewModel(
   }
 
   fun removeInstruction(instruction: Instruction) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(instructions = it.instructions - instruction)
     }
   }
 
   fun updateEquipment(equipment: Equipment) {
-    _addEditRecipeUiState.update { state ->
+    _recipeState.update { state ->
       state.copy(
         equipment = state.equipment.update(equipment) { it.id }
       )
@@ -162,26 +166,26 @@ class AddEditRecipeViewModel(
   }
 
   fun removeEquipment(equipment: Equipment) {
-    _addEditRecipeUiState.update {
+    _recipeState.update {
       it.copy(equipment = it.equipment - equipment)
     }
   }
 
   fun showMessage(message: String) {
-    _addEditRecipeUiState.update {
+    _uiState.update {
       it.copy(userMessage = message)
     }
   }
 
   fun userMessageShown() {
-    _addEditRecipeUiState.update {
+    _uiState.update {
       it.copy(userMessage = null)
     }
   }
 
   private fun <T, R : Comparable<R>> List<T>.update(
     item: T,
-    selector: (T) -> R
+    selector: (T) -> R,
   ) = if (any { selector(it) == selector(item) }) {
     map { i -> if (selector(i) == selector(item)) item else i }
   } else {
@@ -189,7 +193,7 @@ class AddEditRecipeViewModel(
   }
 
   private fun createRecipe() = viewModelScope.launch {
-    createdId = with(_addEditRecipeUiState.value) {
+    createdId = with(_recipeState.value) {
       recipeRepository.createRecipe(
         name = name,
         description = description,
@@ -205,7 +209,7 @@ class AddEditRecipeViewModel(
       )
     }
 
-    _addEditRecipeUiState.update {
+    _uiState.update {
       it.copy(isRecipeSaved = true)
     }
   }
@@ -216,7 +220,7 @@ class AddEditRecipeViewModel(
     }
 
     viewModelScope.launch {
-      with(_addEditRecipeUiState.value) {
+      with(_recipeState.value) {
         recipeRepository.updateRecipe(
           id = recipeId,
           name = name,
@@ -233,7 +237,7 @@ class AddEditRecipeViewModel(
         )
       }
 
-      _addEditRecipeUiState.update {
+      _uiState.update {
         it.copy(isRecipeSaved = true)
       }
     }
@@ -243,26 +247,26 @@ class AddEditRecipeViewModel(
     _isLoading.update { true }
     viewModelScope.launch {
       recipeRepository.fetchRecipe(id).onSuccess { recipe ->
-          _addEditRecipeUiState.update {
-            AddEditRecipeUiState(
-              name = recipe.name,
-              description = recipe.description,
-              notes = recipe.notes,
-              servings = recipe.servings,
-              prepTime = recipe.time.preparation,
-              cookTime = recipe.time.cooking,
-              ingredients = recipe.ingredients,
-              instructions = recipe.instructions,
-              equipment = recipe.equipment
-            )
-          }
+        _recipeState.update {
+          RecipeState(
+            name = recipe.name,
+            description = recipe.description,
+            notes = recipe.notes,
+            servings = recipe.servings,
+            prepTime = recipe.time.preparation,
+            cookTime = recipe.time.cooking,
+            ingredients = recipe.ingredients,
+            instructions = recipe.instructions,
+            equipment = recipe.equipment
+          )
         }
+      }
 
       _isLoading.update { false }
     }
   }
 
-  private fun checkForInvalidForm(): String? = with(_addEditRecipeUiState.value) {
+  private fun checkForInvalidForm(): String? = with(_recipeState.value) {
     return when {
       name.isBlank() -> "Name cannot be blank"
       description.isBlank() -> "Description cannot be blank"
