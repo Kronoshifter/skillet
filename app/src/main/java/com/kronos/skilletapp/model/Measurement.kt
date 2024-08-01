@@ -4,6 +4,8 @@ import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
 import com.kronos.skilletapp.model.IngredientType.*
+import com.kronos.skilletapp.utils.roundToNearestFraction
+import com.kronos.skilletapp.utils.toFraction
 
 data class Measurement(
   val quantity: Double,
@@ -50,6 +52,13 @@ data class Measurement(
     var result = quantity.hashCode()
     result = 31 * result + unit.hashCode()
     return result
+  }
+
+  override fun toString(): String {
+    return when(unit.system) {
+      MeasurementSystem.Metric -> "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
+      else -> "${quantity.toFraction().roundToNearestFraction().reduce()} ${unit.name}"
+    }
   }
 
   fun scale(factor: Double) = copy(quantity = quantity * factor)
@@ -119,7 +128,7 @@ enum class MeasurementSystem {
 sealed class MeasurementUnit(
   open val name: String,
   open val factor: Double,
-  open val aliases: List<String>, //TODO: replace with list of aliases
+  open val aliases: List<String>, //TODO: add abbreviation back in, potentially replace aliases here with lookup table
   open val system: MeasurementSystem,
   open val normalizationLow: Double,
   open val normalizationHigh: Double,

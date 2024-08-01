@@ -2,6 +2,7 @@ package com.kronos.skilletapp.model
 
 import java.util.*
 
+//TODO: consider adding ingredient string that this ingredient was parsed from
 data class Ingredient(
   val name: String,
   val measurement: Measurement,

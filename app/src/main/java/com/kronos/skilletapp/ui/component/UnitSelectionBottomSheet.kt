@@ -57,7 +57,7 @@ fun UnitSelectionBottomSheet(
         items(measurements) { measurement ->
           val quantity = when (measurement.unit.system) {
             MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
-            else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toString()
+            else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
           }
 
           Box(

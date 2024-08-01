@@ -36,9 +36,16 @@ data class Fraction(val numerator: Int, val denominator: Int) {
 
   override fun toString(): String = when {
     numerator == 0 -> "0"
-    whole == 0 -> fractionString(numerator, denominator)
+    whole == 0 -> simpleFractionString(numerator, denominator)
     subNumerator == 0 -> "$whole"
-    else -> "$whole ${fractionString(subNumerator, denominator)}"
+    else -> "$whole ${simpleFractionString(subNumerator, denominator)}"
+  }
+
+  fun toDisplayString(): String = when {
+    numerator == 0 -> "0"
+    whole == 0 -> unicodeFractionString(numerator, denominator)
+    subNumerator == 0 -> "$whole"
+    else -> "$whole ${unicodeFractionString(subNumerator, denominator)}"
   }
 
   fun reduce(): Fraction {
@@ -64,25 +71,20 @@ data class Fraction(val numerator: Int, val denominator: Int) {
     }
   }
 
-  private fun fractionString(numerator: Int, denominator: Int) = when(denominator) {
-    2 -> if (numerator == 1) "\u00BD" else "$numerator/$denominator"
+  private fun unicodeFractionString(numerator: Int, denominator: Int) = when(denominator) {
+    2 -> if (numerator == 1) "\u00BD" else simpleFractionString(numerator, denominator)
     3 -> when(numerator) {
       1 -> "\u2153"
       2 -> "\u2154"
-      else -> "$numerator/$denominator"
+      else -> simpleFractionString(numerator, denominator)
     }
     4 -> when(numerator) {
       1 -> "\u00BC"
       3 -> "\u00BE"
-      else -> "$numerator/$denominator"
+      else -> simpleFractionString(numerator, denominator)
     }
-    8 -> when(numerator) {
-      1 -> "\u215B"
-      3 -> "\u215C"
-      5 -> "\u215D"
-      7 -> "\u215E"
-      else -> "$numerator/$denominator"
-    }
-    else -> "$numerator/$denominator"
+    else -> simpleFractionString(numerator, denominator)
   }
+
+  private fun simpleFractionString(numerator: Int, denominator: Int) = "$numerator/$denominator"
 }
