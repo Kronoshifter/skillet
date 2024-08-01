@@ -11,6 +11,7 @@ import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.koin.core.KoinApplication.Companion.init
 
 data class AddEditRecipeUiState(
   val name: String = "",
@@ -38,6 +39,7 @@ class AddEditRecipeViewModel(
 
   private val _isLoading = MutableStateFlow(false)
   private val _addEditRecipeUiState: MutableStateFlow<AddEditRecipeUiState> = MutableStateFlow(AddEditRecipeUiState())
+//  val uiState = _addEditRecipeUiState.asStateFlow()
 
   val uiState = combine(_isLoading, _addEditRecipeUiState) { loading, uiState ->
     when {
@@ -72,12 +74,6 @@ class AddEditRecipeViewModel(
       createRecipe()
     } else {
       updateRecipe()
-    }
-  }
-
-  fun onUserMessageShown() {
-    _addEditRecipeUiState.update {
-      it.copy(userMessage = null)
     }
   }
 
@@ -168,6 +164,12 @@ class AddEditRecipeViewModel(
   fun removeEquipment(equipment: Equipment) {
     _addEditRecipeUiState.update {
       it.copy(equipment = it.equipment - equipment)
+    }
+  }
+
+  fun showMessage(message: String) {
+    _addEditRecipeUiState.update {
+      it.copy(userMessage = message)
     }
   }
 

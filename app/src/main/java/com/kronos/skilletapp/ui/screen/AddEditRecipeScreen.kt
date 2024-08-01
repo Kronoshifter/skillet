@@ -10,16 +10,17 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kronos.skilletapp.model.Equipment
-import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.Instruction
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.runCatching
+import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientRow
@@ -82,6 +83,8 @@ fun AddEditRecipeScreen(
         onNameChanged = vm::updateName,
         onDescriptionChanged = vm::updateDescription,
         onIngredientChanged = vm::updateIngredient,
+        onRemoveIngredient = vm::removeIngredient,
+        onUserMessage = vm::showMessage,
       )
 
       LaunchedEffect(data.isRecipeSaved) {
@@ -127,6 +130,7 @@ fun AddEditRecipeContent(
   onRemoveInstruction: (Instruction) -> Unit = {},
   onEquipmentChanged: (Equipment) -> Unit = {},
   onRemoveEquipment: (Equipment) -> Unit = {},
+  onUserMessage: (String) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   Surface(
@@ -178,7 +182,12 @@ fun AddEditRecipeContent(
         keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
       )
 
-      IngredientsContent(onIngredientChanged, ingredients)
+      IngredientsContent(
+        ingredients = ingredients,
+        onIngredientChanged = onIngredientChanged,
+        onRemoveIngredient = onRemoveIngredient,
+        onUserMessage = onUserMessage
+      )
 
     }
   }
@@ -186,26 +195,103 @@ fun AddEditRecipeContent(
 
 @Composable
 private fun IngredientsContent(
-  onIngredientChanged: (Ingredient) -> Unit,
   ingredients: List<Ingredient>,
+  onIngredientChanged: (Ingredient) -> Unit,
+  onRemoveIngredient: (Ingredient) -> Unit,
+  onUserMessage: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
-  
-  Text(
-    text = "Ingredients",
-    style = MaterialTheme.typography.titleLarge
-  )
 
-  var ingredientInput by remember { mutableStateOf("") }
+  Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = Modifier.fillMaxWidth()
+  ) {
+    Text(
+      text = "Ingredients",
+      style = MaterialTheme.typography.titleLarge
+    )
 
+    var ingredientInput by remember { mutableStateOf("") }
+
+    OutlinedTextField(
+      value = ingredientInput,
+      onValueChange = { ingredientInput = it },
+      modifier = Modifier.fillMaxWidth(),
+      placeholder = { Text(text = "Add an ingredient") },
+      trailingIcon = {
+        IconButton(
+          onClick = { ingredientInput = "" }
+        ) {
+          Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+        }
+      },
+      singleLine = true,
+      keyboardOptions = KeyboardOptions(
+        imeAction = ImeAction.Done
+      ),
+      keyboardActions = KeyboardActions(
+        onDone = {
+          runCatching { IngredientParser.parseIngredient(ingredientInput) }
+            .onSuccess {
+              onIngredientChanged(it)
+              keyboard?.hide()
+              ingredientInput = ""
+            }.onFailure {
+              onUserMessage("Failed to parse ingredient: ${it.message}")
+            }
+        }
+      )
+    )
+
+    Column(
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(start = 8.dp)
+    ) {
+      ingredients.forEach { ingredient ->
+        var editing by remember { mutableStateOf(false) }
+
+        if (!editing) {
+          IngredientRow(
+            ingredient = ingredient,
+            onClick = { editing = true },
+          )
+        } else {
+          IngredientEdit(
+            ingredient = ingredient,
+            onEdit = {
+              onIngredientChanged(it)
+              editing = false
+            },
+            onRemove = {
+              onRemoveIngredient(it)
+              editing = false
+            }
+          )
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun IngredientEdit(
+  ingredient: Ingredient,
+  onEdit: (Ingredient) -> Unit = {},
+  onRemove: (Ingredient) -> Unit = {},
+) {
+  var ingredientInput by remember { mutableStateOf(ingredient.toString()) }
   OutlinedTextField(
     value = ingredientInput,
     onValueChange = { ingredientInput = it },
     modifier = Modifier.fillMaxWidth(),
-    placeholder = { Text(text = "Add an ingredient") },
     trailingIcon = {
       IconButton(
-        onClick = { ingredientInput = "" }
+        onClick = {
+          ingredientInput = ""
+          onRemove(ingredient)
+        }
       ) {
         Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
       }
@@ -215,40 +301,42 @@ private fun IngredientsContent(
     ),
     keyboardActions = KeyboardActions(
       onDone = {
-        onIngredientChanged(IngredientParser.parseIngredient(ingredientInput))
-        keyboard?.hide()
+        val newIngredient = IngredientParser.parseIngredient(ingredientInput)
+        onEdit(newIngredient.copy(id = ingredient.id))
         ingredientInput = ""
       }
     )
   )
+}
 
-  Column(
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(start = 8.dp)
-  ) {
-    ingredients.forEach { ingredient ->
-      var editing by remember { mutableStateOf(false) }
+@Preview
+@Composable
+fun IngredientEditPreview() {
+  val ingredients = mutableListOf(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup)))
+  ingredients.add(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup)))
 
-      if (!editing) {
-        IngredientRow(
-          ingredient = ingredient,
-          onClick = { editing = true },
-        )
-      } else {
-        IngredientEdit(
-          ingredient = ingredient.toString()
-        )
+  Surface {
+    Column(
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      ingredients.forEach { ing ->
+        var editing by remember { mutableStateOf(false) }
+
+        if (!editing) {
+          IngredientRow(
+            ingredient = ing,
+            onClick = { editing = true },
+          )
+        } else {
+          IngredientEdit(
+            ingredient = ing,
+            onRemove = { ingredients.remove(ing); editing = false },
+            onEdit = { ingredient ->
+              ingredients[ingredients.indexOfFirst { it.id == ing.id }] = ingredient; editing = false
+            }
+          )
+        }
       }
     }
   }
-}
-
-@Composable
-private fun IngredientEdit(
-  ingredient: String,
-) {
-  var ingredientInput by remember { mutableStateOf(ingredient) }
-//  OutlinedTextField(value =, onValueChange =) //TODO: finish this
 }
