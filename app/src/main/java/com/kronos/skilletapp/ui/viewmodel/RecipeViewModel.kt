@@ -34,7 +34,7 @@ class RecipeViewModel(
   private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
     .map { result ->
       result.mapOrElse({ UiState.Error(it) }) {
-        UiState.Success(it)
+        UiState.Loaded(it)
       }
     }
     .catch { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
@@ -45,7 +45,7 @@ class RecipeViewModel(
       else -> when (recipeAsync) {
         UiState.Loading -> UiState.Loading
         is UiState.Error -> recipeAsync
-        is UiState.Success -> UiState.Success(
+        is UiState.Loaded -> UiState.Loaded(
           RecipeUiState(
             recipe = recipeAsync.data,
           )

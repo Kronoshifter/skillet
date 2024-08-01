@@ -33,7 +33,7 @@ fun <T> LoadingContent(
       when (targetState) {
         is UiState.Loading -> loadingContent()
         is UiState.Error -> errorContent(targetState.error)
-        is UiState.Success -> content(targetState.data)
+        is UiState.Loaded -> content(targetState.data)
       }
     }
   }

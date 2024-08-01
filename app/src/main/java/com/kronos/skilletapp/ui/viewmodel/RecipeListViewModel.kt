@@ -8,11 +8,8 @@ import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 data class RecipeListState(
   val recipes: List<Recipe>,
@@ -30,7 +27,7 @@ class RecipeListViewModel(
 
   private val _isLoading = MutableStateFlow(false)
   private val _recipesAsync = recipeRepository.fetchRecipesStream()
-    .map { UiState.Success(it) }
+    .map { UiState.Loaded(it) }
     .catch<UiState<List<Recipe>>> { emit(UiState.Error(SkilletError("Error loading recipes"))) }
 
   val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
@@ -39,7 +36,7 @@ class RecipeListViewModel(
       else -> when (recipesAsync) {
         UiState.Loading -> UiState.Loading
         is UiState.Error -> UiState.Error(recipesAsync.error)
-        is UiState.Success -> UiState.Success(
+        is UiState.Loaded -> UiState.Loaded(
           RecipeListState(
             recipes = recipesAsync.data,
           )
