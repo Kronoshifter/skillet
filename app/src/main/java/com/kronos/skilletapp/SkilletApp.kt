@@ -4,6 +4,7 @@ import android.app.Application
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
+import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.viewmodel.dsl.viewModelOf
@@ -30,4 +31,5 @@ val appModule = module {
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)
+  viewModelOf(::AddEditRecipeViewModel)
 }
