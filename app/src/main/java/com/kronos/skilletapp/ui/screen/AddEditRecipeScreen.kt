@@ -277,11 +277,6 @@ private fun IngredientsContent(
             modifier = Modifier
               .fillMaxWidth()
               .focusRequester(focusRequester),
-//              .onFocusChanged {
-//                if (editing &&!it.isFocused) {
-//                  editing = false
-//                }
-//              },
             onEdit = {
               onIngredientChanged(it)
               editing = false
