@@ -285,7 +285,7 @@ private fun IngredientEdit(
   onEdit: (Ingredient) -> Unit = {},
   onRemove: (Ingredient) -> Unit = {},
 ) {
-  var ingredientInput by remember { mutableStateOf(ingredient.toString()) }
+  var ingredientInput by remember { mutableStateOf(ingredient.raw) }
   OutlinedTextField(
     value = ingredientInput,
     onValueChange = { ingredientInput = it },
@@ -316,8 +316,8 @@ private fun IngredientEdit(
 @Preview
 @Composable
 fun IngredientEditPreview() {
-  val ingredients = mutableListOf(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup)))
-  ingredients.add(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup)))
+  val ingredients = mutableListOf(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup), "1 cup test"))
+  ingredients.add(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup), "1 cup test"))
 
   Surface {
     Column(

@@ -6,6 +6,7 @@ import java.util.*
 data class Ingredient(
   val name: String,
   val measurement: Measurement,
+  val raw: String,
   val comment: String? = null,
   val id: String = UUID.randomUUID().toString(),
 ) {

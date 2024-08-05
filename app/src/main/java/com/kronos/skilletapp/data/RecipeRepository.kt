@@ -105,17 +105,18 @@ class RecipeRepository {
 
   private fun initFakeRecipes() {
     val ingredients = listOf(
-      Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-      Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Butter", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
+      Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce), "8 oz Mini Shells Pasta"),
+      Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon), "1 tbsp Olive Oil"),
+      Ingredient("Butter", measurement = Measurement(1.0, MeasurementUnit.Tablespoon), "1 tbsp Butter"),
       Ingredient(
-        "Garlic",
-        measurement = Measurement(2.0, MeasurementUnit.Custom("clove"))
+        name = "Garlic",
+        measurement = Measurement(2.0, MeasurementUnit.Custom("clove")),
+        raw = "2 cloves Garlic"
       ),
-      Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup), comment = "separated"),
-      Ingredient("Salt", measurement = Measurement(0.0, MeasurementUnit.None)),
+      Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon), raw = "2 tbsp Flour"),
+      Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup), raw = "3/4 cup chicken broth"),
+      Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup), raw = "2 1/2 cups milk", comment = "separated"),
+      Ingredient("Salt", measurement = Measurement(0.0, MeasurementUnit.None), raw = "Salt, to taste", comment = "to taste"),
     )
 
     val instructions = listOf(
