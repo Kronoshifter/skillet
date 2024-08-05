@@ -1,6 +1,8 @@
 package com.kronos.skilletapp.ui.screen
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -253,8 +255,6 @@ private fun IngredientsContent(
       )
     )
 
-    val focusRequester = remember { FocusRequester() }
-
     Column(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
@@ -272,6 +272,8 @@ private fun IngredientsContent(
             },
           )
         } else {
+          val focusRequester = remember { FocusRequester() }
+
           IngredientEdit(
             ingredient = ingredient,
             modifier = Modifier
@@ -290,9 +292,6 @@ private fun IngredientsContent(
           LaunchedEffect(editing) {
             if (editing) {
               focusRequester.requestFocus()
-              focusRequester.captureFocus()
-            } else {
-              focusRequester.freeFocus()
             }
           }
         }
