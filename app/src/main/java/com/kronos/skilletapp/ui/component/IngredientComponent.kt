@@ -63,7 +63,7 @@ fun IngredientRow(
 
         if (measurement.unit !is MeasurementUnit.None) {
           Text(
-            text = measurement.unit.aliases.first(),
+            text = measurement.unit.abbreviation,
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 12.sp
           )
@@ -138,7 +138,7 @@ fun IngredientPill(
       }
 
       Text(
-        text = "$quantity ${measurement.unit.aliases.first()}",
+        text = "$quantity ${measurement.unit.abbreviation}",
         color = MaterialTheme.colorScheme.onPrimary,
         fontSize = 18.sp,
         modifier = Modifier.padding(8.dp)
@@ -180,7 +180,8 @@ fun IngredientPill(
 private fun IngredientRowPreview() {
   val ingredient = Ingredient(
     name = "Pasta",
-    measurement = Measurement(8.0, MeasurementUnit.Ounce)
+    measurement = Measurement(8.0, MeasurementUnit.Ounce),
+    raw = "8 oz Pasta",
   )
   SkilletAppTheme {
     Surface {
@@ -197,7 +198,8 @@ private fun IngredientRowPreview() {
 private fun IngredientPillPreview() {
   val ingredient = Ingredient(
     name = "Pasta",
-    measurement = Measurement(8.0, MeasurementUnit.Ounce)
+    measurement = Measurement(8.0, MeasurementUnit.Ounce),
+    raw = "8 oz Pasta",
   )
 
   SkilletAppTheme {

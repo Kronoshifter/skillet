@@ -18,7 +18,7 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
 
     val unit = ctx.measurement()?.WORD()?.text?.let { unit ->
       MeasurementUnit.values.firstOrNull {
-        it.name == unit || it.aliases.contains(unit)
+        it.name == unit || it.abbreviation == unit || it.aliases.contains(unit)
       } ?: MeasurementUnit.Custom(unit)
     } ?: MeasurementUnit.None
     val quantity = with(ctx.measurement()?.quantity()) {
@@ -33,6 +33,6 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
 
     val comment = ctx.comment()?.WORD()?.joinToString(" ") { it.text }
 
-    return Ingredient(name = name, comment = comment, measurement = measurement)
+    return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text)
   }
 }

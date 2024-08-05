@@ -90,7 +90,7 @@ fun UnitSelectionBottomSheet(
               )
 
               Text(
-                text = measurement.unit.aliases.first(),
+                text = measurement.unit.abbreviation,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 12.sp
               )

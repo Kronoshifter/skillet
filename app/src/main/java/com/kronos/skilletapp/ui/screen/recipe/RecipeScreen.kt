@@ -517,7 +517,7 @@ private fun IngredientListPreview() {
 @Composable
 private fun IngredientComponentPreview() {
   val ingredient =
-    Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce))
+    Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce), raw = "8 oz Mini Shells Pasta")
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     IngredientRow(
@@ -561,20 +561,8 @@ private fun InstructionsListPreview() {
 @Preview
 @Composable
 private fun InstructionComponentPreview() {
-  val instruction = Instruction(
-    text = "Return pot to stove over medium heat then ass butter and olive oil. Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn. Sprinkle in flour then whisk and saute for 1 minute. Slowly pour in chicken broth and milk while whisking until mixture is smooth. Season with salt and pepper then switch to a wooden spoon and stir constantly until mixture is thick and bubbly, 4-5 minutes.",
-    ingredients = listOf(
-      Ingredient("Butter", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Olive Oil", measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-      Ingredient(
-        "Garlic",
-        measurement = Measurement(2.0, MeasurementUnit.Custom("clove"))
-      ),
-      Ingredient("Flour", measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-      Ingredient("Chicken Broth", measurement = Measurement(0.75, MeasurementUnit.Cup)),
-      Ingredient("Milk", measurement = Measurement(2.5, MeasurementUnit.Cup)),
-    )
-  )
+  val repository = RecipeRepository()
+  val instructions = runBlocking { repository.fetchRecipe("test").unwrap().instructions }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
@@ -582,7 +570,7 @@ private fun InstructionComponentPreview() {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       Box(modifier = Modifier.padding(16.dp)) {
         InstructionComponent(
-          instruction = instruction,
+          instruction = instructions.first(),
           scale = 1.0,
           selectedUnits = selectedUnits,
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
