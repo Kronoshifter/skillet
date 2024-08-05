@@ -11,9 +11,15 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -247,6 +253,8 @@ private fun IngredientsContent(
       )
     )
 
+    val focusRequester = remember { FocusRequester() }
+
     Column(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
@@ -259,11 +267,21 @@ private fun IngredientsContent(
         if (!editing) {
           IngredientRow(
             ingredient = ingredient,
-            onClick = { editing = true },
+            onClick = {
+              editing = true
+            },
           )
         } else {
           IngredientEdit(
             ingredient = ingredient,
+            modifier = Modifier
+              .fillMaxWidth()
+              .focusRequester(focusRequester),
+//              .onFocusChanged {
+//                if (editing &&!it.isFocused) {
+//                  editing = false
+//                }
+//              },
             onEdit = {
               onIngredientChanged(it)
               editing = false
@@ -273,6 +291,15 @@ private fun IngredientsContent(
               editing = false
             }
           )
+
+          LaunchedEffect(editing) {
+            if (editing) {
+              focusRequester.requestFocus()
+              focusRequester.captureFocus()
+            } else {
+              focusRequester.freeFocus()
+            }
+          }
         }
       }
     }
@@ -282,18 +309,21 @@ private fun IngredientsContent(
 @Composable
 private fun IngredientEdit(
   ingredient: Ingredient,
+  modifier: Modifier = Modifier,
   onEdit: (Ingredient) -> Unit = {},
   onRemove: (Ingredient) -> Unit = {},
 ) {
-  var ingredientInput by remember { mutableStateOf(ingredient.raw) }
+  var ingredientInput by remember { mutableStateOf(TextFieldValue(ingredient.raw, TextRange(ingredient.raw.length))) }
+
   OutlinedTextField(
     value = ingredientInput,
     onValueChange = { ingredientInput = it },
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier,
+    singleLine = true,
     trailingIcon = {
       IconButton(
         onClick = {
-          ingredientInput = ""
+          ingredientInput = ingredientInput.copy(text = "")
           onRemove(ingredient)
         }
       ) {
@@ -305,9 +335,9 @@ private fun IngredientEdit(
     ),
     keyboardActions = KeyboardActions(
       onDone = {
-        val newIngredient = IngredientParser.parseIngredient(ingredientInput)
+        val newIngredient = IngredientParser.parseIngredient(ingredientInput.text)
         onEdit(newIngredient.copy(id = ingredient.id))
-        ingredientInput = ""
+        ingredientInput = ingredientInput.copy(text = "")
       }
     )
   )
