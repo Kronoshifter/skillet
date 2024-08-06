@@ -3,6 +3,8 @@ package com.kronos.skilletapp.ui.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -28,12 +31,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
+import com.github.michaelbull.result.unwrap
+import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientRow
+import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
+import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
+
+private enum class AddEditRecipeContentTab {
+  Info,
+  Ingredients,
+  Instructions,
+  Equipment
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,6 +127,7 @@ fun AddEditRecipeScreen(
   }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditRecipeContent(
   name: String,
@@ -143,30 +158,88 @@ fun AddEditRecipeContent(
   onUserMessage: (String) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
+  var tab by remember { mutableStateOf(AddEditRecipeContentTab.Info) }
+  val pagerState = rememberPagerState { AddEditRecipeContentTab.entries.size }
+
   Surface(
     modifier = modifier,
     color = MaterialTheme.colorScheme.background
   ) {
     Column(
-      verticalArrangement = Arrangement.spacedBy(8.dp),
+//      verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
         .fillMaxSize()
-        .padding(8.dp)
-        .verticalScroll(rememberScrollState())
+//        .padding(8.dp)
+//        .verticalScroll(rememberScrollState())
     ) {
-      RecipeInfoContent(
-        name = name,
-        description = description,
-        onNameChanged = onNameChanged,
-        onDescriptionChanged = onDescriptionChanged
-      )
+      PrimaryScrollableTabRow(
+        selectedTabIndex = tab.ordinal,
+        modifier = Modifier
+          .fillMaxWidth(),
+//        edgePadding = TabRowDefaults.ScrollableTabRowEdgeStartPadding / 2
+      ) {
+        Tab(
+          selected = tab == AddEditRecipeContentTab.Info,
+          onClick = { tab = AddEditRecipeContentTab.Info },
+          text = { Text(text = "Info") }
+        )
 
-      IngredientsContent(
-        ingredients = ingredients,
-        onIngredientChanged = onIngredientChanged,
-        onRemoveIngredient = onRemoveIngredient,
-        onUserMessage = onUserMessage
-      )
+        Tab(
+          selected = tab == AddEditRecipeContentTab.Ingredients,
+          onClick = { tab = AddEditRecipeContentTab.Ingredients },
+          text = { Text(text = "Ingredients") }
+        )
+
+        Tab(
+          selected = tab == AddEditRecipeContentTab.Instructions,
+          onClick = { tab = AddEditRecipeContentTab.Instructions },
+          text = { Text(text = "Instructions") }
+        )
+
+        Tab(
+          selected = tab == AddEditRecipeContentTab.Equipment,
+          onClick = { tab = AddEditRecipeContentTab.Equipment },
+          text = { Text(text = "Equipment") }
+        )
+      }
+
+      LaunchedEffect(tab) {
+        pagerState.animateScrollToPage(tab.ordinal)
+      }
+
+      LaunchedEffect(pagerState.targetPage) {
+        tab = AddEditRecipeContentTab.entries[pagerState.targetPage]
+      }
+
+      HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxWidth()
+      ) {
+        val page = AddEditRecipeContentTab.entries[it]
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.Center
+        ) {
+          when (page) {
+            AddEditRecipeContentTab.Info -> RecipeInfoContent(
+              name = name,
+              description = description,
+              onNameChanged = onNameChanged,
+              onDescriptionChanged = onDescriptionChanged
+            )
+
+            AddEditRecipeContentTab.Ingredients -> IngredientsContent(
+              ingredients = ingredients,
+              onIngredientChanged = onIngredientChanged,
+              onRemoveIngredient = onRemoveIngredient,
+              onUserMessage = onUserMessage
+            )
+
+            AddEditRecipeContentTab.Instructions -> {}
+            AddEditRecipeContentTab.Equipment -> {}
+          }
+        }
+      }
     }
   }
 }
@@ -174,47 +247,53 @@ fun AddEditRecipeContent(
 @Composable
 private fun RecipeInfoContent(
   name: String,
-  onNameChanged: (String) -> Unit,
   description: String,
+  onNameChanged: (String) -> Unit,
   onDescriptionChanged: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
-  Text(
-    text = "Title",
-    style = MaterialTheme.typography.titleLarge
-  )
+  Column(
+    modifier = Modifier
+      .fillMaxSize()
+      .padding(8.dp)
+  ) {
+    Text(
+      text = "Title",
+      style = MaterialTheme.typography.titleLarge
+    )
 
-  OutlinedTextField(
-    value = name,
-    onValueChange = onNameChanged,
-    modifier = Modifier.fillMaxWidth(),
-    label = { Text(text = "Name") },
-    singleLine = true,
-    keyboardOptions = KeyboardOptions(
-      capitalization = KeyboardCapitalization.Words,
-      imeAction = ImeAction.Done
-    ),
-    keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
-  )
+    OutlinedTextField(
+      value = name,
+      onValueChange = onNameChanged,
+      modifier = Modifier.fillMaxWidth(),
+      label = { Text(text = "Name") },
+      singleLine = true,
+      keyboardOptions = KeyboardOptions(
+        capitalization = KeyboardCapitalization.Words,
+        imeAction = ImeAction.Done
+      ),
+      keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+    )
 
-  Text(
-    text = "Description",
-    style = MaterialTheme.typography.titleLarge
-  )
+    Text(
+      text = "Description",
+      style = MaterialTheme.typography.titleLarge
+    )
 
-  OutlinedTextField(
-    value = description,
-    onValueChange = onDescriptionChanged,
-    modifier = Modifier.fillMaxWidth(),
-    label = { Text(text = "Description") },
-    singleLine = true,
-    keyboardOptions = KeyboardOptions(
-      capitalization = KeyboardCapitalization.Sentences,
-      imeAction = ImeAction.Done
-    ),
-    keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
-  )
+    OutlinedTextField(
+      value = description,
+      onValueChange = onDescriptionChanged,
+      modifier = Modifier.fillMaxWidth(),
+      label = { Text(text = "Description") },
+      singleLine = true,
+      keyboardOptions = KeyboardOptions(
+        capitalization = KeyboardCapitalization.Sentences,
+        imeAction = ImeAction.Done
+      ),
+      keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+    )
+  }
 }
 
 @Composable
@@ -228,7 +307,7 @@ private fun IngredientsContent(
 
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier.fillMaxWidth()
+    modifier = Modifier.fillMaxSize().padding(8.dp)
   ) {
     Text(
       text = "Ingredients",
@@ -269,13 +348,17 @@ private fun IngredientsContent(
       )
     )
 
-    Column(
+    LazyColumn(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
         .fillMaxWidth()
         .padding(start = 8.dp)
     ) {
-      ingredients.forEach { ingredient ->
+      items(
+        items = ingredients,
+        key = { it.id },
+        contentType = { "Ingredient" }
+      ) { ingredient ->
         var editing by remember { mutableStateOf(false) }
 
         if (!editing) {
@@ -306,6 +389,9 @@ private fun IngredientsContent(
           LaunchedEffect(editing) {
             if (editing) {
               focusRequester.requestFocus()
+              focusRequester.captureFocus()
+            } else {
+              focusRequester.freeFocus()
             }
           }
         }
@@ -349,6 +435,47 @@ private fun IngredientEdit(
       }
     )
   )
+}
+
+@Preview
+@Composable
+fun AddEditRecipeContentPreview() {
+  val repository = RecipeRepository()
+  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      AddEditRecipeContent(
+        modifier = Modifier.fillMaxSize(),
+        name = recipe.name,
+        description = recipe.description,
+        ingredients = recipe.ingredients,
+        instructions = recipe.instructions,
+        equipment = recipe.equipment,
+        source = recipe.source.source,
+        sourceName = recipe.source.name,
+        servings = 0,
+        prepTime = 0,
+        cookTime = 0,
+        notes = recipe.notes,
+        onNameChanged = {},
+        onDescriptionChanged = {},
+        onIngredientChanged = {},
+        onRemoveIngredient = {},
+        onUserMessage = {},
+        onInstructionChanged = {},
+        onServingsChanged = {},
+        onPrepTimeChanged = {},
+        onCookTimeChanged = {},
+        onNotesChanged = {},
+        onSourceChanged = {},
+        onSourceNameChanged = {},
+        onRemoveInstruction = {},
+        onRemoveEquipment = {},
+        onEquipmentChanged = {}
+      )
+    }
+  }
 }
 
 @Preview
