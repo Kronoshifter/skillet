@@ -103,9 +103,9 @@ fun AddEditRecipeScreen(
         }
       }
 
-      recipeState.userMessage?.let {
-        LaunchedEffect(snackbarHostState, vm, it) {
-          snackbarHostState.showSnackbar(it)
+      recipeState.userMessage?.let { message ->
+        LaunchedEffect(snackbarHostState, vm, message) {
+          snackbarHostState.showSnackbar(message)
           vm.userMessageShown()
         }
       }
@@ -154,42 +154,11 @@ fun AddEditRecipeContent(
         .padding(8.dp)
         .verticalScroll(rememberScrollState())
     ) {
-      val keyboard = LocalSoftwareKeyboardController.current
-
-      Text(
-        text = "Title",
-        style = MaterialTheme.typography.titleLarge
-      )
-
-      OutlinedTextField(
-        value = name,
-        onValueChange = onNameChanged,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(text = "Name") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-          capitalization = KeyboardCapitalization.Words,
-          imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
-      )
-
-      Text(
-        text = "Description",
-        style = MaterialTheme.typography.titleLarge
-      )
-
-      OutlinedTextField(
-        value = description,
-        onValueChange = onDescriptionChanged,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(text = "Description") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-          capitalization = KeyboardCapitalization.Words,
-          imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+      RecipeInfoContent(
+        name = name,
+        description = description,
+        onNameChanged = onNameChanged,
+        onDescriptionChanged = onDescriptionChanged
       )
 
       IngredientsContent(
@@ -198,9 +167,54 @@ fun AddEditRecipeContent(
         onRemoveIngredient = onRemoveIngredient,
         onUserMessage = onUserMessage
       )
-
     }
   }
+}
+
+@Composable
+private fun RecipeInfoContent(
+  name: String,
+  onNameChanged: (String) -> Unit,
+  description: String,
+  onDescriptionChanged: (String) -> Unit,
+) {
+  val keyboard = LocalSoftwareKeyboardController.current
+
+  Text(
+    text = "Title",
+    style = MaterialTheme.typography.titleLarge
+  )
+
+  OutlinedTextField(
+    value = name,
+    onValueChange = onNameChanged,
+    modifier = Modifier.fillMaxWidth(),
+    label = { Text(text = "Name") },
+    singleLine = true,
+    keyboardOptions = KeyboardOptions(
+      capitalization = KeyboardCapitalization.Words,
+      imeAction = ImeAction.Done
+    ),
+    keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+  )
+
+  Text(
+    text = "Description",
+    style = MaterialTheme.typography.titleLarge
+  )
+
+  OutlinedTextField(
+    value = description,
+    onValueChange = onDescriptionChanged,
+    modifier = Modifier.fillMaxWidth(),
+    label = { Text(text = "Description") },
+    singleLine = true,
+    keyboardOptions = KeyboardOptions(
+      capitalization = KeyboardCapitalization.Sentences,
+      imeAction = ImeAction.Done
+    ),
+    keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+  )
 }
 
 @Composable

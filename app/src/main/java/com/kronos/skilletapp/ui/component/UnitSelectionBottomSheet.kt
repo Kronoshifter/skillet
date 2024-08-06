@@ -63,13 +63,13 @@ fun UnitSelectionBottomSheet(
           Box(
             modifier = Modifier
               .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-              .clip(RoundedCornerShape(percent = 25))
+              .clip(MaterialTheme.shapes.medium)
               .background(MaterialTheme.colorScheme.primary)
               .applyIf(selectedUnit == measurement.unit) {
                 border(
                   width = 2.dp,
                   color = MaterialTheme.colorScheme.onPrimaryContainer,
-                  shape = RoundedCornerShape(percent = 25)
+                  shape = MaterialTheme.shapes.medium
                 )
               }
               .clickable { onUnitSelect(measurement.unit) }
