@@ -1,8 +1,10 @@
 package com.kronos.skilletapp.ui.screen
 
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -39,6 +41,7 @@ import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
 
@@ -218,7 +221,7 @@ fun AddEditRecipeContent(
         val page = AddEditRecipeContentTab.entries[it]
         Box(
           modifier = Modifier.fillMaxSize(),
-          contentAlignment = Alignment.Center
+          contentAlignment = Alignment.TopCenter
         ) {
           when (page) {
             AddEditRecipeContentTab.Info -> RecipeInfoContent(
@@ -276,6 +279,8 @@ private fun RecipeInfoContent(
       keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
     )
 
+    Spacer(modifier = Modifier.height(16.dp))
+
     Text(
       text = "Description",
       style = MaterialTheme.typography.titleLarge
@@ -305,97 +310,95 @@ private fun IngredientsContent(
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
-  Column(
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier.fillMaxSize().padding(8.dp)
+  val state = rememberLazyListState()
+  val scope = rememberCoroutineScope()
+
+  LazyColumn(
+    state = state,
+    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(8.dp)
+//        .padding(start = 8.dp)
   ) {
-    Text(
-      text = "Ingredients",
-      style = MaterialTheme.typography.titleLarge
-    )
+    items(
+      items = ingredients,
+      key = { it.id },
+      contentType = { "Ingredient" }
+    ) { ingredient ->
+      var editing by remember { mutableStateOf(false) }
 
-    var ingredientInput by remember { mutableStateOf("") }
+      if (!editing) {
+        IngredientRow(
+          ingredient = ingredient,
+          onClick = {
+            editing = true
+          },
+        )
+      } else {
+        val focusRequester = remember { FocusRequester() }
 
-    OutlinedTextField(
-      value = ingredientInput,
-      onValueChange = { ingredientInput = it },
-      modifier = Modifier.fillMaxWidth(),
-      placeholder = { Text(text = "Add an ingredient") },
-      trailingIcon = {
-        if (ingredientInput.isNotBlank()) {
-          IconButton(
-            onClick = { ingredientInput = "" }
-          ) {
-            Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+        IngredientEdit(
+          ingredient = ingredient,
+          modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
+          onEdit = {
+            onIngredientChanged(it)
+            editing = false
+          },
+          onRemove = {
+            onRemoveIngredient(it)
+            editing = false
           }
-        }
-      },
-      singleLine = true,
-      keyboardOptions = KeyboardOptions(
-        imeAction = ImeAction.Done
-      ),
-      keyboardActions = KeyboardActions(
-        onDone = {
-          runCatching { IngredientParser.parseIngredient(ingredientInput) }
-            .onSuccess {
-              onIngredientChanged(it)
-              ingredientInput = ""
-            }.onFailure {
-              onUserMessage("Failed to parse ingredient: ${it.message}")
-            }
-          keyboard?.hide()
-        }
-      )
-    )
+        )
 
-    LazyColumn(
-      verticalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = 8.dp)
-    ) {
-      items(
-        items = ingredients,
-        key = { it.id },
-        contentType = { "Ingredient" }
-      ) { ingredient ->
-        var editing by remember { mutableStateOf(false) }
-
-        if (!editing) {
-          IngredientRow(
-            ingredient = ingredient,
-            onClick = {
-              editing = true
-            },
-          )
-        } else {
-          val focusRequester = remember { FocusRequester() }
-
-          IngredientEdit(
-            ingredient = ingredient,
-            modifier = Modifier
-              .fillMaxWidth()
-              .focusRequester(focusRequester),
-            onEdit = {
-              onIngredientChanged(it)
-              editing = false
-            },
-            onRemove = {
-              onRemoveIngredient(it)
-              editing = false
-            }
-          )
-
-          LaunchedEffect(editing) {
-            if (editing) {
-              focusRequester.requestFocus()
-              focusRequester.captureFocus()
-            } else {
-              focusRequester.freeFocus()
-            }
+        LaunchedEffect(editing) {
+          if (editing) {
+            focusRequester.requestFocus()
+            focusRequester.captureFocus()
+          } else {
+            focusRequester.freeFocus()
           }
         }
       }
+    }
+
+    item {
+      var ingredientInput by remember { mutableStateOf("") }
+
+      OutlinedTextField(
+        value = ingredientInput,
+        onValueChange = { ingredientInput = it },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text(text = "Add an ingredient") },
+        trailingIcon = {
+          if (ingredientInput.isNotBlank()) {
+            IconButton(
+              onClick = { ingredientInput = "" }
+            ) {
+              Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+            }
+          }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+          imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+          onDone = {
+            runCatching { IngredientParser.parseIngredient(ingredientInput) }
+              .onSuccess {
+                onIngredientChanged(it)
+                ingredientInput = ""
+                scope.launch { state.animateScrollToItem(ingredients.size) }
+              }.onFailure {
+                onUserMessage("Failed to parse ingredient: ${it.message}")
+              }
+            keyboard?.hide()
+          }
+        )
+      )
     }
   }
 }
@@ -407,7 +410,14 @@ private fun IngredientEdit(
   onEdit: (Ingredient) -> Unit = {},
   onRemove: (Ingredient) -> Unit = {},
 ) {
-  var ingredientInput by remember { mutableStateOf(TextFieldValue(ingredient.raw, TextRange(ingredient.raw.length))) }
+  var ingredientInput by remember {
+    mutableStateOf(
+      TextFieldValue(
+        text = ingredient.raw,
+        selection = TextRange(ingredient.raw.length)
+      )
+    )
+  }
 
   OutlinedTextField(
     value = ingredientInput,
@@ -473,6 +483,30 @@ fun AddEditRecipeContentPreview() {
         onRemoveInstruction = {},
         onRemoveEquipment = {},
         onEquipmentChanged = {}
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun IngredientsTabPreview() {
+  val repository = RecipeRepository()
+  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+
+  val ingredients = recipe.ingredients.toMutableList()
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      IngredientsContent(
+        ingredients = ingredients,
+        onIngredientChanged = {
+          ingredients.add(it)
+        },
+        onRemoveIngredient = {
+          ingredients.remove(it)
+        },
+        onUserMessage = {}
       )
     }
   }
