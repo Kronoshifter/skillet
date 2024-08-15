@@ -447,6 +447,19 @@ private fun IngredientEdit(
   )
 }
 
+@Composable
+fun InstructionContent(
+  instructions: List<Instruction>,
+  onInstructionChanged: (Instruction) -> Unit,
+  onRemoveInstruction: (Instruction) -> Unit,
+  onUserMessage: (String) -> Unit,
+) {
+  val keyboard = LocalSoftwareKeyboardController.current
+
+  val state = rememberLazyListState()
+  val scope = rememberCoroutineScope()
+}
+
 @Preview
 @Composable
 fun AddEditRecipeContentPreview() {
