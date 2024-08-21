@@ -111,23 +111,11 @@ fun IngredientPill(
   val borderColor =
     selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
 
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier
-      .width(IntrinsicSize.Max)
-      .height(IntrinsicSize.Max)
-      .clip(CircleShape)
-      .border(width = 2.dp, color = borderColor, shape = CircleShape)
-      .clickable(enabled = measurements.isNotEmpty()) { showBottomSheet = true },
-  ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = Modifier
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.primary),
-    ) {
+  ItemPill(
+    enabled = measurements.isNotEmpty(),
+    onClick = { showBottomSheet = true },
+    borderColor = borderColor,
+    label = {
       val measurement = with(ingredient.measurement.scale(scale)) {
         selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
       }
@@ -144,7 +132,7 @@ fun IngredientPill(
         modifier = Modifier.padding(8.dp)
       )
     }
-
+  ) {
     Text(
       text = ingredient.name,
       modifier = Modifier
