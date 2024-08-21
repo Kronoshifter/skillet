@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.applyIf
 
@@ -100,8 +101,15 @@ fun ItemPillPreview() {
   SkilletAppTheme {
     Surface {
       ItemPill(
-        leadingContent = { Text(text = "Pasta") },
-        trailingIcon = { Icon(Icons.Filled.Clear, contentDescription = null) },
+        leadingContent = {
+          Text(
+            text = "Pasta",
+            color = MaterialTheme.colorScheme.onPrimary,
+            fontSize = 18.sp,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+          )
+        },
+        trailingIcon = { IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) } },
       ) {
         Text(text = "Pasta")
       }
