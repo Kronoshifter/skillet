@@ -5,17 +5,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.applyIf
-import kotlinx.serialization.json.JsonNull.content
 
 @Composable
 fun ItemRow(
@@ -57,11 +59,12 @@ fun ItemRow(
 @Composable
 fun ItemPill(
   modifier: Modifier = Modifier,
-  enabled: Boolean = true,
+  enabled: Boolean = false,
   onClick: () -> Unit = {},
   color: Color = MaterialTheme.colorScheme.primary,
   borderColor: Color = MaterialTheme.colorScheme.primary,
-  label: @Composable RowScope.() -> Unit,
+  leadingContent: @Composable RowScope.() -> Unit,
+  trailingIcon: @Composable (() -> Unit)? = null,
   content: @Composable () -> Unit
 ) {
   Row(
@@ -81,10 +84,27 @@ fun ItemPill(
         modifier = Modifier
           .clip(CircleShape)
           .background(color),
-        content = label
+        content = leadingContent
       )
     }
 
     content()
+
+    trailingIcon?.invoke()
+  }
+}
+
+@Preview
+@Composable
+fun ItemPillPreview() {
+  SkilletAppTheme {
+    Surface {
+      ItemPill(
+        leadingContent = { Text(text = "Pasta") },
+        trailingIcon = { Icon(Icons.Filled.Clear, contentDescription = null) },
+      ) {
+        Text(text = "Pasta")
+      }
+    }
   }
 }

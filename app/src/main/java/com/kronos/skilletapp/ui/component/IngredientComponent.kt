@@ -115,7 +115,7 @@ fun IngredientPill(
     enabled = measurements.isNotEmpty(),
     onClick = { showBottomSheet = true },
     borderColor = borderColor,
-    label = {
+    leadingContent = {
       val measurement = with(ingredient.measurement.scale(scale)) {
         selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
       }

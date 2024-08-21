@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
@@ -37,8 +39,10 @@ import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.component.IngredientRow
+import com.kronos.skilletapp.ui.component.ItemPill
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
+import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
@@ -550,12 +554,35 @@ fun InstructionComponent(
           .fillMaxWidth()
       ) {
         instruction.ingredients.forEach { ingredient ->
-          IngredientPill(ingredient)
+          ItemPill(
+            leadingContent = {
+              val quantity = when (ingredient.measurement.unit.system) {
+                MeasurementSystem.Metric -> ingredient.measurement.quantity.toString().take(4).removeSuffix(".")
+                else -> ingredient.measurement.quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
+              }
+
+              Text(
+                text = "$quantity ${ingredient.measurement.unit.abbreviation}",
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+              )
+
+            },
+            trailingIcon = {
+              IconButton(onClick = {}) {
+                Icon(imageVector = Icons.Default.Clear, contentDescription = "Edit")
+              }
+            }
+          ) {
+            Text(
+              text = ingredient.name,
+              modifier = Modifier
+            )
+          }
         }
       }
     }
-
-
   }
 }
 
