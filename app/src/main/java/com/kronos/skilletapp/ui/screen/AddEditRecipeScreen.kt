@@ -1,16 +1,14 @@
 package com.kronos.skilletapp.ui.screen
 
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
@@ -20,10 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
@@ -38,6 +35,7 @@ import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
@@ -448,8 +446,9 @@ private fun IngredientEdit(
 }
 
 @Composable
-fun InstructionContent(
+fun InstructionsContent(
   instructions: List<Instruction>,
+  ingredients: List<Ingredient>,
   onInstructionChanged: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   onUserMessage: (String) -> Unit,
@@ -458,6 +457,106 @@ fun InstructionContent(
 
   val state = rememberLazyListState()
   val scope = rememberCoroutineScope()
+
+  LazyColumn(
+    state = state,
+    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(8.dp)
+  ) {
+    itemsIndexed(
+      items = instructions,
+      key = { _, instruction -> instruction.id },
+      contentType = { _, _ -> "Instruction" }
+    ) { index, instruction ->
+      Text(
+        text = "Step ${index + 1}",
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 8.dp)
+      )
+
+      InstructionComponent(
+        instruction = instruction,
+        ingredients = ingredients,
+        onClick = {},
+      )
+
+      if (instruction != instructions.last()) {
+        HorizontalDivider()
+      }
+    }
+
+    item {
+      var instructionInput by remember { mutableStateOf("") }
+
+      OutlinedTextField(
+        value = instructionInput,
+        onValueChange = { instructionInput = it },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text(text = "Add an instruction") },
+        trailingIcon = {
+          if (instructionInput.isNotBlank()) {
+            IconButton(
+              onClick = { instructionInput = "" }
+            ) {
+              Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+            }
+          }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+          imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+          onDone = {
+            val instruction = Instruction(instructionInput)
+            onInstructionChanged(instruction)
+            instructionInput = ""
+            scope.launch { state.animateScrollToItem(instructions.size) }
+            keyboard?.hide()
+          }
+        )
+      )
+    }
+  }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun InstructionComponent(
+  instruction: Instruction,
+  ingredients: List<Ingredient>,
+  onClick: () -> Unit,
+) {
+  Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+  ) {
+    Text(
+      text = instruction.text,
+      modifier = Modifier
+    )
+
+    if (instruction.ingredients.isNotEmpty()) {
+      FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+          .fillMaxWidth()
+      ) {
+        instruction.ingredients.forEach { ingredient ->
+          IngredientPill(ingredient)
+        }
+      }
+    }
+
+
+  }
 }
 
 @Preview
@@ -477,9 +576,9 @@ fun AddEditRecipeContentPreview() {
         equipment = recipe.equipment,
         source = recipe.source.source,
         sourceName = recipe.source.name,
-        servings = 0,
-        prepTime = 0,
-        cookTime = 0,
+        servings = recipe.servings,
+        prepTime = recipe.time.preparation,
+        cookTime = recipe.time.cooking,
         notes = recipe.notes,
         onNameChanged = {},
         onDescriptionChanged = {},
@@ -553,6 +652,32 @@ fun IngredientEditPreview() {
           )
         }
       }
+    }
+  }
+}
+
+@Preview
+@Composable
+fun InstructionsTabPreview() {
+  val repository = RecipeRepository()
+  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+
+  val instructions = recipe.instructions.toMutableList()
+  val ingredients = recipe.ingredients
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      InstructionsContent(
+        instructions = instructions,
+        ingredients = ingredients,
+        onInstructionChanged = {
+          instructions.add(it)
+        },
+        onRemoveInstruction = {
+          instructions.remove(it)
+        },
+        onUserMessage = {}
+      )
     }
   }
 }
