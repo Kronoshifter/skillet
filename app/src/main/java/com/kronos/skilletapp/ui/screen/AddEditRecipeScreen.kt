@@ -2,6 +2,9 @@ package com.kronos.skilletapp.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -13,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,7 +40,6 @@ import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
-import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.ItemPill
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -530,7 +531,7 @@ fun InstructionsContent(
   }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun InstructionComponent(
   instruction: Instruction,
@@ -538,6 +539,10 @@ fun InstructionComponent(
   onInstructionChanged: (Instruction) -> Unit,
   onClick: () -> Unit,
 ) {
+  var showBottomSheet by remember { mutableStateOf(false) }
+  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+  val scope = rememberCoroutineScope()
+
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     modifier = Modifier
@@ -597,13 +602,94 @@ fun InstructionComponent(
     ItemPill(
       enabled = true,
       onClick = {
-        //TODO add ingredient bottom sheet
+        showBottomSheet = true
       },
       leadingContent = {
         Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.padding(8.dp))
       }
     ) {
       Text(text = "Add Ingredient", modifier = Modifier.padding(end = 8.dp))
+    }
+  }
+
+  if (showBottomSheet) {
+    ModalBottomSheet(
+      onDismissRequest = { showBottomSheet = false },
+      sheetState = sheetState
+    ) {
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(8.dp)
+      ) {
+        Text(
+          text = "Select Ingredients",
+          style = MaterialTheme.typography.titleLarge
+        )
+
+        val newIngredients = remember { instruction.ingredients.toMutableStateList() }
+
+        LazyColumn(
+          contentPadding = PaddingValues(8.dp),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalAlignment = Alignment.CenterHorizontally,
+          modifier = Modifier.fillMaxSize()
+        ) {
+          items(ingredients) { ingredient ->
+            ItemPill(
+              modifier = Modifier.fillMaxWidth(),
+              leadingContent = {
+                val quantity = when (ingredient.measurement.unit.system) {
+                  MeasurementSystem.Metric -> ingredient.measurement.quantity.toString().take(4).removeSuffix(".")
+                  else -> ingredient.measurement.quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
+                }
+
+                Text(
+                  text = "$quantity ${ingredient.measurement.unit.abbreviation}",
+                  color = MaterialTheme.colorScheme.onPrimary,
+                  fontSize = 18.sp,
+                  modifier = Modifier.padding(8.dp)
+                )
+              },
+              trailingIcon = {
+                Checkbox(
+                  checked = newIngredients.contains(ingredient),
+                  onCheckedChange = null,
+                )
+              },
+              enabled = true,
+              onClick = {
+                if (newIngredients.contains(ingredient)) {
+                  newIngredients.remove(ingredient)
+                } else {
+                  newIngredients.add(ingredient)
+                }
+              }
+            ) {
+              Text(
+                text = ingredient.name,
+                modifier = Modifier
+              )
+            }
+          }
+        }
+
+        Button(
+          onClick = {
+            onInstructionChanged(instruction.copy(ingredients = newIngredients))
+
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+              if (!sheetState.isVisible) {
+                showBottomSheet = false
+              }
+            }
+          }
+        ) {
+          Text(text = "Save")
+        }
+      }
     }
   }
 }
