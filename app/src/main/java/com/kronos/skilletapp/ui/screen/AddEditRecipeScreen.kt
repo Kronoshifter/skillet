@@ -678,7 +678,7 @@ fun InstructionComponent(
 
         Button(
           onClick = {
-            onInstructionChanged(instruction.copy(ingredients = newIngredients))
+            onInstructionChanged(instruction.copy(ingredients = ingredients.intersect(newIngredients).toList()))
 
             scope.launch { sheetState.hide() }.invokeOnCompletion {
               if (!sheetState.isVisible) {
