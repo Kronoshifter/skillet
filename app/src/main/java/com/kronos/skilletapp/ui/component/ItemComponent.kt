@@ -83,6 +83,7 @@ fun ItemPill(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
+          .fillMaxHeight()
           .clip(CircleShape)
           .background(color),
         content = leadingContent
@@ -91,7 +92,7 @@ fun ItemPill(
 
     content()
 
-    trailingIcon?.invoke()
+    trailingIcon?.invoke() ?: Spacer(modifier = Modifier.width(8.dp))
   }
 }
 
@@ -106,7 +107,7 @@ fun ItemPillPreview() {
             text = "Pasta",
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+            modifier = Modifier.padding(8.dp)
           )
         },
         trailingIcon = { IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) } },

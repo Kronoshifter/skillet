@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -485,7 +486,8 @@ fun InstructionsContent(
       InstructionComponent(
         instruction = instruction,
         ingredients = ingredients,
-        onClick = {},
+        onInstructionChanged = onInstructionChanged,
+        onClick = {}
       )
 
       if (instruction != instructions.last()) {
@@ -533,6 +535,7 @@ fun InstructionsContent(
 fun InstructionComponent(
   instruction: Instruction,
   ingredients: List<Ingredient>,
+  onInstructionChanged: (Instruction) -> Unit,
   onClick: () -> Unit,
 ) {
   Column(
@@ -565,12 +568,19 @@ fun InstructionComponent(
                 text = "$quantity ${ingredient.measurement.unit.abbreviation}",
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 18.sp,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                modifier = Modifier.padding(8.dp)
               )
-
             },
             trailingIcon = {
-              IconButton(onClick = {}) {
+              IconButton(
+                onClick = {
+                  onInstructionChanged(
+                    instruction.copy(
+                      ingredients = instruction.ingredients - ingredient
+                    )
+                  )
+                }
+              ) {
                 Icon(imageVector = Icons.Default.Clear, contentDescription = "Edit")
               }
             }
@@ -582,6 +592,18 @@ fun InstructionComponent(
           }
         }
       }
+    }
+
+    ItemPill(
+      enabled = true,
+      onClick = {
+        //TODO add ingredient bottom sheet
+      },
+      leadingContent = {
+        Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.padding(8.dp))
+      }
+    ) {
+      Text(text = "Add Ingredient", modifier = Modifier.padding(end = 8.dp))
     }
   }
 }
@@ -689,7 +711,7 @@ fun InstructionsTabPreview() {
   val repository = RecipeRepository()
   val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
 
-  val instructions = recipe.instructions.toMutableList()
+  var instructions by remember { mutableStateOf(recipe.instructions) }
   val ingredients = recipe.ingredients
 
   SkilletAppTheme {
@@ -697,11 +719,17 @@ fun InstructionsTabPreview() {
       InstructionsContent(
         instructions = instructions,
         ingredients = ingredients,
-        onInstructionChanged = {
-          instructions.add(it)
+        onInstructionChanged = { instruction ->
+          instructions = if (instructions.any { it.id == instruction.id }) {
+            instructions.map { i ->
+              if (i.id == instruction.id) instruction else i
+            }
+          } else {
+            instructions + instruction
+          }
         },
         onRemoveInstruction = {
-          instructions.remove(it)
+          instructions = instructions - it
         },
         onUserMessage = {}
       )
