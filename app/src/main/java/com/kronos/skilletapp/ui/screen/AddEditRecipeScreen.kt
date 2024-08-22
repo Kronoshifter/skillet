@@ -116,6 +116,8 @@ fun AddEditRecipeScreen(
         onDescriptionChanged = vm::updateDescription,
         onIngredientChanged = vm::updateIngredient,
         onRemoveIngredient = vm::removeIngredient,
+        onInstructionChanged = vm::updateInstruction,
+        onRemoveInstruction = vm::removeInstruction,
         onUserMessage = vm::showMessage,
       )
 
@@ -243,7 +245,13 @@ fun AddEditRecipeContent(
               onUserMessage = onUserMessage
             )
 
-            AddEditRecipeContentTab.Instructions -> {}
+            AddEditRecipeContentTab.Instructions -> InstructionsContent(
+              instructions = instructions,
+              ingredients = ingredients,
+              onInstructionChanged = onInstructionChanged,
+              onRemoveInstruction = onRemoveInstruction,
+              onUserMessage = onUserMessage
+            )
             AddEditRecipeContentTab.Equipment -> {}
           }
         }
