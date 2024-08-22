@@ -90,7 +90,9 @@ fun ItemPill(
       )
     }
 
-    content()
+    Box(modifier = Modifier.weight(1f),) {
+      content()
+    }
 
     trailingIcon?.invoke() ?: Spacer(modifier = Modifier.width(8.dp))
   }

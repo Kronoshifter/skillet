@@ -44,6 +44,7 @@ import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.ItemPill
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
+import com.kronos.skilletapp.utils.applyIf
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -564,14 +565,16 @@ fun InstructionComponent(
         instruction.ingredients.forEach { ingredient ->
           ItemPill(
             leadingContent = {
-              val quantity = ingredient.measurement.displayQuantity
+              if (ingredient.measurement.quantity > 0) {
+                val quantity = ingredient.measurement.displayQuantity
 
-              Text(
-                text = "$quantity ${ingredient.measurement.unit.abbreviation}",
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 18.sp,
-                modifier = Modifier.padding(8.dp)
-              )
+                Text(
+                  text = "$quantity ${ingredient.measurement.unit.abbreviation}",
+                  color = MaterialTheme.colorScheme.onPrimary,
+                  fontSize = 18.sp,
+                  modifier = Modifier.padding(8.dp)
+                )
+              }
             },
             trailingIcon = {
               IconButton(
@@ -589,7 +592,7 @@ fun InstructionComponent(
           ) {
             Text(
               text = ingredient.name,
-              modifier = Modifier
+              modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }
             )
           }
         }
@@ -632,25 +635,28 @@ fun InstructionComponent(
           contentPadding = PaddingValues(8.dp),
           verticalArrangement = Arrangement.spacedBy(8.dp),
           horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.fillMaxSize()
+          modifier = Modifier.wrapContentSize()
         ) {
           items(ingredients) { ingredient ->
             ItemPill(
               modifier = Modifier.fillMaxWidth(),
               leadingContent = {
-                val quantity = ingredient.measurement.displayQuantity
+                if (ingredient.measurement.quantity > 0) {
+                  val quantity = ingredient.measurement.displayQuantity
 
-                Text(
-                  text = "$quantity ${ingredient.measurement.unit.abbreviation}",
-                  color = MaterialTheme.colorScheme.onPrimary,
-                  fontSize = 18.sp,
-                  modifier = Modifier.padding(8.dp)
-                )
+                  Text(
+                    text = "$quantity ${ingredient.measurement.unit.abbreviation}",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(8.dp)
+                  )
+                }
               },
               trailingIcon = {
                 Checkbox(
                   checked = newIngredients.contains(ingredient),
                   onCheckedChange = null,
+                  modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
               },
               enabled = true,
@@ -664,7 +670,7 @@ fun InstructionComponent(
             ) {
               Text(
                 text = ingredient.name,
-                modifier = Modifier
+                modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }
               )
             }
           }
@@ -679,7 +685,8 @@ fun InstructionComponent(
                 showBottomSheet = false
               }
             }
-          }
+          },
+          modifier = Modifier.fillMaxWidth()
         ) {
           Text(text = "Save")
         }

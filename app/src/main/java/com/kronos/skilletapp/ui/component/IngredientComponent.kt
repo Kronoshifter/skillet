@@ -113,24 +113,29 @@ fun IngredientPill(
     onClick = { showBottomSheet = true },
     borderColor = borderColor,
     leadingContent = {
-      val measurement = with(ingredient.measurement.scale(scale)) {
-        selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+      if (ingredient.measurement.quantity > 0) {
+        val measurement = with(ingredient.measurement.scale(scale)) {
+          selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+        }
+
+        val quantity = measurement.displayQuantity
+
+        Text(
+          text = "$quantity ${measurement.unit.abbreviation}",
+          color = MaterialTheme.colorScheme.onPrimary,
+          fontSize = 18.sp,
+          modifier = Modifier.padding(8.dp)
+        )
       }
-
-      val quantity = measurement.displayQuantity
-
-      Text(
-        text = "$quantity ${measurement.unit.abbreviation}",
-        color = MaterialTheme.colorScheme.onPrimary,
-        fontSize = 18.sp,
-        modifier = Modifier.padding(8.dp)
-      )
     }
   ) {
     Text(
       text = ingredient.name,
       modifier = Modifier
-        .padding(end = 16.dp)
+        .applyIf(ingredient.measurement.quantity <= 0) {
+          padding(start = 8.dp)
+        }
+        .padding(vertical = 8.dp)
     )
   }
 
@@ -182,6 +187,26 @@ private fun IngredientPillPreview() {
     name = "Pasta",
     measurement = Measurement(8.0, MeasurementUnit.Ounce),
     raw = "8 oz Pasta",
+  )
+
+  SkilletAppTheme {
+    Surface {
+      IngredientPill(
+        ingredient = ingredient,
+        scale = 1.0,
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun IngredientPillNoQuantityPreview() {
+  val ingredient = Ingredient(
+    name = "Salt",
+    measurement = Measurement(0.0, MeasurementUnit.None),
+    raw = "Salt, to taste",
+    comment = "to taste"
   )
 
   SkilletAppTheme {
