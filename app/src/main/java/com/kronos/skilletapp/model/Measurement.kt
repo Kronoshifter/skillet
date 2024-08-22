@@ -101,6 +101,12 @@ data class Measurement(
   fun round() = copy(quantity = quantity.roundToInt().toDouble())
 
   fun scaleAndRound(factor: Double) = scale(factor).roundToEighth()
+
+  val displayQuantity
+    get() = when (unit.system) {
+      MeasurementSystem.Metric -> quantity.toString().take(4).removeSuffix(".")
+      else -> quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
+    }
 }
 
 fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {

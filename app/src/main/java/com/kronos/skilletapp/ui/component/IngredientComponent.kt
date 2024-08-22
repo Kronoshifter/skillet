@@ -42,10 +42,7 @@ fun IngredientRow(
       .height(IntrinsicSize.Min),
     showDetail = measurement.quantity > 0,
     detail = {
-      val quantity = when (measurement.unit.system) {
-        MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
-        else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
-      }
+      val quantity = measurement.displayQuantity
 
       Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -120,10 +117,7 @@ fun IngredientPill(
         selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
       }
 
-      val quantity = when (measurement.unit.system) {
-        MeasurementSystem.Metric -> measurement.quantity.toString().take(4).removeSuffix(".")
-        else -> measurement.quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
-      }
+      val quantity = measurement.displayQuantity
 
       Text(
         text = "$quantity ${measurement.unit.abbreviation}",

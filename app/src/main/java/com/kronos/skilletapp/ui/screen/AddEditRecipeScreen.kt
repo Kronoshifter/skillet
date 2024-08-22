@@ -564,10 +564,7 @@ fun InstructionComponent(
         instruction.ingredients.forEach { ingredient ->
           ItemPill(
             leadingContent = {
-              val quantity = when (ingredient.measurement.unit.system) {
-                MeasurementSystem.Metric -> ingredient.measurement.quantity.toString().take(4).removeSuffix(".")
-                else -> ingredient.measurement.quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
-              }
+              val quantity = ingredient.measurement.displayQuantity
 
               Text(
                 text = "$quantity ${ingredient.measurement.unit.abbreviation}",
@@ -641,10 +638,7 @@ fun InstructionComponent(
             ItemPill(
               modifier = Modifier.fillMaxWidth(),
               leadingContent = {
-                val quantity = when (ingredient.measurement.unit.system) {
-                  MeasurementSystem.Metric -> ingredient.measurement.quantity.toString().take(4).removeSuffix(".")
-                  else -> ingredient.measurement.quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
-                }
+                val quantity = ingredient.measurement.displayQuantity
 
                 Text(
                   text = "$quantity ${ingredient.measurement.unit.abbreviation}",
