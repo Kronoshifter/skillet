@@ -13,7 +13,7 @@ object IngredientParser {
       CommonTokenStream(
         IngredientGrammarLexer(
           CharStreams.fromString(
-            text
+            "$text\n"
           )
         )
       )

@@ -33,6 +33,6 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
 
     val comment = ctx.comment()?.WORD()?.joinToString(" ") { it.text }
 
-    return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text)
+    return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text.trimEnd())
   }
 }
