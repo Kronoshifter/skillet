@@ -120,14 +120,27 @@ fun IngredientPill(
           selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
         }
 
-        val quantity = measurement.displayQuantity
+        val quantity = ingredient.measurement.displayQuantity.let {
+          if (ingredient.measurement.unit !is MeasurementUnit.None) {
+            "$it ${ingredient.measurement.unit.abbreviation}"
+          } else {
+            it
+          }
+        }
 
-        Text(
-          text = "$quantity ${measurement.unit.abbreviation}",
-          color = MaterialTheme.colorScheme.onPrimary,
-          fontSize = 18.sp,
-          modifier = Modifier.padding(8.dp)
-        )
+        Box(
+          modifier = Modifier
+            .widthIn(min = 48.dp)
+        ) {
+          Text(
+            text = quantity,
+            color = MaterialTheme.colorScheme.onPrimary,
+            fontSize = 18.sp,
+            modifier = Modifier
+              .padding(8.dp)
+              .align(Alignment.Center)
+          )
+        }
       }
     }
   ) {
@@ -209,6 +222,25 @@ fun IngredientPillNoQuantityPreview() {
     measurement = Measurement(0.0, MeasurementUnit.None),
     raw = "Salt, to taste",
     comment = "to taste"
+  )
+
+  SkilletAppTheme {
+    Surface {
+      IngredientPill(
+        ingredient = ingredient,
+        scale = 1.0,
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun IngredientPillNoMeasurementPreview() {
+  val ingredient = Ingredient(
+    name = "Pepe",
+    measurement = Measurement(1.0, MeasurementUnit.None),
+    raw = "Pepe",
   )
 
   SkilletAppTheme {
