@@ -117,21 +117,29 @@ class AddEditRecipeViewModel(
   fun updateIngredient(ingredient: Ingredient) {
     _recipeState.update { state ->
       state.copy(
-        ingredients = state.ingredients.update(ingredient) { it.id }
+        ingredients = state.ingredients.upsert(ingredient) { it.id },
+        instructions = state.instructions.map { instruction ->
+          instruction.copy(ingredients = instruction.ingredients.update(ingredient) { it.id })
+        }
       )
     }
   }
 
   fun removeIngredient(ingredient: Ingredient) {
     _recipeState.update {
-      it.copy(ingredients = it.ingredients - ingredient)
+      it.copy(
+        ingredients = it.ingredients - ingredient,
+        instructions = it.instructions.map { instruction ->
+          instruction.copy(ingredients = instruction.ingredients - ingredient)
+        }
+      )
     }
   }
 
   fun updateInstruction(instruction: Instruction) {
     _recipeState.update { state ->
       state.copy(
-        instructions = state.instructions.update(instruction) { it.id }
+        instructions = state.instructions.upsert(instruction) { it.id }
       )
     }
   }
@@ -145,7 +153,7 @@ class AddEditRecipeViewModel(
   fun updateEquipment(equipment: Equipment) {
     _recipeState.update { state ->
       state.copy(
-        equipment = state.equipment.update(equipment) { it.id }
+        equipment = state.equipment.upsert(equipment) { it.id }
       )
     }
   }
@@ -171,8 +179,13 @@ class AddEditRecipeViewModel(
   private fun <T, R : Comparable<R>> List<T>.update(
     item: T,
     selector: (T) -> R,
+  ) = map { if (selector(it) == selector(item)) item else it }
+
+  private fun <T, R : Comparable<R>> List<T>.upsert(
+    item: T,
+    selector: (T) -> R,
   ) = if (any { selector(it) == selector(item) }) {
-    map { i -> if (selector(i) == selector(item)) item else i }
+    map { if (selector(it) == selector(item)) item else it }
   } else {
     this + item
   }
