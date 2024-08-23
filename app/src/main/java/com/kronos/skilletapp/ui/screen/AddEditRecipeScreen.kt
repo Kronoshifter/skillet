@@ -564,8 +564,6 @@ fun InstructionComponent(
     )
 
     if (instruction.ingredients.isNotEmpty()) {
-      //TODO: figure out how to stop the ripple from triggering on the item that gets the same index after ingredient is removed
-      // Try ContextualFlowRow
       FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -576,14 +574,7 @@ fun InstructionComponent(
           ItemPill(
             leadingContent = {
               if (ingredient.measurement.quantity > 0) {
-                val quantity = ingredient.measurement.displayQuantity
-
-                Text(
-                  text = "$quantity ${ingredient.measurement.unit.abbreviation}",
-                  color = MaterialTheme.colorScheme.onPrimary,
-                  fontSize = 18.sp,
-                  modifier = Modifier.padding(8.dp)
-                )
+                IngredientQuantity(ingredient = ingredient)
               }
             },
             trailingIcon = {
@@ -657,14 +648,7 @@ fun InstructionComponent(
               modifier = Modifier.fillMaxWidth(),
               leadingContent = {
                 if (ingredient.measurement.quantity > 0) {
-                  val quantity = ingredient.measurement.displayQuantity
-
-                  Text(
-                    text = "$quantity ${ingredient.measurement.unit.abbreviation}",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(8.dp)
-                  )
+                  IngredientQuantity(ingredient = ingredient)
                 }
               },
               trailingIcon = {
@@ -707,6 +691,31 @@ fun InstructionComponent(
         }
       }
     }
+  }
+}
+
+@Composable
+private fun IngredientQuantity(ingredient: Ingredient) {
+  val quantity = ingredient.measurement.displayQuantity.let {
+    if (ingredient.measurement.unit !is MeasurementUnit.None) {
+      "$it ${ingredient.measurement.unit.abbreviation}"
+    } else {
+      it
+    }
+  }
+
+  Box(
+    modifier = Modifier
+      .widthIn(min = 48.dp)
+  ) {
+    Text(
+      text = quantity,
+      color = MaterialTheme.colorScheme.onPrimary,
+      fontSize = 18.sp,
+      modifier = Modifier
+        .padding(8.dp)
+        .align(Alignment.Center)
+    )
   }
 }
 

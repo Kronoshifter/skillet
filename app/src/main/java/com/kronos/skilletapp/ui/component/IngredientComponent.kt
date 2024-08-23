@@ -55,7 +55,9 @@ fun IngredientRow(
           color = MaterialTheme.colorScheme.onPrimary,
           fontSize = 18.sp,
           modifier = Modifier
-            .applyIf(measurement.unit !is MeasurementUnit.None) { offset(y = 4.dp) }
+            .applyIf(measurement.unit !is MeasurementUnit.None) {
+              offset(y = 4.dp)
+            }
         )
 
         if (measurement.unit !is MeasurementUnit.None) {
