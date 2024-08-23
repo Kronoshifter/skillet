@@ -564,6 +564,8 @@ fun InstructionComponent(
     )
 
     if (instruction.ingredients.isNotEmpty()) {
+      //TODO: figure out how to stop the ripple from triggering on the item that gets the same index after ingredient is removed
+      // Try ContextualFlowRow
       FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -585,22 +587,27 @@ fun InstructionComponent(
               }
             },
             trailingIcon = {
-              IconButton(
-                onClick = {
-                  onInstructionChanged(
-                    instruction.copy(
-                      ingredients = instruction.ingredients - ingredient
+              CompositionLocalProvider(LocalRippleConfiguration provides null) {
+                IconButton(
+                  onClick = {
+                    onInstructionChanged(
+                      instruction.copy(
+                        ingredients = instruction.ingredients - ingredient
+                      )
                     )
-                  )
+                  }
+                ) {
+                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Edit")
                 }
-              ) {
-                Icon(imageVector = Icons.Default.Clear, contentDescription = "Edit")
               }
             }
           ) {
             Text(
               text = ingredient.name,
-              modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }
+              modifier = Modifier
+                .applyIf(ingredient.measurement.quantity <= 0) {
+                  padding(start = 8.dp)
+                }
             )
           }
         }
