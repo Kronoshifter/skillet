@@ -19,9 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
@@ -350,11 +351,22 @@ private fun IngredientsContent(
         )
       } else {
         val focusRequester = remember { FocusRequester() }
+        val focusManager = LocalFocusManager.current
+        var focusGained by remember { mutableStateOf(false) }
 
         IngredientEdit(
           ingredient = ingredient,
           modifier = Modifier
             .fillMaxWidth()
+            .onFocusChanged {
+              if (focusGained) {
+                if (!it.isFocused || !it.hasFocus) {
+                  editing = false
+                }
+              } else {
+                focusGained = it.isFocused || it.hasFocus
+              }
+            }
             .focusRequester(focusRequester),
           onEdit = {
             onIngredientChanged(it)
@@ -369,9 +381,8 @@ private fun IngredientsContent(
         LaunchedEffect(editing) {
           if (editing) {
             focusRequester.requestFocus()
-            focusRequester.captureFocus()
           } else {
-            focusRequester.freeFocus()
+            focusManager.clearFocus()
           }
         }
       }
