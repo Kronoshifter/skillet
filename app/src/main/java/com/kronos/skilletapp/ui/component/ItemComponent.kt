@@ -18,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
-import com.kronos.skilletapp.utils.applyIf
+import com.kronos.skilletapp.utils.modifier.applyIf
 
 @Composable
 fun ItemRow(
@@ -73,7 +73,7 @@ fun ItemPill(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     modifier = modifier
       .width(IntrinsicSize.Max)
-      .height(IntrinsicSize.Max)
+      .height(IntrinsicSize.Min)
       .clip(CircleShape)
       .border(width = 2.dp, color = borderColor, shape = CircleShape)
       .clickable(enabled = enabled, onClick = onClick),

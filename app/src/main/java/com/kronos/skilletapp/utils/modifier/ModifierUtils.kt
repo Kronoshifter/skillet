@@ -1,4 +1,4 @@
-package com.kronos.skilletapp.utils
+package com.kronos.skilletapp.utils.modifier
 
 import androidx.compose.ui.Modifier
 

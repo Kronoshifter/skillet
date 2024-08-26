@@ -1,26 +1,22 @@
 package com.kronos.skilletapp.ui.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Measurement
-import com.kronos.skilletapp.model.MeasurementSystem
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
-import com.kronos.skilletapp.utils.applyIf
+import com.kronos.skilletapp.utils.modifier.AspectRatioReference
+import com.kronos.skilletapp.utils.modifier.applyIf
+import com.kronos.skilletapp.utils.modifier.aspectRatioReference
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 
@@ -120,7 +116,7 @@ fun IngredientPill(
           selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
         }
 
-        val quantity = ingredient.measurement.displayQuantity.let {
+        val quantity = measurement.displayQuantity.let {
           if (ingredient.measurement.unit !is MeasurementUnit.None) {
             "$it ${ingredient.measurement.unit.abbreviation}"
           } else {
@@ -130,7 +126,7 @@ fun IngredientPill(
 
         Box(
           modifier = Modifier
-            .widthIn(min = 48.dp)
+//            .widthIn(min = 48.dp)
         ) {
           Text(
             text = quantity,

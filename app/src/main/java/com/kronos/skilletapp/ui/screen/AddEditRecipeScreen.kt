@@ -2,9 +2,6 @@ package com.kronos.skilletapp.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -44,8 +41,7 @@ import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.ItemPill
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
-import com.kronos.skilletapp.utils.applyIf
-import com.kronos.skilletapp.utils.toFraction
+import com.kronos.skilletapp.utils.modifier.applyIf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
