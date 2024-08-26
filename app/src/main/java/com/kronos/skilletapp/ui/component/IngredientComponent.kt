@@ -5,8 +5,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
@@ -14,9 +19,7 @@ import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
-import com.kronos.skilletapp.utils.modifier.AspectRatioReference
 import com.kronos.skilletapp.utils.modifier.applyIf
-import com.kronos.skilletapp.utils.modifier.aspectRatioReference
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 
@@ -124,9 +127,19 @@ fun IngredientPill(
           }
         }
 
+        // TODO: this works for now, but it should use a custom layout to avoid recomposition
+        var minWidth by remember { mutableStateOf(Dp.Unspecified) }
+        val density = LocalDensity.current
+
         Box(
           modifier = Modifier
-//            .widthIn(min = 48.dp)
+            .onPlaced {
+              minWidth = with(density) {
+                it.size.height.toDp()
+              }
+            }
+            .widthIn(min = minWidth)
+            .fillMaxHeight()
         ) {
           Text(
             text = quantity,

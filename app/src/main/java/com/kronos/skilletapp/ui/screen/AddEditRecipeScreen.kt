@@ -19,6 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +29,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -700,9 +704,19 @@ private fun IngredientQuantity(ingredient: Ingredient) {
     }
   }
 
+  // TODO: this works for now, but it should use a custom layout to avoid recomposition
+  var minWidth by remember { mutableStateOf(Dp.Unspecified) }
+  val density = LocalDensity.current
+
   Box(
     modifier = Modifier
-      .widthIn(min = 48.dp)
+      .onPlaced {
+        minWidth = with(density) {
+          it.size.height.toDp()
+        }
+      }
+      .widthIn(min = minWidth)
+      .fillMaxHeight()
   ) {
     Text(
       text = quantity,

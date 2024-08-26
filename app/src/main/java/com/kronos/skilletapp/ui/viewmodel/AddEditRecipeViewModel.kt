@@ -267,10 +267,8 @@ class AddEditRecipeViewModel(
   private fun checkForInvalidForm(): String? = with(_recipeState.value) {
     return when {
       name.isBlank() -> "Name cannot be blank"
-      description.isBlank() -> "Description cannot be blank"
       ingredients.isEmpty() -> "At least one ingredient is required"
       instructions.isEmpty() -> "At least one instruction is required"
-      equipment.isEmpty() -> "At least one equipment is required"
       servings <= 0 -> "Servings must be greater than 0"
       cookTime <= 0 -> "Cook time must be greater than 0"
       else -> null
