@@ -14,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,8 +82,8 @@ fun AddEditRecipeScreen(
           }
         },
         actions = {
-          TextButton(onClick = vm::saveRecipe) {
-            Text(text = "Save")
+          IconButton(onClick = vm::saveRecipe) {
+            Icon(imageVector = Icons.Default.Save, contentDescription = "Save")
           }
         }
       )
@@ -498,16 +500,8 @@ fun InstructionsContent(
       key = { _, instruction -> instruction.id },
       contentType = { _, _ -> "Instruction" }
     ) { index, instruction ->
-
-      Text(
-        text = "Step ${index + 1}",
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 8.dp)
-      )
-
       InstructionComponent(
+        step = index + 1,
         instruction = instruction,
         ingredients = ingredients,
         onInstructionChanged = onInstructionChanged,
@@ -557,6 +551,7 @@ fun InstructionsContent(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun InstructionComponent(
+  step: Int,
   instruction: Instruction,
   ingredients: List<Ingredient>,
   onInstructionChanged: (Instruction) -> Unit,
@@ -573,10 +568,36 @@ fun InstructionComponent(
       .fillMaxWidth()
       .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
   ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween,
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      Text(
+        text = "Step $step",
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+          .wrapContentWidth(Alignment.Start)
+      )
+
+      IconButton(
+        onClick = {
+          onRemoveInstruction(instruction)
+        },
+        modifier = Modifier
+          .wrapContentWidth(Alignment.End)
+      ) {
+        Icon(imageVector = Icons.Default.Close, contentDescription = "remove instruction")
+      }
+    }
+
     if (!editing) {
       Text(
         text = instruction.text,
-        modifier = Modifier.clickable { editing = true }
+        modifier = Modifier
+          .fillMaxWidth()
+          .clickable { editing = true }
       )
     } else {
       val focusRequester = remember { FocusRequester() }
