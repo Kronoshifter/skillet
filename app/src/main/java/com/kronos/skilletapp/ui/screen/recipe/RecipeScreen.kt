@@ -383,6 +383,7 @@ private fun InstructionsList(
     itemsIndexed(instructions) { index, instruction ->
       Text(
         text = "Step ${index + 1}",
+        style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
           .fillMaxWidth()
