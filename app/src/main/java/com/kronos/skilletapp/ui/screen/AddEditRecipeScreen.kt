@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -253,6 +254,7 @@ fun AddEditRecipeContent(
               onRemoveInstruction = onRemoveInstruction,
               onUserMessage = onUserMessage
             )
+
             AddEditRecipeContentTab.Equipment -> {}
           }
         }
@@ -496,6 +498,7 @@ fun InstructionsContent(
       key = { _, instruction -> instruction.id },
       contentType = { _, _ -> "Instruction" }
     ) { index, instruction ->
+
       Text(
         text = "Step ${index + 1}",
         fontWeight = FontWeight.Bold,
@@ -508,7 +511,7 @@ fun InstructionsContent(
         instruction = instruction,
         ingredients = ingredients,
         onInstructionChanged = onInstructionChanged,
-        onClick = {}
+        onRemoveInstruction = onRemoveInstruction,
       )
 
       if (instruction != instructions.last()) {
@@ -557,8 +560,9 @@ fun InstructionComponent(
   instruction: Instruction,
   ingredients: List<Ingredient>,
   onInstructionChanged: (Instruction) -> Unit,
-  onClick: () -> Unit,
+  onRemoveInstruction: (Instruction) -> Unit,
 ) {
+  var editing by remember { mutableStateOf(false) }
   var showBottomSheet by remember { mutableStateOf(false) }
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   val scope = rememberCoroutineScope()
@@ -569,10 +573,48 @@ fun InstructionComponent(
       .fillMaxWidth()
       .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
   ) {
-    Text(
-      text = instruction.text,
-      modifier = Modifier
-    )
+    if (!editing) {
+      Text(
+        text = instruction.text,
+        modifier = Modifier.clickable { editing = true }
+      )
+    } else {
+      val focusRequester = remember { FocusRequester() }
+      val focusManager = LocalFocusManager.current
+      var focusGained by remember { mutableStateOf(false) }
+
+      InstructionEdit(
+        instruction = instruction,
+        modifier = Modifier
+          .fillMaxWidth()
+          .onFocusChanged {
+            if (focusGained) {
+              if (!it.isFocused || !it.hasFocus) {
+                editing = false
+              }
+            } else {
+              focusGained = it.isFocused || it.hasFocus
+            }
+          }
+          .focusRequester(focusRequester),
+        onEdit = {
+          onInstructionChanged(it)
+          editing = false
+        },
+        onRemove = {
+          onRemoveInstruction(it)
+          editing = false
+        }
+      )
+
+      LaunchedEffect(editing) {
+        if (editing) {
+          focusRequester.requestFocus()
+        } else {
+          focusManager.clearFocus()
+        }
+      }
+    }
 
     if (instruction.ingredients.isNotEmpty()) {
       FlowRow(
@@ -738,6 +780,36 @@ private fun IngredientQuantity(ingredient: Ingredient) {
         .align(Alignment.Center)
     )
   }
+}
+
+@Composable
+fun InstructionEdit(
+  instruction: Instruction,
+  modifier: Modifier = Modifier,
+  onEdit: (Instruction) -> Unit = {},
+  onRemove: (Instruction) -> Unit = {},
+) {
+  var instructionInput by remember {
+    mutableStateOf(
+      TextFieldValue(
+        text = instruction.text,
+        selection = TextRange(instruction.text.length)
+      )
+    )
+  }
+
+  OutlinedTextField(
+    value = instructionInput,
+    onValueChange = { instructionInput = it },
+    modifier = modifier,
+    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+    keyboardActions = KeyboardActions(
+      onDone = {
+        onEdit(instruction.copy(text = instructionInput.text))
+        instructionInput = instructionInput.copy(text = "")
+      },
+    )
+  )
 }
 
 @Preview
