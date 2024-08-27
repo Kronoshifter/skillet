@@ -599,7 +599,7 @@ fun InstructionComponent(
                     )
                   }
                 ) {
-                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Edit")
+                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
                 }
               }
             }

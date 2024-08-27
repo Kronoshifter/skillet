@@ -120,8 +120,8 @@ fun IngredientPill(
         }
 
         val quantity = measurement.displayQuantity.let {
-          if (ingredient.measurement.unit !is MeasurementUnit.None) {
-            "$it ${ingredient.measurement.unit.abbreviation}"
+          if (measurement.unit !is MeasurementUnit.None) {
+            "$it ${measurement.unit.abbreviation}"
           } else {
             it
           }
