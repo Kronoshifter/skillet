@@ -45,6 +45,7 @@ import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.component.InfiniteScrollingPicker
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.ItemPill
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -118,6 +119,7 @@ fun AddEditRecipeScreen(
         equipment = recipeState.equipment,
         onNameChanged = vm::updateName,
         onDescriptionChanged = vm::updateDescription,
+        onServingsChanged = vm::updateServings,
         onIngredientChanged = vm::updateIngredient,
         onRemoveIngredient = vm::removeIngredient,
         onInstructionChanged = vm::updateInstruction,
@@ -271,6 +273,7 @@ fun AddEditRecipeContent(
   }
 }
 
+@ExperimentalMaterial3Api
 @Composable
 private fun RecipeInfoContent(
   name: String,
@@ -332,7 +335,6 @@ private fun RecipeInfoContent(
 
     HorizontalDivider()
 
-    //TODO: add controls for recipe prep and cook time
     Column {
       Text(
         text = "Servings",
@@ -343,11 +345,68 @@ private fun RecipeInfoContent(
         text = "How many servings does this recipe make? This is used to scale the recipe."
       )
 
-      TextButton(onClick = { /*TODO open servings editing controls*/ }) {
+      var showServingsPicker by remember { mutableStateOf(false) }
+      var servingsSelect by remember { mutableIntStateOf(servings) }
+      val sheetState = rememberModalBottomSheetState()
+      val scope = rememberCoroutineScope()
+
+      TextButton(onClick = { showServingsPicker = true }) {
         Text(
           text = servings.let { if (it > 0) "$it servings" else "Set servings" },
           style = MaterialTheme.typography.titleMedium
         )
+      }
+
+      if (showServingsPicker) {
+        ModalBottomSheet(
+          sheetState = sheetState,
+          onDismissRequest = { showServingsPicker = false }
+        ) {
+          Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(8.dp)
+          ) {
+            Row(
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Text(
+                text = "Servings",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+              )
+
+//              Spacer(modifier = Modifier.weight(1f))
+
+              TextButton(
+                onClick = {
+                  onServingsChanged(servingsSelect)
+
+                  scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    if (!sheetState.isVisible) {
+                      showServingsPicker = false
+                    }
+                  }
+                },
+                modifier = Modifier
+              ) {
+                Text(text = "Save")
+              }
+            }
+
+            InfiniteScrollingPicker(
+              options = (0..99).toList(),
+              selected = servingsSelect,
+              onSelect = { servingsSelect = it }
+            ) {
+              Text(text = if (it != 0) it.toString() else "-")
+            }
+          }
+        }
       }
     }
 
