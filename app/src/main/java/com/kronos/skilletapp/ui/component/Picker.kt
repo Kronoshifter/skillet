@@ -26,8 +26,12 @@ fun <T> InfiniteScrollingPicker(
   modifier: Modifier = Modifier,
   visibleItemCount: Int = 3,
   itemHeight: Dp = 40.dp,
-  dividerColor: Color = LocalContentColor.current,
-  optionContent: @Composable BoxScope.(T) -> Unit = { Text(text = it.toString()) }
+  divider: @Composable (offset: Dp) -> Unit = {
+    HorizontalDivider(
+      modifier = Modifier.offset(y = it),
+    )
+  },
+  optionContent: @Composable BoxScope.(T) -> Unit = { Text(text = it.toString()) },
 ) {
   require(visibleItemCount % 2 == 1) {
     "visibleItemCount must be an odd number"
@@ -61,15 +65,8 @@ fun <T> InfiniteScrollingPicker(
       }
     }
 
-    HorizontalDivider(
-      modifier = Modifier.offset(y = itemHeight * (center)),
-      color = dividerColor
-    )
-
-    HorizontalDivider(
-      modifier = Modifier.offset(y = itemHeight * (center + 1)),
-      color = dividerColor
-    )
+    divider(offset = itemHeight * (center))
+    divider(offset = itemHeight * (center + 1))
   }
 
   LaunchedEffect(listState) {
