@@ -238,8 +238,14 @@ fun AddEditRecipeContent(
             AddEditRecipeContentTab.Info -> RecipeInfoContent(
               name = name,
               description = description,
+              servings = servings,
+              prepTime = prepTime,
+              cookTime = cookTime,
               onNameChanged = onNameChanged,
-              onDescriptionChanged = onDescriptionChanged
+              onDescriptionChanged = onDescriptionChanged,
+              onServingsChanged = onServingsChanged,
+              onPrepTimeChanged = onPrepTimeChanged,
+              onCookTimeChanged = onCookTimeChanged
             )
 
             AddEditRecipeContentTab.Ingredients -> IngredientsContent(
@@ -269,12 +275,19 @@ fun AddEditRecipeContent(
 private fun RecipeInfoContent(
   name: String,
   description: String,
+  servings: Int,
+  prepTime: Int,
+  cookTime: Int,
   onNameChanged: (String) -> Unit,
   onDescriptionChanged: (String) -> Unit,
+  onServingsChanged: (Int) -> Unit,
+  onPrepTimeChanged: (Int) -> Unit,
+  onCookTimeChanged: (Int) -> Unit
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
   Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
     modifier = Modifier
       .fillMaxSize()
       .padding(8.dp)
@@ -297,7 +310,7 @@ private fun RecipeInfoContent(
       keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    HorizontalDivider()
 
     Text(
       text = "Description",
@@ -309,13 +322,92 @@ private fun RecipeInfoContent(
       onValueChange = onDescriptionChanged,
       modifier = Modifier.fillMaxWidth(),
       label = { Text(text = "Description") },
-      singleLine = true,
+      minLines = 3,
       keyboardOptions = KeyboardOptions(
         capitalization = KeyboardCapitalization.Sentences,
         imeAction = ImeAction.Done
       ),
       keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
     )
+
+    HorizontalDivider()
+
+    //TODO: add controls for recipe prep and cook time
+    Column {
+      Text(
+        text = "Servings",
+        style = MaterialTheme.typography.titleLarge
+      )
+
+      Text(
+        text = "How many servings does this recipe make? This is used to scale the recipe."
+      )
+
+      TextButton(onClick = { /*TODO open servings editing controls*/ }) {
+        Text(
+          text = servings.let { if (it > 0) "$it servings" else "Set servings" },
+          style = MaterialTheme.typography.titleMedium
+        )
+      }
+    }
+
+    HorizontalDivider()
+
+    Column {
+      Text(
+        text = "Prep Time",
+        style = MaterialTheme.typography.titleLarge
+      )
+
+      Text(
+        text = "How long does this recipe take to prepare?"
+      )
+
+      TextButton(onClick = { /*TODO open prep time editing controls*/ }) {
+        val hours = prepTime / 60
+        val minutes = prepTime % 60
+        val text = when {
+          hours > 0 && minutes > 0 -> "$hours hours, $minutes minutes"
+          hours > 0 -> "$hours hours"
+          minutes > 0 -> "$minutes minutes"
+          else -> "Set prep time"
+        }
+
+        Text(
+          text = text,
+          style = MaterialTheme.typography.titleMedium
+        )
+      }
+    }
+
+    HorizontalDivider()
+
+    Column {
+      Text(
+        text = "Cook Time",
+        style = MaterialTheme.typography.titleLarge
+      )
+
+      Text(
+        text = "How long does this recipe take to cook?"
+      )
+
+      TextButton(onClick = { /*TODO open cook time editing controls*/ }) {
+        val hours = cookTime / 60
+        val minutes = cookTime % 60
+        val text = when {
+          hours > 0 && minutes > 0 -> "$hours hours, $minutes minutes"
+          hours > 0 -> "$hours hours"
+          minutes > 0 -> "$minutes minutes"
+          else -> "Set cook time"
+        }
+
+        Text(
+          text = text,
+          style = MaterialTheme.typography.titleMedium
+        )
+      }
+    }
   }
 }
 
