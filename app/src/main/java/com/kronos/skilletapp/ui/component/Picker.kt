@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,7 +18,9 @@ import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.modifier.verticalFadingEdge
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> InfiniteScrollingPicker(
   options: List<T>,
@@ -44,6 +47,7 @@ fun <T> InfiniteScrollingPicker(
 
   val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
   val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+  val scope = rememberCoroutineScope()
 
   Box(modifier = modifier) {
     LazyColumn(
@@ -55,12 +59,19 @@ fun <T> InfiniteScrollingPicker(
         .height(visibleItemCount * itemHeight)
         .verticalFadingEdge(),
     ) {
-      items(scrollCount) { index ->
-        Box(
-          contentAlignment = Alignment.Center,
-          modifier = Modifier.height(itemHeight)
-        ) {
-          optionContent(options[index % options.size])
+      items(scrollCount) { index -> 
+        CompositionLocalProvider(LocalRippleConfiguration provides null){
+          Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+              .height(itemHeight)
+              .fillMaxWidth()
+              .clickable {
+                scope.launch { listState.animateScrollToItem(index = index - center) }
+              }
+          ) {
+            optionContent(options[index % options.size])
+          }
         }
       }
     }
