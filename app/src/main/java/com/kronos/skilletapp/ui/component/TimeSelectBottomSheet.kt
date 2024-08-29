@@ -59,7 +59,7 @@ fun TimeSelectBottomSheet(
           onSelect = { time = it * 60 + minutes },
           modifier = Modifier.weight(1f)
         ) {
-          Text(text = "$it hours")
+          Text(text = if (it > 0) "$it hours" else "-")
         }
 
         InfiniteScrollingPicker(
@@ -68,7 +68,7 @@ fun TimeSelectBottomSheet(
           onSelect = { time = hours * 60 + it },
           modifier = Modifier.weight(1f)
         ) {
-          Text(text = "$it minutes")
+          Text(text = if (it > 0) "$it minutes" else "-")
         }
       }
     }
