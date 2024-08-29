@@ -136,6 +136,8 @@ class AddEditRecipeViewModel(
     }
   }
 
+  //TODO: add functions to reorder ingredients
+
   fun updateInstruction(instruction: Instruction) {
     _recipeState.update { state ->
       state.copy(
@@ -150,6 +152,8 @@ class AddEditRecipeViewModel(
     }
   }
 
+  //TODO: add functions to reorder instructions
+
   fun updateEquipment(equipment: Equipment) {
     _recipeState.update { state ->
       state.copy(
@@ -163,6 +167,8 @@ class AddEditRecipeViewModel(
       it.copy(equipment = it.equipment - equipment)
     }
   }
+
+  //TODO: add functions to reorder equipment
 
   fun showMessage(message: String) {
     _recipeState.update {

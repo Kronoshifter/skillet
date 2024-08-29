@@ -361,7 +361,7 @@ private fun RecipeInfoContent(
 
       TextButton(onClick = { showServingsPicker = true }) {
         Text(
-          text = servings.let { if (it > 0) "$it servings" else "Set servings" },
+          text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" }  else "Set servings" },
           style = MaterialTheme.typography.titleMedium
         )
       }
@@ -531,6 +531,7 @@ private fun IngredientsContent(
   val state = rememberLazyListState()
   val scope = rememberCoroutineScope()
 
+  //TODO: make ingredient list reorder by drag and drop
   LazyColumn(
     state = state,
     verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
@@ -688,6 +689,7 @@ fun InstructionsContent(
   val state = rememberLazyListState()
   val scope = rememberCoroutineScope()
 
+  //TODO: make instructions reorder by drag and drop
   LazyColumn(
     state = state,
     verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),

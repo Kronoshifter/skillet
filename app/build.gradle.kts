@@ -77,6 +77,7 @@ dependencies {
   implementation("io.insert-koin:koin-androidx-compose:$koin_version")
   implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
   implementation("org.antlr:antlr4:4.13.0")
+  implementation("sh.calvin.reorderable:reorderable:2.3.1")
 
   testImplementation("junit:junit:4.13.2")
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
