@@ -48,6 +48,7 @@ import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.InfiniteScrollingPicker
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.ItemPill
+import com.kronos.skilletapp.ui.component.TimeSelectBottomSheet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.utils.modifier.applyIf
@@ -120,6 +121,10 @@ fun AddEditRecipeScreen(
         onNameChanged = vm::updateName,
         onDescriptionChanged = vm::updateDescription,
         onServingsChanged = vm::updateServings,
+        onPrepTimeChanged = vm::updatePrepTime,
+        onCookTimeChanged = vm::updateCookTime,
+        onSourceChanged = vm::updateSource,
+        onSourceNameChanged = vm::updateSourceName,
         onIngredientChanged = vm::updateIngredient,
         onRemoveIngredient = vm::removeIngredient,
         onInstructionChanged = vm::updateInstruction,
@@ -285,7 +290,7 @@ private fun RecipeInfoContent(
   onDescriptionChanged: (String) -> Unit,
   onServingsChanged: (Int) -> Unit,
   onPrepTimeChanged: (Int) -> Unit,
-  onCookTimeChanged: (Int) -> Unit
+  onCookTimeChanged: (Int) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
@@ -420,7 +425,11 @@ private fun RecipeInfoContent(
         text = "How long does this recipe take to prepare?"
       )
 
-      TextButton(onClick = { /*TODO open prep time editing controls*/ }) {
+      var showTimePicker by remember { mutableStateOf(false) }
+      val sheetState = rememberModalBottomSheetState()
+      val scope = rememberCoroutineScope()
+
+      TextButton(onClick = { showTimePicker = true }) {
         val hours = prepTime / 60
         val minutes = prepTime % 60
         val text = when {
@@ -433,6 +442,24 @@ private fun RecipeInfoContent(
         Text(
           text = text,
           style = MaterialTheme.typography.titleMedium
+        )
+      }
+
+      if (showTimePicker) {
+        TimeSelectBottomSheet(
+          initialTime = prepTime,
+          sheetState = sheetState,
+          onDismissRequest = { showTimePicker = false },
+          title = { Text("Prep Time") },
+          onTimeSelect = {
+            onPrepTimeChanged(it)
+
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+              if (!sheetState.isVisible) {
+                showTimePicker = false
+              }
+            }
+          }
         )
       }
     }
