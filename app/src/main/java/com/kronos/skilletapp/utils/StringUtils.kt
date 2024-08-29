@@ -9,3 +9,7 @@ fun String.normalizeWhitespace(): String {
   val whitespacePattern = """\s+""".toPattern()
   return whitespacePattern.matcher(this).replaceAll(" ")
 }
+
+fun String.pluralize(count: Int, pluralizer: (String) -> String) = let {
+  if (count == 1) this else pluralizer(this)
+}

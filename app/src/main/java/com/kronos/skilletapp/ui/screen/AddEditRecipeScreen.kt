@@ -54,6 +54,7 @@ import com.kronos.skilletapp.ui.component.TimeSelectBottomSheet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.utils.modifier.applyIf
+import com.kronos.skilletapp.utils.pluralize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
@@ -436,9 +437,9 @@ private fun RecipeInfoContent(
         val hours = prepTime / 60
         val minutes = prepTime % 60
         val text = when {
-          hours > 0 && minutes > 0 -> "$hours hours, $minutes minutes"
-          hours > 0 -> "$hours hours"
-          minutes > 0 -> "$minutes minutes"
+          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${"minute".pluralize(minutes) { "${it}s" }}"
+          hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
+          minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
           else -> "Set prep time"
         }
 
@@ -487,9 +488,9 @@ private fun RecipeInfoContent(
         val hours = cookTime / 60
         val minutes = cookTime % 60
         val text = when {
-          hours > 0 && minutes > 0 -> "$hours hours, $minutes minutes"
-          hours > 0 -> "$hours hours"
-          minutes > 0 -> "$minutes minutes"
+          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${"minute".pluralize(minutes) { "${it}s" }}"
+          hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
+          minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
           else -> "Set cook time"
         }
 

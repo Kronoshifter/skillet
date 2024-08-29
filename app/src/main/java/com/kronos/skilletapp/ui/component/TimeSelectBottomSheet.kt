@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.kronos.skilletapp.utils.pluralize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,8 +59,8 @@ fun TimeSelectBottomSheet(
           selected = hours,
           onSelect = { time = it * 60 + minutes },
           modifier = Modifier.weight(1f)
-        ) {
-          Text(text = if (it > 0) "$it hours" else "-")
+        ) { i ->
+          Text(text = if (i > 0) "$i hour".pluralize(i) { "${it}s" } else "-")
         }
 
         InfiniteScrollingPicker(
@@ -67,8 +68,8 @@ fun TimeSelectBottomSheet(
           selected = minutes,
           onSelect = { time = hours * 60 + it },
           modifier = Modifier.weight(1f)
-        ) {
-          Text(text = if (it > 0) "$it minutes" else "-")
+        ) { i ->
+          Text(text = if (i > 0) "$i minute".pluralize(i) { "${it}s" } else "-")
         }
       }
     }
