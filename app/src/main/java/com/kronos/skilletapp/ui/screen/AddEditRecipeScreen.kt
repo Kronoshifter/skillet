@@ -8,8 +8,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -299,6 +301,7 @@ private fun RecipeInfoContent(
     modifier = Modifier
       .fillMaxSize()
       .padding(8.dp)
+      .verticalScroll(rememberScrollState())
   ) {
     Text(
       text = "Title",
@@ -404,7 +407,7 @@ private fun RecipeInfoContent(
             InfiniteScrollingPicker(
               options = (0..99).toList(),
               selected = servingsSelect,
-              onSelect = { servingsSelect = it }
+              onSelect = { servingsSelect = it },
             ) {
               Text(text = if (it != 0) it.toString() else "-")
             }
@@ -476,7 +479,11 @@ private fun RecipeInfoContent(
         text = "How long does this recipe take to cook?"
       )
 
-      TextButton(onClick = { /*TODO open cook time editing controls*/ }) {
+      var showTimePicker by remember { mutableStateOf(false) }
+      val sheetState = rememberModalBottomSheetState()
+      val scope = rememberCoroutineScope()
+
+      TextButton(onClick = { showTimePicker = true }) {
         val hours = cookTime / 60
         val minutes = cookTime % 60
         val text = when {
@@ -489,6 +496,24 @@ private fun RecipeInfoContent(
         Text(
           text = text,
           style = MaterialTheme.typography.titleMedium
+        )
+      }
+
+      if (showTimePicker) {
+        TimeSelectBottomSheet(
+          initialTime = cookTime,
+          sheetState = sheetState,
+          onDismissRequest = { showTimePicker = false },
+          title = { Text("Cook Time") },
+          onTimeSelect = {
+            onCookTimeChanged(it)
+
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+              if (!sheetState.isVisible) {
+                showTimePicker = false
+              }
+            }
+          }
         )
       }
     }
