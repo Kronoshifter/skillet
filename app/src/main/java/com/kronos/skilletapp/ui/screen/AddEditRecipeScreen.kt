@@ -380,8 +380,6 @@ private fun RecipeInfoContent(
                 modifier = Modifier
               )
 
-//              Spacer(modifier = Modifier.weight(1f))
-
               TextButton(
                 onClick = {
                   onServingsChanged(servingsSelect)
