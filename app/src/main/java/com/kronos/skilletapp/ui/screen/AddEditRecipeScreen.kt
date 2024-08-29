@@ -378,15 +378,13 @@ private fun RecipeInfoContent(
               .fillMaxWidth()
               .padding(8.dp)
           ) {
-            Row(
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically,
+            Box(
               modifier = Modifier.fillMaxWidth()
             ) {
               Text(
                 text = "Servings",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier
+                modifier = Modifier.align(Alignment.Center)
               )
 
               TextButton(
@@ -399,7 +397,7 @@ private fun RecipeInfoContent(
                     }
                   }
                 },
-                modifier = Modifier
+                modifier = Modifier.align(Alignment.CenterEnd)
               ) {
                 Text(text = "Save")
               }

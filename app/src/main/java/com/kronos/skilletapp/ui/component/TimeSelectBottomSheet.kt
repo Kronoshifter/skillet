@@ -30,19 +30,22 @@ fun TimeSelectBottomSheet(
         .fillMaxWidth()
         .padding(8.dp)
     ) {
-      Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+      Box(
         modifier = Modifier
           .fillMaxWidth()
       ) {
         CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.titleLarge) {
-          title()
+          Box(
+            modifier = Modifier.align(Alignment.Center)
+          ) {
+            title()
+          }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        TextButton(onClick = { onTimeSelect(time) }) {
+        TextButton(
+          onClick = { onTimeSelect(time) },
+          modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
           Text(text = "Save")
         }
       }
