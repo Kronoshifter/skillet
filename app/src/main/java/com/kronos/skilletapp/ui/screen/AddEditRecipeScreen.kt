@@ -1,11 +1,8 @@
 package com.kronos.skilletapp.ui.screen
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -984,40 +981,49 @@ fun InstructionComponent(
               .fillMaxWidth()
           ) {
             ingredients.intersect(instruction.ingredients.toSet()).forEach { ingredient ->
-              ItemPill(
-                leadingContent = {
-                  if (ingredient.measurement.quantity > 0) {
-                    IngredientQuantity(ingredient = ingredient)
-                  }
-                },
-                trailingIcon = {
-                  CompositionLocalProvider(LocalRippleConfiguration provides null) {
-                    IconButton(
-                      onClick = {
-                        onInstructionChanged(
-                          instruction.copy(
-                            ingredients = instruction.ingredients - ingredient
-                          )
-                        )
+              key(ingredient.id) {
+                val visible = remember { MutableTransitionState(true) }
+
+                if (!visible.targetState && !visible.currentState && visible.isIdle) {
+                  onInstructionChanged(
+                    instruction.copy(
+                      ingredients = instruction.ingredients - ingredient
+                    )
+                  )
+                }
+
+                AnimatedVisibility(
+                  visibleState = visible,
+                  exit = fadeOut()
+                ) {
+                  ItemPill(
+                    modifier = Modifier,
+                    leadingContent = {
+                      if (ingredient.measurement.quantity > 0) {
+                        IngredientQuantity(ingredient = ingredient)
                       }
-                    ) {
-                      Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { visible.targetState = false }) {
+                          Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
+                        }
                     }
+                  ) {
+                    Text(
+                      text = ingredient.name,
+                      modifier = Modifier
+                        .applyIf(ingredient.measurement.quantity <= 0) {
+                          padding(start = 8.dp)
+                        }
+                    )
                   }
                 }
-              ) {
-                Text(
-                  text = ingredient.name,
-                  modifier = Modifier
-                    .applyIf(ingredient.measurement.quantity <= 0) {
-                      padding(start = 8.dp)
-                    }
-                )
               }
             }
           }
         }
 
+        //TODO: change text based on whether any ingredients are present or not
         ItemPill(
           enabled = true,
           onClick = {
