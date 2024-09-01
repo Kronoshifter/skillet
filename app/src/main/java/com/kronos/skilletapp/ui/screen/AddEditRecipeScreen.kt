@@ -4,6 +4,8 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -565,13 +567,15 @@ private fun IngredientsContent(
     onMoveIngredient(from.index, to.index)
   }
 
+  var reordering by remember { mutableStateOf(false) }
+
   LazyColumn(
     state = lazyListState,
     verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
     modifier = Modifier
       .fillMaxWidth()
+      .fillMaxHeight()
       .padding(8.dp)
-//        .padding(start = 8.dp)
   ) {
     items(
       items = ingredients,
@@ -593,8 +597,14 @@ private fun IngredientsContent(
             IngredientRow(
               ingredient = ingredient,
               modifier = Modifier.longPressDraggableHandle(
-                onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
-                onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+                onDragStarted = {
+                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
+                  reordering = true
+                },
+                onDragStopped = {
+                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
+                  reordering = false
+                }
               ),
               onClick = {
                 editing = true
@@ -736,11 +746,13 @@ fun InstructionsContent(
   onUserMessage: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
-  val view = LocalView.current
 
   val scope = rememberCoroutineScope()
   val lazyListState = rememberLazyListState()
-  val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+  val reorderableLazyListState = rememberReorderableLazyListState(
+    lazyListState = lazyListState,
+    scrollThresholdPadding = WindowInsets.systemBars.asPaddingValues()
+  ) { from, to ->
     onMoveInstruction(from.index, to.index)
   }
 
@@ -761,6 +773,7 @@ fun InstructionsContent(
       verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
       modifier = Modifier
         .fillMaxWidth()
+        .fillMaxHeight()
         .padding(8.dp)
     ) {
       itemsIndexed(
@@ -798,37 +811,39 @@ fun InstructionsContent(
         }
       }
 
-      item {
-        var instructionInput by remember { mutableStateOf("") }
+      if (!reordering) {
+        item {
+          var instructionInput by remember { mutableStateOf("") }
 
-        OutlinedTextField(
-          value = instructionInput,
-          onValueChange = { instructionInput = it },
-          modifier = Modifier.fillMaxWidth(),
-          placeholder = { Text(text = "Add an instruction") },
-          trailingIcon = {
-            if (instructionInput.isNotBlank()) {
-              IconButton(
-                onClick = { instructionInput = "" }
-              ) {
-                Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+          OutlinedTextField(
+            value = instructionInput,
+            onValueChange = { instructionInput = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text(text = "Add an instruction") },
+            trailingIcon = {
+              if (instructionInput.isNotBlank()) {
+                IconButton(
+                  onClick = { instructionInput = "" }
+                ) {
+                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+                }
               }
-            }
-          },
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Done
-          ),
-          keyboardActions = KeyboardActions(
-            onDone = {
-              val instruction = Instruction(instructionInput)
-              onInstructionChanged(instruction)
-              instructionInput = ""
-              scope.launch { lazyListState.animateScrollToItem(instructions.size) }
-              keyboard?.hide()
-            }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+              imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+              onDone = {
+                val instruction = Instruction(instructionInput)
+                onInstructionChanged(instruction)
+                instructionInput = ""
+                scope.launch { lazyListState.animateScrollToItem(instructions.size) }
+                keyboard?.hide()
+              }
+            )
           )
-        )
+        }
       }
     }
   }
