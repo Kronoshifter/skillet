@@ -19,10 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -66,6 +63,7 @@ import com.kronos.skilletapp.utils.pluralize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -381,7 +379,7 @@ private fun RecipeInfoContent(
           servingsSelect = servings
         }) {
         Text(
-          text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" }  else "Set servings" },
+          text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings" },
           style = MaterialTheme.typography.titleMedium
         )
       }
@@ -455,7 +453,12 @@ private fun RecipeInfoContent(
         val hours = prepTime / 60
         val minutes = prepTime % 60
         val text = when {
-          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${"minute".pluralize(minutes) { "${it}s" }}"
+          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${
+            "minute".pluralize(
+              minutes
+            ) { "${it}s" }
+          }"
+
           hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
           minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
           else -> "Set prep time"
@@ -506,7 +509,12 @@ private fun RecipeInfoContent(
         val hours = cookTime / 60
         val minutes = cookTime % 60
         val text = when {
-          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${"minute".pluralize(minutes) { "${it}s" }}"
+          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${
+            "minute".pluralize(
+              minutes
+            ) { "${it}s" }
+          }"
+
           hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
           minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
           else -> "Set cook time"
@@ -736,88 +744,92 @@ fun InstructionsContent(
     onMoveInstruction(from.index, to.index)
   }
 
-  LazyColumn(
-    state = lazyListState,
-    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(8.dp)
-  ) {
-    itemsIndexed(
-      items = instructions,
-      key = { _, instruction -> instruction.id },
-      contentType = { _, _ -> "Instruction" }
-    ) { index, instruction ->
-      ReorderableItem(
-        state = reorderableLazyListState,
-        key = instruction.id
-      ) { isDragging ->
-        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
-        var expanded by remember { mutableStateOf(true) }
+  var reordering by remember { mutableStateOf(false) }
 
-        Surface(shadowElevation = elevation) {
-          Column {
-            InstructionComponent(
-              step = index + 1,
-              expanded = expanded,
-              instruction = instruction,
-              ingredients = ingredients,
-              onToggleExpanded = { expanded = it },
-              onInstructionChanged = onInstructionChanged,
-              onRemoveInstruction = onRemoveInstruction,
-              modifier = Modifier.longPressDraggableHandle(
-                onDragStarted = {
-                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
-                  if (expanded) {
-                    expanded = false
-                  }
-                },
-                onDragStopped = {
-                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
-                }
+  Column {
+    TextButton(
+      onClick = { reordering = !reordering }
+    ) {
+      Text(
+        text = if (!reordering) "Reorder instructions" else "Stop reordering",
+        style = MaterialTheme.typography.titleMedium
+      )
+    }
+
+    LazyColumn(
+      state = lazyListState,
+      verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp)
+    ) {
+      itemsIndexed(
+        items = instructions,
+        key = { _, instruction -> instruction.id },
+        contentType = { _, _ -> "Instruction" }
+      ) { index, instruction ->
+        ReorderableItem(
+          state = reorderableLazyListState,
+          key = instruction.id
+        ) { isDragging ->
+          val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+          var expanded by remember { mutableStateOf(true) }
+
+          Surface(shadowElevation = elevation) {
+            Column {
+              InstructionComponent(
+                step = index + 1,
+                expanded = expanded,
+                reordering = reordering,
+                reorderScope = this@ReorderableItem,
+                instruction = instruction,
+                ingredients = ingredients,
+                onToggleExpanded = { expanded = it },
+                onInstructionChanged = onInstructionChanged,
+                onRemoveInstruction = onRemoveInstruction,
               )
-            )
 
+            }
           }
+        }
+
+        if (instruction != instructions.last()) {
+          HorizontalDivider()
         }
       }
 
-      if (instruction != instructions.last()) {
-        HorizontalDivider()
-      }
-    }
+      item {
+        var instructionInput by remember { mutableStateOf("") }
 
-    item {
-      var instructionInput by remember { mutableStateOf("") }
-
-      OutlinedTextField(
-        value = instructionInput,
-        onValueChange = { instructionInput = it },
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text(text = "Add an instruction") },
-        trailingIcon = {
-          if (instructionInput.isNotBlank()) {
-            IconButton(
-              onClick = { instructionInput = "" }
-            ) {
-              Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+        OutlinedTextField(
+          value = instructionInput,
+          onValueChange = { instructionInput = it },
+          modifier = Modifier.fillMaxWidth(),
+          placeholder = { Text(text = "Add an instruction") },
+          trailingIcon = {
+            if (instructionInput.isNotBlank()) {
+              IconButton(
+                onClick = { instructionInput = "" }
+              ) {
+                Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+              }
             }
-          }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-          imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(
-          onDone = {
-            val instruction = Instruction(instructionInput)
-            onInstructionChanged(instruction)
-            instructionInput = ""
-            scope.launch { lazyListState.animateScrollToItem(instructions.size) }
-            keyboard?.hide()
-          }
+          },
+          singleLine = true,
+          keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done
+          ),
+          keyboardActions = KeyboardActions(
+            onDone = {
+              val instruction = Instruction(instructionInput)
+              onInstructionChanged(instruction)
+              instructionInput = ""
+              scope.launch { lazyListState.animateScrollToItem(instructions.size) }
+              keyboard?.hide()
+            }
+          )
         )
-      )
+      }
     }
   }
 }
@@ -827,17 +839,21 @@ fun InstructionsContent(
 fun InstructionComponent(
   step: Int,
   expanded: Boolean,
+  reordering: Boolean,
+  reorderScope: ReorderableCollectionItemScope,
   instruction: Instruction,
   ingredients: List<Ingredient>,
   onToggleExpanded: (Boolean) -> Unit,
   onInstructionChanged: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   var editing by remember { mutableStateOf(false) }
   var showBottomSheet by remember { mutableStateOf(false) }
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   val scope = rememberCoroutineScope()
+
+  val isExpanded = expanded && !reordering
 
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -851,7 +867,7 @@ fun InstructionComponent(
       horizontalArrangement = Arrangement.SpaceBetween,
       modifier = Modifier
         .fillMaxWidth()
-        .clickable { onToggleExpanded(!expanded) }
+        .clickable(enabled = !reordering) { onToggleExpanded(!expanded) }
     ) {
       Text(
         text = "Step $step",
@@ -861,19 +877,38 @@ fun InstructionComponent(
           .wrapContentWidth(Alignment.Start)
       )
 
-      IconButton(
-        onClick = {
-          onRemoveInstruction(instruction)
-        },
-        modifier = Modifier
-          .wrapContentWidth(Alignment.End)
-      ) {
-        Icon(imageVector = Icons.Default.Close, contentDescription = "remove instruction")
+      if (!reordering) {
+        IconButton(
+          onClick = {
+            onRemoveInstruction(instruction)
+          },
+          modifier = Modifier
+            .wrapContentWidth(Alignment.End)
+        ) {
+          Icon(imageVector = Icons.Default.Close, contentDescription = "remove instruction")
+        }
+      } else {
+        val view = LocalView.current
+
+        IconButton(
+          onClick = {},
+          modifier = with(reorderScope) {
+            Modifier
+              .wrapContentWidth(Alignment.End)
+              .draggableHandle(
+                onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+              )
+          }
+
+        ) {
+          Icon(imageVector = Icons.Default.DragHandle, contentDescription = "reorder instruction")
+        }
       }
     }
 
     if (!editing) {
-      val maxLines = if (expanded) Int.MAX_VALUE else 1
+      val maxLines = if (isExpanded) Int.MAX_VALUE else 1
 
       Text(
         text = instruction.text,
@@ -921,7 +956,7 @@ fun InstructionComponent(
       }
     }
 
-    AnimatedVisibility(visible = expanded) {
+    AnimatedVisibility(visible = isExpanded) {
       Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
       ) {
