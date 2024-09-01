@@ -9,6 +9,8 @@ import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.utils.update
+import com.kronos.skilletapp.utils.upsert
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -180,20 +182,6 @@ class AddEditRecipeViewModel(
     _recipeState.update {
       it.copy(userMessage = null)
     }
-  }
-
-  private fun <T, R : Comparable<R>> List<T>.update(
-    item: T,
-    selector: (T) -> R,
-  ) = map { if (selector(it) == selector(item)) item else it }
-
-  private fun <T, R : Comparable<R>> List<T>.upsert(
-    item: T,
-    selector: (T) -> R,
-  ) = if (any { selector(it) == selector(item) }) {
-    map { if (selector(it) == selector(item)) item else it }
-  } else {
-    this + item
   }
 
   private fun createRecipe() = viewModelScope.launch {
