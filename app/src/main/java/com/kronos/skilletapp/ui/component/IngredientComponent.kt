@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun IngredientRow(
   ingredient: Ingredient,
+  modifier: Modifier = Modifier,
   scale: Double = 1.0,
   selectedUnit: MeasurementUnit? = null,
   enabled: Boolean = true,
@@ -38,7 +39,8 @@ fun IngredientRow(
   ItemRow(
     modifier = Modifier
       .fillMaxWidth()
-      .height(IntrinsicSize.Min),
+      .height(IntrinsicSize.Min)
+      .then(modifier),
     showDetail = measurement.quantity > 0,
     detail = {
       val quantity = measurement.displayQuantity

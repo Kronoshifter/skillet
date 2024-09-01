@@ -523,7 +523,8 @@ private fun IngredientComponentPreview() {
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     IngredientRow(
       ingredient = ingredient,
-      scale = 1.0, null,
+      scale = 1.0,
+      selectedUnit = null,
       enabled = false,
       onClick = {}
     )

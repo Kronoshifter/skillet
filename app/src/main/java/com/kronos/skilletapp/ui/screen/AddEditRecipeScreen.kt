@@ -1,5 +1,8 @@
 package com.kronos.skilletapp.ui.screen
 
+import android.view.HapticFeedbackConstants
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +32,7 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -54,10 +58,13 @@ import com.kronos.skilletapp.ui.component.TimeSelectBottomSheet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.utils.modifier.applyIf
+import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.pluralize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private enum class AddEditRecipeContentTab {
   Info,
@@ -156,7 +163,7 @@ fun AddEditRecipeScreen(
   }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AddEditRecipeContent(
   name: String,
@@ -525,6 +532,7 @@ private fun RecipeInfoContent(
   }
 }
 
+@ExperimentalFoundationApi
 @Composable
 private fun IngredientsContent(
   ingredients: List<Ingredient>,
@@ -534,13 +542,18 @@ private fun IngredientsContent(
   onUserMessage: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
+  val view = LocalView.current
 
-  val state = rememberLazyListState()
   val scope = rememberCoroutineScope()
+  val lazyListState = rememberLazyListState()
+  val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+    onMoveIngredient(from.index, to.index)
+    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
+  }
 
   //TODO: make ingredient list reorder by drag and drop
   LazyColumn(
-    state = state,
+    state = lazyListState,
     verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
     modifier = Modifier
       .fillMaxWidth()
@@ -552,49 +565,61 @@ private fun IngredientsContent(
       key = { it.id },
       contentType = { "Ingredient" }
     ) { ingredient ->
-      var editing by remember { mutableStateOf(false) }
+      ReorderableItem(
+        state = reorderableLazyListState,
+        key = ingredient.id
+      ) { isDragging ->
+        var editing by remember { mutableStateOf(false) }
+        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
 
-      if (!editing) {
-        IngredientRow(
-          ingredient = ingredient,
-          onClick = {
-            editing = true
-          },
-        )
-      } else {
-        val focusRequester = remember { FocusRequester() }
-        val focusManager = LocalFocusManager.current
-        var focusGained by remember { mutableStateOf(false) }
+        Surface(shadowElevation = elevation) {
+          if (!editing) {
+            IngredientRow(
+              ingredient = ingredient,
+              modifier = Modifier.longPressDraggableHandle(
+                onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+              ),
+              onClick = {
+                editing = true
+              },
+            )
+          } else {
+            val focusRequester = remember { FocusRequester() }
+            val focusManager = LocalFocusManager.current
+            var focusGained by remember { mutableStateOf(false) }
 
-        IngredientEdit(
-          ingredient = ingredient,
-          modifier = Modifier
-            .fillMaxWidth()
-            .onFocusChanged {
-              if (focusGained) {
-                if (!it.isFocused || !it.hasFocus) {
-                  editing = false
+            IngredientEdit(
+              ingredient = ingredient,
+              modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged {
+                  if (focusGained) {
+                    if (!it.isFocused || !it.hasFocus) {
+                      editing = false
+                    }
+                  } else {
+                    focusGained = it.isFocused || it.hasFocus
+                  }
                 }
+                .focusRequester(focusRequester),
+              onEdit = {
+                onIngredientChanged(it)
+                editing = false
+              },
+              onRemove = {
+                onRemoveIngredient(it)
+                editing = false
+              }
+            )
+
+            LaunchedEffect(editing) {
+              if (editing) {
+                focusRequester.requestFocus()
               } else {
-                focusGained = it.isFocused || it.hasFocus
+                focusManager.clearFocus()
               }
             }
-            .focusRequester(focusRequester),
-          onEdit = {
-            onIngredientChanged(it)
-            editing = false
-          },
-          onRemove = {
-            onRemoveIngredient(it)
-            editing = false
-          }
-        )
-
-        LaunchedEffect(editing) {
-          if (editing) {
-            focusRequester.requestFocus()
-          } else {
-            focusManager.clearFocus()
           }
         }
       }
@@ -627,7 +652,7 @@ private fun IngredientsContent(
               .onSuccess {
                 onIngredientChanged(it)
                 ingredientInput = ""
-                scope.launch { state.animateScrollToItem(ingredients.size) }
+                scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
               }.onFailure {
                 onUserMessage("Failed to parse ingredient: ${it.message}")
               }
@@ -1084,13 +1109,14 @@ fun AddEditRecipeContentPreview() {
   }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun IngredientsTabPreview() {
   val repository = RecipeRepository()
   val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
 
-  val ingredients = recipe.ingredients.toMutableList()
+  val ingredients = recipe.ingredients.toMutableStateList()
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -1103,7 +1129,9 @@ fun IngredientsTabPreview() {
           ingredients.remove(it)
         },
         onMoveIngredient = { from, to ->
-
+          with(ingredients) {
+            add(to, removeAt(from))
+          }
         },
         onUserMessage = {}
       )
@@ -1170,7 +1198,7 @@ fun InstructionsTabPreview() {
           instructions = instructions - it
         },
         onMoveInstruction = { from, to ->
-
+          instructions = instructions.move(from, to)
         },
         onUserMessage = {}
       )
