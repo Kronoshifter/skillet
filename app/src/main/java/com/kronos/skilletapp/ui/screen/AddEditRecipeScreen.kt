@@ -372,7 +372,11 @@ private fun RecipeInfoContent(
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
 
-      TextButton(onClick = { showServingsPicker = true }) {
+      TextButton(
+        onClick = {
+          showServingsPicker = true
+          servingsSelect = servings
+        }) {
         Text(
           text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" }  else "Set servings" },
           style = MaterialTheme.typography.titleMedium
@@ -548,10 +552,8 @@ private fun IngredientsContent(
   val lazyListState = rememberLazyListState()
   val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
     onMoveIngredient(from.index, to.index)
-    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
   }
 
-  //TODO: make ingredient list reorder by drag and drop
   LazyColumn(
     state = lazyListState,
     verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
@@ -572,7 +574,10 @@ private fun IngredientsContent(
         var editing by remember { mutableStateOf(false) }
         val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
 
-        Surface(shadowElevation = elevation) {
+        Surface(
+          shadowElevation = elevation,
+          shape = MaterialTheme.shapes.medium
+        ) {
           if (!editing) {
             IngredientRow(
               ingredient = ingredient,
@@ -685,6 +690,7 @@ private fun IngredientEdit(
     onValueChange = { ingredientInput = it },
     modifier = modifier,
     singleLine = true,
+    shape = MaterialTheme.shapes.medium,
     trailingIcon = {
       IconButton(
         onClick = {
@@ -708,6 +714,7 @@ private fun IngredientEdit(
   )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InstructionsContent(
   instructions: List<Instruction>,
@@ -718,13 +725,16 @@ fun InstructionsContent(
   onUserMessage: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
+  val view = LocalView.current
 
-  val state = rememberLazyListState()
   val scope = rememberCoroutineScope()
+  val lazyListState = rememberLazyListState()
+  val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+    onMoveInstruction(from.index, to.index)
+  }
 
-  //TODO: make instructions reorder by drag and drop
   LazyColumn(
-    state = state,
+    state = lazyListState,
     verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
     modifier = Modifier
       .fillMaxWidth()
@@ -735,16 +745,31 @@ fun InstructionsContent(
       key = { _, instruction -> instruction.id },
       contentType = { _, _ -> "Instruction" }
     ) { index, instruction ->
-      InstructionComponent(
-        step = index + 1,
-        instruction = instruction,
-        ingredients = ingredients,
-        onInstructionChanged = onInstructionChanged,
-        onRemoveInstruction = onRemoveInstruction,
-      )
+      ReorderableItem(
+        state = reorderableLazyListState,
+        key = instruction.id
+      ) { isDragging ->
+        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
 
-      if (instruction != instructions.last()) {
-        HorizontalDivider()
+        Surface(shadowElevation = elevation) {
+          Column {
+            InstructionComponent(
+              step = index + 1,
+              instruction = instruction,
+              ingredients = ingredients,
+              onInstructionChanged = onInstructionChanged,
+              onRemoveInstruction = onRemoveInstruction,
+              modifier = Modifier.longPressDraggableHandle(
+                onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+              )
+            )
+
+            if (instruction != instructions.last()) {
+              HorizontalDivider()
+            }
+          }
+        }
       }
     }
 
@@ -774,7 +799,7 @@ fun InstructionsContent(
             val instruction = Instruction(instructionInput)
             onInstructionChanged(instruction)
             instructionInput = ""
-            scope.launch { state.animateScrollToItem(instructions.size) }
+            scope.launch { lazyListState.animateScrollToItem(instructions.size) }
             keyboard?.hide()
           }
         )
@@ -791,6 +816,7 @@ fun InstructionComponent(
   ingredients: List<Ingredient>,
   onInstructionChanged: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
+  modifier: Modifier = Modifier
 ) {
   var editing by remember { mutableStateOf(false) }
   var showBottomSheet by remember { mutableStateOf(false) }
@@ -802,6 +828,7 @@ fun InstructionComponent(
     modifier = Modifier
       .fillMaxWidth()
       .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+      .then(modifier)
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
