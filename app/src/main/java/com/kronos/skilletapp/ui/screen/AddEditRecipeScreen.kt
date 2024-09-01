@@ -1023,17 +1023,48 @@ fun InstructionComponent(
           }
         }
 
-        //TODO: change text based on whether any ingredients are present or not
         ItemPill(
           enabled = true,
           onClick = {
             showBottomSheet = true
           },
           leadingContent = {
-            Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.padding(8.dp))
+            AnimatedContent(
+              targetState = instruction.ingredients.isEmpty(),
+              label = "Add/Edit Ingredient Icon"
+            ) {
+              if (it) {
+                Icon(
+                  imageVector = Icons.Default.Add,
+                  contentDescription = "Add ingredients to instruction",
+                  modifier = Modifier.padding(8.dp)
+                )
+              } else {
+                Icon(
+                  imageVector = Icons.Default.Edit,
+                  contentDescription = "Edit instruction's ingredients",
+                  modifier = Modifier.padding(8.dp)
+                )
+              }
+            }
           }
         ) {
-          Text(text = "Add Ingredient", modifier = Modifier.padding(end = 8.dp))
+          AnimatedContent(
+            targetState = instruction.ingredients.isEmpty(),
+            label = "Add/Edit Ingredient Text"
+          ) {
+            if (it) {
+              Text(
+                text = "Add Ingredients",
+                modifier = Modifier.padding(end = 8.dp)
+              )
+            } else {
+              Text(
+                text = "Edit Ingredients",
+                modifier = Modifier.padding(end = 8.dp)
+              )
+            }
+          }
         }
       }
     }
