@@ -130,8 +130,13 @@ fun AddEditRecipeScreen(
         onSourceNameChanged = vm::updateSourceName,
         onIngredientChanged = vm::updateIngredient,
         onRemoveIngredient = vm::removeIngredient,
+        onMoveIngredient = vm::moveIngredient,
         onInstructionChanged = vm::updateInstruction,
         onRemoveInstruction = vm::removeInstruction,
+        onMoveInstruction = vm::moveInstruction,
+        onEquipmentChanged = vm::updateEquipment,
+        onRemoveEquipment = vm::removeEquipment,
+        onMoveEquipment = vm::moveEquipment,
         onUserMessage = vm::showMessage,
       )
 
@@ -175,10 +180,13 @@ fun AddEditRecipeContent(
   onSourceNameChanged: (String) -> Unit = {},
   onIngredientChanged: (Ingredient) -> Unit = {},
   onRemoveIngredient: (Ingredient) -> Unit = {},
+  onMoveIngredient: (Int, Int) -> Unit = { _, _ -> },
   onInstructionChanged: (Instruction) -> Unit = {},
   onRemoveInstruction: (Instruction) -> Unit = {},
+  onMoveInstruction: (Int, Int) -> Unit = { _, _ -> },
   onEquipmentChanged: (Equipment) -> Unit = {},
   onRemoveEquipment: (Equipment) -> Unit = {},
+  onMoveEquipment: (Int, Int) -> Unit = { _, _ -> },
   onUserMessage: (String) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
@@ -190,17 +198,13 @@ fun AddEditRecipeContent(
     color = MaterialTheme.colorScheme.background
   ) {
     Column(
-//      verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier
         .fillMaxSize()
-//        .padding(8.dp)
-//        .verticalScroll(rememberScrollState())
     ) {
       PrimaryScrollableTabRow(
         selectedTabIndex = tab.ordinal,
         modifier = Modifier
           .fillMaxWidth(),
-//        edgePadding = TabRowDefaults.ScrollableTabRowEdgeStartPadding / 2
       ) {
         Tab(
           selected = tab == AddEditRecipeContentTab.Info,
@@ -262,6 +266,7 @@ fun AddEditRecipeContent(
               ingredients = ingredients,
               onIngredientChanged = onIngredientChanged,
               onRemoveIngredient = onRemoveIngredient,
+              onMoveIngredient = onMoveIngredient,
               onUserMessage = onUserMessage
             )
 
@@ -270,6 +275,7 @@ fun AddEditRecipeContent(
               ingredients = ingredients,
               onInstructionChanged = onInstructionChanged,
               onRemoveInstruction = onRemoveInstruction,
+              onMoveInstruction = onMoveInstruction,
               onUserMessage = onUserMessage
             )
 
@@ -524,6 +530,7 @@ private fun IngredientsContent(
   ingredients: List<Ingredient>,
   onIngredientChanged: (Ingredient) -> Unit,
   onRemoveIngredient: (Ingredient) -> Unit,
+  onMoveIngredient: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
@@ -682,6 +689,7 @@ fun InstructionsContent(
   ingredients: List<Ingredient>,
   onInstructionChanged: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
+  onMoveInstruction: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
@@ -1094,6 +1102,9 @@ fun IngredientsTabPreview() {
         onRemoveIngredient = {
           ingredients.remove(it)
         },
+        onMoveIngredient = { from, to ->
+
+        },
         onUserMessage = {}
       )
     }
@@ -1157,6 +1168,9 @@ fun InstructionsTabPreview() {
         },
         onRemoveInstruction = {
           instructions = instructions - it
+        },
+        onMoveInstruction = { from, to ->
+
         },
         onUserMessage = {}
       )

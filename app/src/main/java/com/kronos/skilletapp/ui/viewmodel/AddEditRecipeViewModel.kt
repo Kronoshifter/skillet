@@ -139,7 +139,6 @@ class AddEditRecipeViewModel(
     }
   }
 
-  //TODO: add functions to reorder ingredients
   fun moveIngredient(from: Int, to: Int) {
     _recipeState.update {
       it.copy(
@@ -162,7 +161,6 @@ class AddEditRecipeViewModel(
     }
   }
 
-  //TODO: add functions to reorder instructions
   fun moveInstruction(from: Int, to: Int) {
     _recipeState.update {
       it.copy(
@@ -185,7 +183,6 @@ class AddEditRecipeViewModel(
     }
   }
 
-  //TODO: add functions to reorder equipment
   fun moveEquipment(from: Int, to: Int) {
     _recipeState.update {
       it.copy(
