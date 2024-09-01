@@ -21,7 +21,8 @@ fun TimeSelectBottomSheet(
     sheetState = sheetState,
     onDismissRequest = onDismissRequest
   ) {
-    var time by remember { mutableIntStateOf(initialTime) }
+    var hours by remember { mutableIntStateOf(initialTime / 60) }
+    var minutes by remember { mutableIntStateOf(initialTime % 60) }
 
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -43,7 +44,7 @@ fun TimeSelectBottomSheet(
         }
 
         TextButton(
-          onClick = { onTimeSelect(time) },
+          onClick = { onTimeSelect(hours * 60 + minutes) },
           modifier = Modifier.align(Alignment.CenterEnd)
         ) {
           Text(text = "Save")
@@ -51,16 +52,13 @@ fun TimeSelectBottomSheet(
       }
 
       Row(modifier = Modifier.fillMaxWidth()) {
-        val hours = time / 60
         val hoursOptions = (0..23).toList()
-
-        val minutes = time % 60
         val minutesOptions = (0..55 step 5).toList()
 
         InfiniteScrollingPicker(
           options = hoursOptions,
           selected = hours,
-          onSelect = { time = it * 60 + minutes },
+          onSelect = { hours = it },
           modifier = Modifier.weight(1f)
         ) { i ->
           Text(text = if (i > 0) "$i hour".pluralize(i) { "${it}s" } else "-")
@@ -69,7 +67,7 @@ fun TimeSelectBottomSheet(
         InfiniteScrollingPicker(
           options = minutesOptions,
           selected = minutes,
-          onSelect = { time = hours * 60 + it },
+          onSelect = { minutes = it },
           modifier = Modifier.weight(1f)
         ) { i ->
           Text(text = if (i > 0) "$i minute".pluralize(i) { "${it}s" } else "-")
