@@ -846,7 +846,7 @@ fun InstructionComponent(
         modifier = Modifier
           .fillMaxWidth()
       ) {
-        instruction.ingredients.forEach { ingredient ->
+        ingredients.intersect(instruction.ingredients.toSet()).forEach { ingredient ->
           ItemPill(
             leadingContent = {
               if (ingredient.measurement.quantity > 0) {
@@ -953,7 +953,7 @@ fun InstructionComponent(
 
         Button(
           onClick = {
-            onInstructionChanged(instruction.copy(ingredients = ingredients.intersect(newIngredients).toList()))
+            onInstructionChanged(instruction.copy(ingredients = newIngredients))
 
             scope.launch { sheetState.hide() }.invokeOnCompletion {
               if (!sheetState.isVisible) {

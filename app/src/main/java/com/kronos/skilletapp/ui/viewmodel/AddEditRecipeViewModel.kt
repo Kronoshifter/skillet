@@ -9,6 +9,7 @@ import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
 import kotlinx.coroutines.flow.*
@@ -139,6 +140,13 @@ class AddEditRecipeViewModel(
   }
 
   //TODO: add functions to reorder ingredients
+  fun moveIngredient(from: Int, to: Int) {
+    _recipeState.update {
+      it.copy(
+        ingredients = it.ingredients.move(from, to),
+      )
+    }
+  }
 
   fun updateInstruction(instruction: Instruction) {
     _recipeState.update { state ->
@@ -155,6 +163,13 @@ class AddEditRecipeViewModel(
   }
 
   //TODO: add functions to reorder instructions
+  fun moveInstruction(from: Int, to: Int) {
+    _recipeState.update {
+      it.copy(
+        instructions = it.instructions.move(from, to),
+      )
+    }
+  }
 
   fun updateEquipment(equipment: Equipment) {
     _recipeState.update { state ->
@@ -171,6 +186,13 @@ class AddEditRecipeViewModel(
   }
 
   //TODO: add functions to reorder equipment
+  fun moveEquipment(from: Int, to: Int) {
+    _recipeState.update {
+      it.copy(
+        equipment = it.equipment.move(from, to),
+      )
+    }
+  }
 
   fun showMessage(message: String) {
     _recipeState.update {
