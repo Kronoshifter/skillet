@@ -1,7 +1,9 @@
 package com.kronos.skilletapp.ui.screen
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -38,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -750,26 +753,37 @@ fun InstructionsContent(
         key = instruction.id
       ) { isDragging ->
         val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+        var expanded by remember { mutableStateOf(true) }
 
         Surface(shadowElevation = elevation) {
           Column {
             InstructionComponent(
               step = index + 1,
+              expanded = expanded,
               instruction = instruction,
               ingredients = ingredients,
+              onToggleExpanded = { expanded = it },
               onInstructionChanged = onInstructionChanged,
               onRemoveInstruction = onRemoveInstruction,
               modifier = Modifier.longPressDraggableHandle(
-                onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
-                onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+                onDragStarted = {
+                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
+                  if (expanded) {
+                    expanded = false
+                  }
+                },
+                onDragStopped = {
+                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
+                }
               )
             )
 
-            if (instruction != instructions.last()) {
-              HorizontalDivider()
-            }
           }
         }
+      }
+
+      if (instruction != instructions.last()) {
+        HorizontalDivider()
       }
     }
 
@@ -812,8 +826,10 @@ fun InstructionsContent(
 @Composable
 fun InstructionComponent(
   step: Int,
+  expanded: Boolean,
   instruction: Instruction,
   ingredients: List<Ingredient>,
+  onToggleExpanded: (Boolean) -> Unit,
   onInstructionChanged: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   modifier: Modifier = Modifier
@@ -833,7 +849,9 @@ fun InstructionComponent(
     Row(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween,
-      modifier = Modifier.fillMaxWidth()
+      modifier = Modifier
+        .fillMaxWidth()
+        .clickable { onToggleExpanded(!expanded) }
     ) {
       Text(
         text = "Step $step",
@@ -855,8 +873,12 @@ fun InstructionComponent(
     }
 
     if (!editing) {
+      val maxLines = if (expanded) Int.MAX_VALUE else 1
+
       Text(
         text = instruction.text,
+        overflow = TextOverflow.Ellipsis,
+        maxLines = maxLines,
         modifier = Modifier
           .fillMaxWidth()
           .clickable { editing = true }
@@ -899,58 +921,65 @@ fun InstructionComponent(
       }
     }
 
-    if (instruction.ingredients.isNotEmpty()) {
-      FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-          .fillMaxWidth()
+    AnimatedVisibility(visible = expanded) {
+      Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
       ) {
-        ingredients.intersect(instruction.ingredients.toSet()).forEach { ingredient ->
-          ItemPill(
-            leadingContent = {
-              if (ingredient.measurement.quantity > 0) {
-                IngredientQuantity(ingredient = ingredient)
-              }
-            },
-            trailingIcon = {
-              CompositionLocalProvider(LocalRippleConfiguration provides null) {
-                IconButton(
-                  onClick = {
-                    onInstructionChanged(
-                      instruction.copy(
-                        ingredients = instruction.ingredients - ingredient
-                      )
-                    )
+
+        if (instruction.ingredients.isNotEmpty()) {
+          FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+              .fillMaxWidth()
+          ) {
+            ingredients.intersect(instruction.ingredients.toSet()).forEach { ingredient ->
+              ItemPill(
+                leadingContent = {
+                  if (ingredient.measurement.quantity > 0) {
+                    IngredientQuantity(ingredient = ingredient)
                   }
-                ) {
-                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
+                },
+                trailingIcon = {
+                  CompositionLocalProvider(LocalRippleConfiguration provides null) {
+                    IconButton(
+                      onClick = {
+                        onInstructionChanged(
+                          instruction.copy(
+                            ingredients = instruction.ingredients - ingredient
+                          )
+                        )
+                      }
+                    ) {
+                      Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
+                    }
+                  }
                 }
+              ) {
+                Text(
+                  text = ingredient.name,
+                  modifier = Modifier
+                    .applyIf(ingredient.measurement.quantity <= 0) {
+                      padding(start = 8.dp)
+                    }
+                )
               }
             }
-          ) {
-            Text(
-              text = ingredient.name,
-              modifier = Modifier
-                .applyIf(ingredient.measurement.quantity <= 0) {
-                  padding(start = 8.dp)
-                }
-            )
           }
         }
-      }
-    }
 
-    ItemPill(
-      enabled = true,
-      onClick = {
-        showBottomSheet = true
-      },
-      leadingContent = {
-        Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.padding(8.dp))
+        ItemPill(
+          enabled = true,
+          onClick = {
+            showBottomSheet = true
+          },
+          leadingContent = {
+            Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.padding(8.dp))
+          }
+        ) {
+          Text(text = "Add Ingredient", modifier = Modifier.padding(end = 8.dp))
+        }
       }
-    ) {
-      Text(text = "Add Ingredient", modifier = Modifier.padding(end = 8.dp))
     }
   }
 
