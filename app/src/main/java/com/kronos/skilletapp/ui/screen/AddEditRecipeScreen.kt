@@ -23,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -231,11 +232,11 @@ fun AddEditRecipeContent(
           text = { Text(text = "Instructions") }
         )
 
-        Tab(
-          selected = tab == AddEditRecipeContentTab.Equipment,
-          onClick = { tab = AddEditRecipeContentTab.Equipment },
-          text = { Text(text = "Equipment") }
-        )
+//        Tab(
+//          selected = tab == AddEditRecipeContentTab.Equipment,
+//          onClick = { tab = AddEditRecipeContentTab.Equipment },
+//          text = { Text(text = "Equipment") }
+//        )
       }
 
       LaunchedEffect(tab) {
@@ -258,15 +259,21 @@ fun AddEditRecipeContent(
           when (page) {
             AddEditRecipeContentTab.Info -> RecipeInfoContent(
               name = name,
+              source = source,
+              sourceName = sourceName,
               description = description,
               servings = servings,
               prepTime = prepTime,
               cookTime = cookTime,
+              notes = notes,
               onNameChanged = onNameChanged,
+              onSourceChanged = onSourceChanged,
+              onSourceNameChanged = onSourceNameChanged,
               onDescriptionChanged = onDescriptionChanged,
               onServingsChanged = onServingsChanged,
               onPrepTimeChanged = onPrepTimeChanged,
-              onCookTimeChanged = onCookTimeChanged
+              onCookTimeChanged = onCookTimeChanged,
+              onNotesChanged = onNotesChanged
             )
 
             AddEditRecipeContentTab.Ingredients -> IngredientsContent(
@@ -298,15 +305,21 @@ fun AddEditRecipeContent(
 @Composable
 private fun RecipeInfoContent(
   name: String,
+  source: String,
+  sourceName: String,
   description: String,
   servings: Int,
   prepTime: Int,
   cookTime: Int,
+  notes: String,
   onNameChanged: (String) -> Unit,
+  onSourceChanged: (String) -> Unit,
+  onSourceNameChanged: (String) -> Unit,
   onDescriptionChanged: (String) -> Unit,
   onServingsChanged: (Int) -> Unit,
   onPrepTimeChanged: (Int) -> Unit,
   onCookTimeChanged: (Int) -> Unit,
+  onNotesChanged: (String) -> Unit
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
@@ -326,7 +339,6 @@ private fun RecipeInfoContent(
       value = name,
       onValueChange = onNameChanged,
       modifier = Modifier.fillMaxWidth(),
-      label = { Text(text = "Name") },
       singleLine = true,
       keyboardOptions = KeyboardOptions(
         capitalization = KeyboardCapitalization.Words,
@@ -337,25 +349,138 @@ private fun RecipeInfoContent(
 
     HorizontalDivider()
 
-    Text(
-      text = "Description",
-      style = MaterialTheme.typography.titleLarge
-    )
+    Column {
+      Text(
+        text = "Source",
+        style = MaterialTheme.typography.titleLarge
+      )
 
-    OutlinedTextField(
-      value = description,
-      onValueChange = onDescriptionChanged,
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text(text = "Description") },
-      minLines = 3,
-      keyboardOptions = KeyboardOptions(
-        capitalization = KeyboardCapitalization.Sentences,
-        imeAction = ImeAction.Done
-      ),
-      keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
-    )
+      Text(
+        text = "Where did you find this recipe?"
+      )
+
+      var showSourceSheet by remember { mutableStateOf(false) }
+      val sheetState = rememberModalBottomSheetState()
+      val scope = rememberCoroutineScope()
+
+      TextButton(
+        onClick = { showSourceSheet = true }
+      ) {
+        Text(
+          text = sourceName.ifBlank { "Add Source" },
+          style = MaterialTheme.typography.titleMedium
+        )
+      }
+
+      if (source.isNotBlank()) {
+        Text(
+          text = source,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.secondary,
+          modifier = Modifier.padding(start = 12.dp)
+        )
+      }
+
+      if (showSourceSheet) {
+        ModalBottomSheet(
+          onDismissRequest = { showSourceSheet = false },
+          sheetState = sheetState
+        ) {
+          Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(8.dp)
+          ) {
+            var sourceNameInput by remember { mutableStateOf(sourceName) }
+            var sourceInput by remember { mutableStateOf(source) }
+
+            Box(
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Text(
+                text = "Source",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.align(Alignment.Center)
+              )
+
+              TextButton(
+                onClick = {
+                  onSourceChanged(sourceNameInput)
+                  onSourceNameChanged(sourceInput)
+
+                  scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    if (!sheetState.isVisible) {
+                      showSourceSheet = false
+                    }
+                  }
+                },
+                modifier = Modifier.align(Alignment.CenterEnd)
+              ) {
+                Text(text = "Save")
+              }
+            }
+
+            val focusManager = LocalFocusManager.current
+            val sheetKeyboard = LocalSoftwareKeyboardController.current
+
+            OutlinedTextField(
+              value = sourceNameInput,
+              onValueChange = { sourceNameInput = it },
+              label = { Text("Name") },
+              singleLine = true,
+              keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+              ),
+              keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Next) }
+              ),
+              modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+              value = sourceInput,
+              onValueChange = { sourceInput = it },
+              label = { Text("Source")},
+              placeholder = { Text("Website URL, recipe book and page number...") },
+              singleLine = true,
+              keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+              ),
+              keyboardActions = KeyboardActions(
+                onDone = {
+                  sheetKeyboard?.hide()
+                  focusManager.clearFocus()
+                }
+              ),
+              modifier = Modifier.fillMaxWidth()
+            )
+          }
+        }
+      }
+    }
 
     HorizontalDivider()
+
+//    Text(
+//      text = "Description",
+//      style = MaterialTheme.typography.titleLarge
+//    )
+//
+//    OutlinedTextField(
+//      value = description,
+//      onValueChange = onDescriptionChanged,
+//      modifier = Modifier.fillMaxWidth(),
+//      minLines = 3,
+//      keyboardOptions = KeyboardOptions(
+//        capitalization = KeyboardCapitalization.Sentences,
+//        imeAction = ImeAction.Done
+//      ),
+//      keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+//    )
+//
+//    HorizontalDivider()
 
     Column {
       Text(
@@ -543,6 +668,26 @@ private fun RecipeInfoContent(
         )
       }
     }
+
+    HorizontalDivider()
+
+    Text(
+      text = "Additional Notes",
+      style = MaterialTheme.typography.titleLarge
+    )
+
+    OutlinedTextField(
+      value = notes,
+      onValueChange = onNotesChanged,
+      modifier = Modifier.fillMaxWidth(),
+      placeholder = { Text("Any additional notes about the recipe") },
+      minLines = 3,
+      keyboardOptions = KeyboardOptions(
+        capitalization = KeyboardCapitalization.Sentences,
+        imeAction = ImeAction.Done
+      ),
+      keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
+    )
   }
 }
 
@@ -840,13 +985,13 @@ fun InstructionsContent(
                 onRemoveInstruction = onRemoveInstruction,
               )
 
+              if (instruction != instructions.last()) {
+                HorizontalDivider()
+              }
             }
           }
         }
 
-        if (instruction != instructions.last()) {
-          HorizontalDivider()
-        }
       }
 
       if (!reordering) {
@@ -869,7 +1014,7 @@ fun InstructionsContent(
                 }
               }
             },
-            singleLine = true,
+            minLines = 3,
             keyboardOptions = KeyboardOptions(
               imeAction = ImeAction.Done
             ),
