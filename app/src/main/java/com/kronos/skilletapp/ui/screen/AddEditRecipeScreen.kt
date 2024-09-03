@@ -600,6 +600,7 @@ private fun IngredientsContent(
             shadowElevation = elevation,
             shape = MaterialTheme.shapes.medium
           ) {
+            //TODO: animate between editing and non-editing states
             if (!editing) {
               IngredientRow(
                 ingredient = ingredient,
@@ -650,7 +651,8 @@ private fun IngredientsContent(
                 onRemove = {
                   onRemoveIngredient(it)
                   editing = false
-                }
+                },
+                onUserMessage = onUserMessage
               )
 
               LaunchedEffect(editing) {
@@ -717,6 +719,7 @@ private fun IngredientEdit(
   modifier: Modifier = Modifier,
   onEdit: (Ingredient) -> Unit = {},
   onRemove: (Ingredient) -> Unit = {},
+  onUserMessage: (String) -> Unit
 ) {
   var ingredientInput by remember {
     mutableStateOf(
@@ -748,9 +751,18 @@ private fun IngredientEdit(
     ),
     keyboardActions = KeyboardActions(
       onDone = {
-        val newIngredient = IngredientParser.parseIngredient(ingredientInput.text)
-        onEdit(newIngredient.copy(id = ingredient.id))
-        ingredientInput = ingredientInput.copy(text = "")
+        if (ingredientInput.isNotBlank()) {
+          runCatching { IngredientParser.parseIngredient(ingredientInput.text) }
+          .onSuccess {
+            onEdit(it.copy(id = ingredient.id))
+            ingredientInput = ingredientInput.copy(text = "")
+          }.onFailure {
+            onUserMessage("Failed to parse ingredient: ${it.message}")
+          }
+        } else {
+          ingredientInput = ingredientInput.copy(text = "")
+          onRemove(ingredient)
+        }
       }
     )
   )
@@ -917,36 +929,39 @@ fun InstructionComponent(
           .wrapContentWidth(Alignment.Start)
       )
 
-      if (!reordering) {
-        IconButton(
-          onClick = {
-            onRemoveInstruction(instruction)
-          },
-          modifier = Modifier
-            .wrapContentWidth(Alignment.End)
-        ) {
-          Icon(imageVector = Icons.Default.Close, contentDescription = "remove instruction")
-        }
-      } else {
-        val view = LocalView.current
-
-        IconButton(
-          onClick = {},
-          modifier = with(reorderScope) {
-            Modifier
+      AnimatedContent(targetState = reordering, label = "Swap between drag handle delete button") { isReordering ->
+        if (!isReordering) {
+          IconButton(
+            onClick = {
+              onRemoveInstruction(instruction)
+            },
+            modifier = Modifier
               .wrapContentWidth(Alignment.End)
-              .draggableHandle(
-                onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
-                onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
-              )
+          ) {
+            Icon(imageVector = Icons.Default.Close, contentDescription = "remove instruction")
           }
+        } else {
+          val view = LocalView.current
 
-        ) {
-          Icon(imageVector = Icons.Default.DragHandle, contentDescription = "reorder instruction")
+          IconButton(
+            onClick = {},
+            modifier = with(reorderScope) {
+              Modifier
+                .wrapContentWidth(Alignment.End)
+                .draggableHandle(
+                  onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                  onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+                )
+            }
+
+          ) {
+            Icon(imageVector = Icons.Default.DragHandle, contentDescription = "reorder instruction")
+          }
         }
       }
     }
 
+    //TODO: animate between editing and non-editing states
     if (!editing) {
       val maxLines = if (isExpanded) Int.MAX_VALUE else 1
 
@@ -1236,12 +1251,21 @@ fun InstructionEdit(
     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
     keyboardActions = KeyboardActions(
       onDone = {
-        onEdit(instruction.copy(text = instructionInput.text))
-        instructionInput = instructionInput.copy(text = "")
+        if (instructionInput.isNotBlank()) {
+          onEdit(instruction.copy(text = instructionInput.text))
+          instructionInput = instructionInput.copy(text = "")
+        } else {
+          instructionInput = instructionInput.copy(text = "")
+          if (instruction.ingredients.isEmpty()) {
+            onRemove(instruction)
+          }
+        }
       },
     )
   )
 }
+
+private fun TextFieldValue.isNotBlank() = text.isNotBlank()
 
 @Preview
 @Composable
@@ -1338,7 +1362,8 @@ fun IngredientEditPreview() {
             onRemove = { ingredients.remove(ing); editing = false },
             onEdit = { ingredient ->
               ingredients[ingredients.indexOfFirst { it.id == ing.id }] = ingredient; editing = false
-            }
+            },
+            onUserMessage = {}
           )
         }
       }
