@@ -600,66 +600,71 @@ private fun IngredientsContent(
             shadowElevation = elevation,
             shape = MaterialTheme.shapes.medium
           ) {
-            //TODO: animate between editing and non-editing states
-            if (!editing) {
-              IngredientRow(
-                ingredient = ingredient,
-                onClick = {
-                  editing = true
-                },
-                trailingIcon = {
-                  AnimatedVisibility(
-                    visible = reordering,
-                    enter = fadeIn() + expandHorizontally() + slideInHorizontally { it },
-                    exit = fadeOut() + shrinkHorizontally() + slideOutHorizontally { it }
-                  ) {
-                    IconButton(
-                      onClick = {},
-                      modifier = Modifier.draggableHandle(
-                        onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
-                        onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
-                      ),
+            AnimatedContent(
+              targetState = editing,
+              label = "Ingredient editing transition",
+              transitionSpec = { fadeIn() togetherWith fadeOut() }
+            ) { isEditing ->
+              if (!isEditing) {
+                IngredientRow(
+                  ingredient = ingredient,
+                  onClick = {
+                    editing = true
+                  },
+                  trailingIcon = {
+                    AnimatedVisibility(
+                      visible = reordering,
+                      enter = fadeIn() + expandHorizontally() + slideInHorizontally { it },
+                      exit = fadeOut() + shrinkHorizontally() + slideOutHorizontally { it }
                     ) {
-                      Icon(imageVector = Icons.Default.DragHandle, contentDescription = "drag ingredient")
-                    }
-                  }
-                }
-              )
-            } else {
-              val focusRequester = remember { FocusRequester() }
-              val focusManager = LocalFocusManager.current
-              var focusGained by remember { mutableStateOf(false) }
-
-              IngredientEdit(
-                ingredient = ingredient,
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .onFocusChanged {
-                    if (focusGained) {
-                      if (!it.isFocused || !it.hasFocus) {
-                        editing = false
+                      IconButton(
+                        onClick = {},
+                        modifier = Modifier.draggableHandle(
+                          onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                          onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+                        ),
+                      ) {
+                        Icon(imageVector = Icons.Default.DragHandle, contentDescription = "drag ingredient")
                       }
-                    } else {
-                      focusGained = it.isFocused || it.hasFocus
                     }
                   }
-                  .focusRequester(focusRequester),
-                onEdit = {
-                  onIngredientChanged(it)
-                  editing = false
-                },
-                onRemove = {
-                  onRemoveIngredient(it)
-                  editing = false
-                },
-                onUserMessage = onUserMessage
-              )
+                )
+              } else {
+                val focusRequester = remember { FocusRequester() }
+                val focusManager = LocalFocusManager.current
+                var focusGained by remember { mutableStateOf(false) }
 
-              LaunchedEffect(editing) {
-                if (editing) {
-                  focusRequester.requestFocus()
-                } else {
-                  focusManager.clearFocus()
+                IngredientEdit(
+                  ingredient = ingredient,
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged {
+                      if (focusGained) {
+                        if (!it.isFocused || !it.hasFocus) {
+                          editing = false
+                        }
+                      } else {
+                        focusGained = it.isFocused || it.hasFocus
+                      }
+                    }
+                    .focusRequester(focusRequester),
+                  onEdit = {
+                    onIngredientChanged(it)
+                    editing = false
+                  },
+                  onRemove = {
+                    onRemoveIngredient(it)
+                    editing = false
+                  },
+                  onUserMessage = onUserMessage
+                )
+
+                LaunchedEffect(editing) {
+                  if (editing) {
+                    focusRequester.requestFocus()
+                  } else {
+                    focusManager.clearFocus()
+                  }
                 }
               }
             }
@@ -961,52 +966,57 @@ fun InstructionComponent(
       }
     }
 
-    //TODO: animate between editing and non-editing states
-    if (!editing) {
-      val maxLines = if (isExpanded) Int.MAX_VALUE else 1
+    AnimatedContent(
+      targetState = editing,
+      label = "Instruction editing transition",
+      transitionSpec = { fadeIn() togetherWith fadeOut() }
+    ) { isEditing ->
+      if (!isEditing) {
+        val maxLines = if (isExpanded) Int.MAX_VALUE else 1
 
-      Text(
-        text = instruction.text,
-        overflow = TextOverflow.Ellipsis,
-        maxLines = maxLines,
-        modifier = Modifier
-          .fillMaxWidth()
-          .clickable { editing = true }
-      )
-    } else {
-      val focusRequester = remember { FocusRequester() }
-      val focusManager = LocalFocusManager.current
-      var focusGained by remember { mutableStateOf(false) }
+        Text(
+          text = instruction.text,
+          overflow = TextOverflow.Ellipsis,
+          maxLines = maxLines,
+          modifier = Modifier
+            .fillMaxWidth()
+            .clickable { editing = true }
+        )
+      } else {
+        val focusRequester = remember { FocusRequester() }
+        val focusManager = LocalFocusManager.current
+        var focusGained by remember { mutableStateOf(false) }
 
-      InstructionEdit(
-        instruction = instruction,
-        modifier = Modifier
-          .fillMaxWidth()
-          .onFocusChanged {
-            if (focusGained) {
-              if (!it.isFocused || !it.hasFocus) {
-                editing = false
+        InstructionEdit(
+          instruction = instruction,
+          modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged {
+              if (focusGained) {
+                if (!it.isFocused || !it.hasFocus) {
+                  editing = false
+                }
+              } else {
+                focusGained = it.isFocused || it.hasFocus
               }
-            } else {
-              focusGained = it.isFocused || it.hasFocus
             }
+            .focusRequester(focusRequester),
+          onEdit = {
+            onInstructionChanged(it)
+            editing = false
+          },
+          onRemove = {
+            onRemoveInstruction(it)
+            editing = false
           }
-          .focusRequester(focusRequester),
-        onEdit = {
-          onInstructionChanged(it)
-          editing = false
-        },
-        onRemove = {
-          onRemoveInstruction(it)
-          editing = false
-        }
-      )
+        )
 
-      LaunchedEffect(editing) {
-        if (editing) {
-          focusRequester.requestFocus()
-        } else {
-          focusManager.clearFocus()
+        LaunchedEffect(editing) {
+          if (editing) {
+            focusRequester.requestFocus()
+          } else {
+            focusManager.clearFocus()
+          }
         }
       }
     }
