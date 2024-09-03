@@ -14,7 +14,7 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
 //  }
 
   override fun visitIngredient(ctx: IngredientGrammarParser.IngredientContext): Ingredient {
-    val name = ctx.name().text
+    val name = ctx.name()?.text ?: ""
 
     val unit = ctx.measurement()?.WORD()?.text?.let { unit ->
       MeasurementUnit.values.firstOrNull {

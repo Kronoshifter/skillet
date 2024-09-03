@@ -30,6 +30,7 @@ fun ItemRow(
   decoration: Boolean = false,
   enabled: Boolean = true,
   onClick: () -> Unit = {},
+  trailingIcon: @Composable (() -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
   Row(
@@ -55,7 +56,11 @@ fun ItemRow(
       Spacer(modifier = Modifier.size(boxSize))
     }
 
-    content()
+    Box(modifier = Modifier.weight(1f),) {
+      content()
+    }
+
+    trailingIcon?.invoke()
   }
 }
 
@@ -80,10 +85,6 @@ fun ItemPill(
       .border(width = 2.dp, color = borderColor, shape = CircleShape)
       .clickable(enabled = enabled, onClick = onClick),
   ) {
-
-    var minWidth by remember { mutableStateOf(Dp.Unspecified) }
-    val density = LocalDensity.current
-
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
       Row(
         verticalAlignment = Alignment.CenterVertically,

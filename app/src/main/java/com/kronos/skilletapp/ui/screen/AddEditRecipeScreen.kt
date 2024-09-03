@@ -566,123 +566,147 @@ private fun IngredientsContent(
 
   var reordering by remember { mutableStateOf(false) }
 
-  LazyColumn(
-    state = lazyListState,
-    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-    modifier = Modifier
-      .fillMaxWidth()
-      .fillMaxHeight()
-      .padding(8.dp)
-  ) {
-    items(
-      items = ingredients,
-      key = { it.id },
-      contentType = { "Ingredient" }
-    ) { ingredient ->
-      ReorderableItem(
-        state = reorderableLazyListState,
-        key = ingredient.id
-      ) { isDragging ->
-        var editing by remember { mutableStateOf(false) }
-        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+  Column {
+    TextButton(
+      onClick = { reordering = !reordering }
+    ) {
+      Text(
+        text = if (!reordering) "Reorder ingredients" else "Stop reordering",
+        style = MaterialTheme.typography.titleMedium
+      )
+    }
 
-        Surface(
-          shadowElevation = elevation,
-          shape = MaterialTheme.shapes.medium
-        ) {
-          if (!editing) {
-            IngredientRow(
-              ingredient = ingredient,
-              modifier = Modifier.longPressDraggableHandle(
-                onDragStarted = {
-                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
-                  reordering = true
+    LazyColumn(
+      state = lazyListState,
+      verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+      modifier = Modifier
+        .fillMaxWidth()
+        .fillMaxHeight()
+        .padding(8.dp)
+    ) {
+      items(
+        items = ingredients,
+        key = { it.id },
+        contentType = { "Ingredient" }
+      ) { ingredient ->
+        ReorderableItem(
+          state = reorderableLazyListState,
+          key = ingredient.id
+        ) { isDragging ->
+          var editing by remember { mutableStateOf(false) }
+          val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+
+          Surface(
+            shadowElevation = elevation,
+            shape = MaterialTheme.shapes.medium
+          ) {
+            if (!editing) {
+              IngredientRow(
+                ingredient = ingredient,
+                onClick = {
+                  editing = true
                 },
-                onDragStopped = {
-                  view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
-                  reordering = false
-                }
-              ),
-              onClick = {
-                editing = true
-              },
-            )
-          } else {
-            val focusRequester = remember { FocusRequester() }
-            val focusManager = LocalFocusManager.current
-            var focusGained by remember { mutableStateOf(false) }
-
-            IngredientEdit(
-              ingredient = ingredient,
-              modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged {
-                  if (focusGained) {
-                    if (!it.isFocused || !it.hasFocus) {
-                      editing = false
+                trailingIcon = {
+                  AnimatedVisibility(
+                    visible = reordering,
+                    enter = fadeIn() + expandHorizontally() + slideInHorizontally { it },
+                    exit = fadeOut() + shrinkHorizontally() + slideOutHorizontally { it }
+                  ) {
+                    IconButton(
+                      onClick = {},
+                      modifier = Modifier.draggableHandle(
+                        onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                        onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) }
+                      ),
+                    ) {
+                      Icon(imageVector = Icons.Default.DragHandle, contentDescription = "drag ingredient")
                     }
-                  } else {
-                    focusGained = it.isFocused || it.hasFocus
                   }
                 }
-                .focusRequester(focusRequester),
-              onEdit = {
-                onIngredientChanged(it)
-                editing = false
-              },
-              onRemove = {
-                onRemoveIngredient(it)
-                editing = false
-              }
-            )
+              )
+            } else {
+              val focusRequester = remember { FocusRequester() }
+              val focusManager = LocalFocusManager.current
+              var focusGained by remember { mutableStateOf(false) }
 
-            LaunchedEffect(editing) {
-              if (editing) {
-                focusRequester.requestFocus()
-              } else {
-                focusManager.clearFocus()
+              IngredientEdit(
+                ingredient = ingredient,
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .onFocusChanged {
+                    if (focusGained) {
+                      if (!it.isFocused || !it.hasFocus) {
+                        editing = false
+                      }
+                    } else {
+                      focusGained = it.isFocused || it.hasFocus
+                    }
+                  }
+                  .focusRequester(focusRequester),
+                onEdit = {
+                  onIngredientChanged(it)
+                  editing = false
+                },
+                onRemove = {
+                  onRemoveIngredient(it)
+                  editing = false
+                }
+              )
+
+              LaunchedEffect(editing) {
+                if (editing) {
+                  focusRequester.requestFocus()
+                } else {
+                  focusManager.clearFocus()
+                }
               }
             }
           }
         }
       }
-    }
 
-    item {
-      var ingredientInput by remember { mutableStateOf("") }
+      if (!reordering) {
+        item(key = "Ingredient Input") {
+          var ingredientInput by remember { mutableStateOf("") }
 
-      OutlinedTextField(
-        value = ingredientInput,
-        onValueChange = { ingredientInput = it },
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text(text = "Add an ingredient") },
-        trailingIcon = {
-          if (ingredientInput.isNotBlank()) {
-            IconButton(
-              onClick = { ingredientInput = "" }
-            ) {
-              Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
-            }
-          }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-          imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(
-          onDone = {
-            runCatching { IngredientParser.parseIngredient(ingredientInput) }
-              .onSuccess {
-                onIngredientChanged(it)
-                ingredientInput = ""
-                scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
-              }.onFailure {
-                onUserMessage("Failed to parse ingredient: ${it.message}")
+          OutlinedTextField(
+            value = ingredientInput,
+            onValueChange = { ingredientInput = it },
+            modifier = Modifier
+              .fillMaxWidth()
+              .animateItem(),
+            placeholder = { Text(text = "Add an ingredient") },
+            trailingIcon = {
+              if (ingredientInput.isNotBlank()) {
+                IconButton(
+                  onClick = { ingredientInput = "" }
+                ) {
+                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
+                }
               }
-            keyboard?.hide()
-          }
-        )
-      )
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+              imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+              onDone = {
+                if (ingredientInput.isNotBlank()) {
+                  runCatching { IngredientParser.parseIngredient(ingredientInput) }
+                    .onSuccess {
+                      onIngredientChanged(it)
+                      ingredientInput = ""
+                      scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
+                    }.onFailure {
+                      onUserMessage("Failed to parse ingredient: ${it.message}")
+                    }
+                }
+                keyboard?.hide()
+              }
+            )
+          )
+        }
+      }
     }
   }
 }
@@ -815,7 +839,9 @@ fun InstructionsContent(
           OutlinedTextField(
             value = instructionInput,
             onValueChange = { instructionInput = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+              .fillMaxWidth()
+              .animateItem(),
             placeholder = { Text(text = "Add an instruction") },
             trailingIcon = {
               if (instructionInput.isNotBlank()) {
@@ -832,10 +858,12 @@ fun InstructionsContent(
             ),
             keyboardActions = KeyboardActions(
               onDone = {
-                val instruction = Instruction(instructionInput)
-                onInstructionChanged(instruction)
-                instructionInput = ""
-                scope.launch { lazyListState.animateScrollToItem(instructions.size) }
+                if (instructionInput.isNotBlank()) {
+                  val instruction = Instruction(instructionInput)
+                  onInstructionChanged(instruction)
+                  instructionInput = ""
+                  scope.launch { lazyListState.animateScrollToItem(instructions.size) }
+                }
                 keyboard?.hide()
               }
             )
@@ -968,7 +996,11 @@ fun InstructionComponent(
       }
     }
 
-    AnimatedVisibility(visible = isExpanded) {
+    AnimatedVisibility(
+      visible = isExpanded,
+      enter = fadeIn() + expandVertically(),
+      exit = fadeOut() + shrinkVertically()
+    ) {
       Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
       ) {
@@ -1004,9 +1036,9 @@ fun InstructionComponent(
                       }
                     },
                     trailingIcon = {
-                        IconButton(onClick = { visible.targetState = false }) {
-                          Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
-                        }
+                      IconButton(onClick = { visible.targetState = false }) {
+                        Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
+                      }
                     }
                   ) {
                     Text(

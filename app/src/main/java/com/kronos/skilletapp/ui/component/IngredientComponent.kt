@@ -1,6 +1,8 @@
 package com.kronos.skilletapp.ui.component
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +22,7 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
+import com.kronos.skilletapp.utils.modifier.applyUnless
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 
@@ -31,6 +34,7 @@ fun IngredientRow(
   selectedUnit: MeasurementUnit? = null,
   enabled: Boolean = true,
   onClick: () -> Unit = {},
+  trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurement = with(ingredient.measurement.scale(scale)) {
     selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
@@ -56,7 +60,7 @@ fun IngredientRow(
           color = MaterialTheme.colorScheme.onPrimary,
           fontSize = 18.sp,
           modifier = Modifier
-            .applyIf(measurement.unit !is MeasurementUnit.None) {
+            .applyUnless(measurement.unit is MeasurementUnit.None) {
               offset(y = 4.dp)
             }
         )
@@ -72,7 +76,8 @@ fun IngredientRow(
     },
     decoration = selectedUnit != null,
     enabled = enabled,
-    onClick = onClick
+    onClick = onClick,
+    trailingIcon = trailingIcon
   ) {
     Column {
       Text(
@@ -201,6 +206,11 @@ private fun IngredientRowPreview() {
       IngredientRow(
         ingredient = ingredient,
         scale = 1.0,
+        trailingIcon = {
+          IconButton(onClick = {}) {
+            Icon(imageVector = Icons.Default.DragHandle, contentDescription = "Dragging")
+          }
+        }
       )
     }
   }
