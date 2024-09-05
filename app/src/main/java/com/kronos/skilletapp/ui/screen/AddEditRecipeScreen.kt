@@ -71,7 +71,7 @@ private enum class AddEditRecipeContentTab {
   Info,
   Ingredients,
   Instructions,
-  Equipment
+//  Equipment
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -293,7 +293,7 @@ fun AddEditRecipeContent(
               onUserMessage = onUserMessage
             )
 
-            AddEditRecipeContentTab.Equipment -> {}
+//            AddEditRecipeContentTab.Equipment -> {}
           }
         }
       }
