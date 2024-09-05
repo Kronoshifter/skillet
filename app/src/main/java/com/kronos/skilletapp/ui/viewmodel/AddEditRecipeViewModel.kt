@@ -266,6 +266,8 @@ class AddEditRecipeViewModel(
             servings = recipe.servings,
             prepTime = recipe.time.preparation,
             cookTime = recipe.time.cooking,
+            source = recipe.source.source,
+            sourceName = recipe.source.name,
             ingredients = recipe.ingredients,
             instructions = recipe.instructions,
             equipment = recipe.equipment

@@ -90,7 +90,12 @@ fun AddEditRecipeScreen(
       TopAppBar(
         title = { Text(text = title) },
         navigationIcon = {
-          IconButton(onClick = onBack) {
+          IconButton(
+            onClick = {
+              //TODO: add a discard changes dialog
+              onBack()
+            }
+          ) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
           }
         },
@@ -407,8 +412,8 @@ private fun RecipeInfoContent(
 
               TextButton(
                 onClick = {
-                  onSourceChanged(sourceNameInput)
-                  onSourceNameChanged(sourceInput)
+                  onSourceChanged(sourceInput)
+                  onSourceNameChanged(sourceNameInput)
 
                   scope.launch { sheetState.hide() }.invokeOnCompletion {
                     if (!sheetState.isVisible) {
