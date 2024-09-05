@@ -381,16 +381,8 @@ private fun InstructionsList(
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     itemsIndexed(instructions) { index, instruction ->
-      Text(
-        text = "Step ${index + 1}",
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 8.dp)
-      )
-
       InstructionComponent(
+        step = index + 1,
         instruction = instruction,
         scale = scale,
         selectedUnits = selectedUnits,
@@ -407,6 +399,7 @@ private fun InstructionsList(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun InstructionComponent(
+  step: Int,
   instruction: Instruction,
   scale: Double,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
@@ -418,6 +411,14 @@ private fun InstructionComponent(
       .fillMaxWidth()
       .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
   ) {
+    Text(
+      text = "Step $step",
+      style = MaterialTheme.typography.titleLarge,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier
+        .fillMaxWidth()
+    )
+
     Text(
       text = instruction.text,
       modifier = Modifier
@@ -572,6 +573,7 @@ private fun InstructionComponentPreview() {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       Box(modifier = Modifier.padding(16.dp)) {
         InstructionComponent(
+          step = 1,
           instruction = instructions.first(),
           scale = 1.0,
           selectedUnits = selectedUnits,
