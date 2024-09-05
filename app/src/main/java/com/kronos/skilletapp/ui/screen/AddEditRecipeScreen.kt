@@ -1284,12 +1284,32 @@ fun InstructionComponent(
           .fillMaxWidth()
           .padding(8.dp)
       ) {
-        Text(
-          text = "Select Ingredients",
-          style = MaterialTheme.typography.titleLarge
-        )
-
         val newIngredients = remember { instruction.ingredients.toMutableStateList() }
+
+        Box(
+          modifier = Modifier.fillMaxWidth()
+        ) {
+          Text(
+            text = "Select Ingredients",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.align(Alignment.Center)
+          )
+
+          TextButton(
+            onClick = {
+              onInstructionChanged(instruction.copy(ingredients = newIngredients))
+
+              scope.launch { sheetState.hide() }.invokeOnCompletion {
+                if (!sheetState.isVisible) {
+                  showBottomSheet = false
+                }
+              }
+            },
+            modifier = Modifier.align(Alignment.CenterEnd)
+          ) {
+            Text(text = "Save")
+          }
+        }
 
         LazyColumn(
           contentPadding = PaddingValues(8.dp),
@@ -1327,21 +1347,6 @@ fun InstructionComponent(
               )
             }
           }
-        }
-
-        Button(
-          onClick = {
-            onInstructionChanged(instruction.copy(ingredients = newIngredients))
-
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-              if (!sheetState.isVisible) {
-                showBottomSheet = false
-              }
-            }
-          },
-          modifier = Modifier.fillMaxWidth()
-        ) {
-          Text(text = "Save")
         }
       }
     }
