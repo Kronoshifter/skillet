@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
@@ -51,10 +52,7 @@ import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.LoadingContent
-import com.kronos.skilletapp.ui.component.InfiniteScrollingPicker
-import com.kronos.skilletapp.ui.component.IngredientRow
-import com.kronos.skilletapp.ui.component.ItemPill
-import com.kronos.skilletapp.ui.component.TimeSelectBottomSheet
+import com.kronos.skilletapp.ui.component.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.utils.modifier.applyIf
@@ -84,6 +82,8 @@ fun AddEditRecipeScreen(
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   vm: AddEditRecipeViewModel = getViewModel(),
 ) {
+  var showDiscardChangesDialog by remember { mutableStateOf(false) }
+
   Scaffold(
     modifier = modifier.fillMaxSize(),
     topBar = {
@@ -93,7 +93,7 @@ fun AddEditRecipeScreen(
           IconButton(
             onClick = {
               //TODO: add a discard changes dialog
-              onBack()
+              showDiscardChangesDialog = true
             }
           ) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -166,6 +166,16 @@ fun AddEditRecipeScreen(
         }
       }
     }
+  }
+
+  if (showDiscardChangesDialog) {
+    ConfirmDialog(
+      onDismissRequest = { showDiscardChangesDialog = false },
+      onConfirm = { onBack() },
+      onDismiss = { showDiscardChangesDialog = false },
+      title = "Discard Changes?",
+      text = "Unsaved changes will be lost",
+    )
   }
 }
 
