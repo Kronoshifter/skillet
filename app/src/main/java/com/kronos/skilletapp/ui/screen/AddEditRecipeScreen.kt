@@ -92,8 +92,11 @@ fun AddEditRecipeScreen(
         navigationIcon = {
           IconButton(
             onClick = {
-              //TODO: add a discard changes dialog
-              showDiscardChangesDialog = true
+              if (vm.tharBeChanges) {
+                showDiscardChangesDialog = true
+              } else {
+                onBack()
+              }
             }
           ) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

@@ -41,6 +41,7 @@ class AddEditRecipeViewModel(
 
   private val _uiState: MutableStateFlow<UiState<Unit>> = MutableStateFlow(UiState.Loaded(Unit))
   private val _recipeState: MutableStateFlow<RecipeState> = MutableStateFlow(RecipeState())
+  private var originalRecipeState = RecipeState()
   val uiState = _uiState.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
 
@@ -203,6 +204,21 @@ class AddEditRecipeViewModel(
     }
   }
 
+  val tharBeChanges: Boolean
+    get() = _recipeState.value.let {
+      it.name != originalRecipeState.name ||
+      it.description != originalRecipeState.description ||
+      it.notes != originalRecipeState.notes ||
+      it.servings != originalRecipeState.servings ||
+      it.prepTime != originalRecipeState.prepTime ||
+      it.cookTime != originalRecipeState.cookTime ||
+      it.source != originalRecipeState.source ||
+      it.sourceName != originalRecipeState.sourceName ||
+      it.ingredients != originalRecipeState.ingredients ||
+      it.instructions != originalRecipeState.instructions ||
+      it.equipment != originalRecipeState.equipment
+    }
+
   private fun createRecipe() = viewModelScope.launch {
     createdId = with(_recipeState.value) {
       recipeRepository.createRecipe(
@@ -271,7 +287,7 @@ class AddEditRecipeViewModel(
             ingredients = recipe.ingredients,
             instructions = recipe.instructions,
             equipment = recipe.equipment
-          )
+          ).also { originalRecipeState = it }
         }
       }
 
