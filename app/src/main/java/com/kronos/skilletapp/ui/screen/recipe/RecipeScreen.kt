@@ -49,9 +49,9 @@ import org.koin.dsl.module
 import kotlin.collections.set
 import kotlin.math.roundToInt
 
-private object RecipeContentTab {
-  const val INGREDIENTS = 0
-  const val INSTRUCTIONS = 1
+private enum class RecipeContentTab {
+  Ingredients,
+  Instructions
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,8 +110,8 @@ private fun RecipeContent(
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  var tab by remember { mutableIntStateOf(RecipeContentTab.INGREDIENTS) }
-  val pagerState = rememberPagerState { 2 }
+  var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
+  val pagerState = rememberPagerState { RecipeContentTab.entries.size }
 
   Surface(
     modifier = Modifier
@@ -145,49 +145,50 @@ private fun RecipeContent(
       HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
       PrimaryTabRow(
-        selectedTabIndex = tab,
+        selectedTabIndex = tab.ordinal,
         modifier = Modifier.fillMaxWidth()
       ) {
         Tab(
-          selected = tab == RecipeContentTab.INGREDIENTS,
-          onClick = { tab = RecipeContentTab.INGREDIENTS },
+          selected = tab == RecipeContentTab.Ingredients,
+          onClick = { tab = RecipeContentTab.Ingredients },
           text = { Text(text = "Ingredients") },
           modifier = Modifier
         )
 
         Tab(
-          selected = tab == RecipeContentTab.INSTRUCTIONS,
-          onClick = { tab = RecipeContentTab.INSTRUCTIONS },
+          selected = tab == RecipeContentTab.Instructions,
+          onClick = { tab = RecipeContentTab.Instructions },
           text = { Text(text = "Instructions") },
           modifier = Modifier
         )
       }
 
       LaunchedEffect(tab) {
-        pagerState.animateScrollToPage(tab)
+        pagerState.animateScrollToPage(tab.ordinal)
       }
 
       LaunchedEffect(pagerState.targetPage) {
-        tab = pagerState.targetPage
+        tab = RecipeContentTab.entries[pagerState.targetPage]
       }
 
       HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxWidth()
-      ) { page ->
+      ) {
+        val page = RecipeContentTab.entries[it]
         Box(
           modifier = Modifier.fillMaxSize(),
           contentAlignment = Alignment.Center
         ) {
           when (page) {
-            RecipeContentTab.INGREDIENTS -> IngredientsList(
+            RecipeContentTab.Ingredients -> IngredientsList(
               ingredients = recipe.ingredients,
               scale = scale,
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect
             )
 
-            RecipeContentTab.INSTRUCTIONS -> InstructionsList(
+            RecipeContentTab.Instructions -> InstructionsList(
               instructions = recipe.instructions,
               scale = scale,
               selectedUnits = selectedUnits,
