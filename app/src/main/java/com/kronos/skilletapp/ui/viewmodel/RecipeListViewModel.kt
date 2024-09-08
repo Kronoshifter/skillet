@@ -27,7 +27,7 @@ class RecipeListViewModel(
 
   private val _isLoading = MutableStateFlow(false)
   private val _recipesAsync = recipeRepository.fetchRecipesStream()
-    .map { UiState.Loaded(it) }
+    .map { UiState.LoadedWithData(it) }
     .catch<UiState<List<Recipe>>> { emit(UiState.Error(SkilletError("Error loading recipes"))) }
 
   val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
@@ -36,7 +36,7 @@ class RecipeListViewModel(
       else -> when (recipesAsync) {
         UiState.Loading -> UiState.Loading
         is UiState.Error -> UiState.Error(recipesAsync.error)
-        is UiState.Loaded -> UiState.Loaded(
+        is UiState.LoadedWithData -> UiState.LoadedWithData(
           RecipeListState(
             recipes = recipesAsync.data,
           )

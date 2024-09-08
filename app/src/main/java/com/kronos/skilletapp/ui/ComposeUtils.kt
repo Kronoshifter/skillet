@@ -29,11 +29,40 @@ fun <T> LoadingContent(
     label = "Loading",
     modifier = Modifier.fillMaxSize(),
   ) { targetState ->
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier
+      .fillMaxSize()
+      .then(modifier)) {
       when (targetState) {
         UiState.Loading -> loadingContent()
         is UiState.Error -> errorContent(targetState.error)
-        is UiState.Loaded -> content(targetState.data)
+        is UiState.LoadedWithData -> content(targetState.data)
+        UiState.Loaded -> throw IllegalStateException("Invalid state: $targetState")
+      }
+    }
+  }
+}
+
+@Composable
+fun LoadingContent(
+  state: UiState<Nothing>,
+  modifier: Modifier = Modifier,
+  loadingContent: @Composable () -> Unit = { CircularProgressIndicator() },
+  errorContent: @Composable (SkilletError) -> Unit = { error -> Text(text = error.message) },
+  content: @Composable () -> Unit,
+  ) {
+  AnimatedContent(
+    targetState = state,
+    label = "Loading",
+    modifier = Modifier.fillMaxSize(),
+  ) { targetState ->
+    Box(contentAlignment = Alignment.Center, modifier = Modifier
+      .fillMaxSize()
+      .then(modifier)) {
+      when (targetState) {
+        UiState.Loading -> loadingContent()
+        is UiState.Error -> errorContent(targetState.error)
+        UiState.Loaded -> content()
+        is UiState.LoadedWithData -> throw IllegalStateException("Invalid state: $targetState")
       }
     }
   }

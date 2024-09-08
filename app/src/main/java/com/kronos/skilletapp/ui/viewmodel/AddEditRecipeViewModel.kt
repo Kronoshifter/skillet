@@ -39,7 +39,7 @@ class AddEditRecipeViewModel(
   private val recipeId = args.recipeId
   private lateinit var createdId: String
 
-  private val _uiState: MutableStateFlow<UiState<Unit>> = MutableStateFlow(UiState.Loaded(Unit))
+  private val _uiState: MutableStateFlow<UiState<Nothing>> = MutableStateFlow(UiState.Loaded)
   private val _recipeState: MutableStateFlow<RecipeState> = MutableStateFlow(RecipeState())
   private var originalRecipeState = RecipeState()
   val uiState = _uiState.asStateFlow()
@@ -291,7 +291,7 @@ class AddEditRecipeViewModel(
         }
       }
 
-      _uiState.update { UiState.Loaded(Unit) }
+      _uiState.update { UiState.Loaded }
     }
   }
 
