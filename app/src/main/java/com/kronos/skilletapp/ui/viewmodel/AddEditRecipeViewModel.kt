@@ -45,6 +45,21 @@ class AddEditRecipeViewModel(
   val uiState = _uiState.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
 
+  val tharBeChanges: Boolean
+    get() = _recipeState.value.let {
+      it.name != originalRecipeState.name ||
+          it.description != originalRecipeState.description ||
+          it.notes != originalRecipeState.notes ||
+          it.servings != originalRecipeState.servings ||
+          it.prepTime != originalRecipeState.prepTime ||
+          it.cookTime != originalRecipeState.cookTime ||
+          it.source != originalRecipeState.source ||
+          it.sourceName != originalRecipeState.sourceName ||
+          it.ingredients != originalRecipeState.ingredients ||
+          it.instructions != originalRecipeState.instructions ||
+          it.equipment != originalRecipeState.equipment
+    }
+
   init {
     recipeId?.let {
       loadRecipe(it)
@@ -203,21 +218,6 @@ class AddEditRecipeViewModel(
       it.copy(userMessage = null)
     }
   }
-
-  val tharBeChanges: Boolean
-    get() = _recipeState.value.let {
-      it.name != originalRecipeState.name ||
-      it.description != originalRecipeState.description ||
-      it.notes != originalRecipeState.notes ||
-      it.servings != originalRecipeState.servings ||
-      it.prepTime != originalRecipeState.prepTime ||
-      it.cookTime != originalRecipeState.cookTime ||
-      it.source != originalRecipeState.source ||
-      it.sourceName != originalRecipeState.sourceName ||
-      it.ingredients != originalRecipeState.ingredients ||
-      it.instructions != originalRecipeState.instructions ||
-      it.equipment != originalRecipeState.equipment
-    }
 
   private fun createRecipe() = viewModelScope.launch {
     createdId = with(_recipeState.value) {
