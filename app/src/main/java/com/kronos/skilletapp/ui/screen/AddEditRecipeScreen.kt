@@ -144,6 +144,7 @@ fun AddEditRecipeScreen(
         onCookTimeChanged = vm::updateCookTime,
         onSourceChanged = vm::updateSource,
         onSourceNameChanged = vm::updateSourceName,
+        onNotesChanged = vm::updateNotes,
         onIngredientChanged = vm::updateIngredient,
         onRemoveIngredient = vm::removeIngredient,
         onMoveIngredient = vm::moveIngredient,
