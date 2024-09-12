@@ -41,6 +41,7 @@ class RecipeListViewModel(
             recipes = recipesAsync.data,
           )
         )
+        else -> UiState.Error(SkilletError("UiState.Loaded should not be used here"))
       }
     }
   }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
