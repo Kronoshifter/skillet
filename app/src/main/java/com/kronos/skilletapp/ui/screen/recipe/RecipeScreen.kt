@@ -433,7 +433,14 @@ private fun InstructionComponent(
           .fillMaxWidth()
       ) {
         instruction.ingredients.forEach { ingredient ->
-          IngredientPill(ingredient, scale, selectedUnits, onUnitSelect)
+          key(ingredient.id) {
+            IngredientPill(
+              ingredient = ingredient,
+              scale = scale,
+              selectedUnit = selectedUnits[ingredient],
+              onUnitSelect = onUnitSelect
+            )
+          }
         }
       }
     }

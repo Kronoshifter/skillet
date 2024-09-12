@@ -101,7 +101,8 @@ fun IngredientRow(
 fun IngredientPill(
   ingredient: Ingredient,
   scale: Double = 1.0,
-  selectedUnits: Map<Ingredient, MeasurementUnit?> = mapOf(),
+//  selectedUnits: Map<Ingredient, MeasurementUnit?> = mapOf(),
+  selectedUnit: MeasurementUnit? = null,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit = { _, _ -> },
 ) {
   var showBottomSheet by remember { mutableStateOf(false) }
@@ -110,8 +111,6 @@ fun IngredientPill(
     .filter { it.type == ingredient.measurement.unit.type }
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
-
-  val selectedUnit = selectedUnits[ingredient]
 
   val borderColor =
     selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
