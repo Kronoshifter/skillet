@@ -732,7 +732,8 @@ private fun IngredientsContent(
 
   Column {
     TextButton(
-      onClick = { reordering = !reordering }
+      onClick = { reordering = !reordering },
+      enabled = ingredients.size > 1,
     ) {
       Text(
         text = if (!reordering) "Reorder ingredients" else "Stop reordering",
@@ -962,7 +963,8 @@ fun InstructionsContent(
 
   Column {
     TextButton(
-      onClick = { reordering = !reordering }
+      onClick = { reordering = !reordering },
+      enabled = instructions.size > 1,
     ) {
       Text(
         text = if (!reordering) "Reorder instructions" else "Stop reordering",
