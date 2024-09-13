@@ -357,6 +357,7 @@ private fun RecipeInfoContent(
     OutlinedTextField(
       value = name,
       onValueChange = onNameChanged,
+      placeholder = { Text(text = "The name of your recipe") },
       modifier = Modifier.fillMaxWidth(),
       singleLine = true,
       keyboardOptions = KeyboardOptions(
