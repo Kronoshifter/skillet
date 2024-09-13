@@ -12,7 +12,9 @@ sealed interface Route {
 class SkilletNavigationActions(private val navController: NavHostController) {
 
   fun navigateToRecipe(recipeId: String) {
-    navController.navigate(Route.Recipe(recipeId))
+    navController.navigate(Route.Recipe(recipeId)) {
+      popUpTo<Route.RecipeList>()
+    }
   }
 
   fun navigateToAddEditRecipe(title: String, recipeId: String? = null) {

@@ -864,6 +864,7 @@ private fun IngredientsContent(
             ),
             keyboardActions = KeyboardActions(
               onDone = {
+                // TODO: parse multiple ingredients when a list is pasted in
                 if (ingredientInput.isNotBlank()) {
                   runCatching { IngredientParser.parseIngredient(ingredientInput) }
                     .onSuccess {
@@ -1042,6 +1043,7 @@ fun InstructionsContent(
             ),
             keyboardActions = KeyboardActions(
               onDone = {
+                // TODO: parse multiple instructions when multiple instructions are pasted
                 if (instructionInput.isNotBlank()) {
                   val instruction = Instruction(instructionInput)
                   onInstructionChanged(instruction)
