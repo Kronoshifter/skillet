@@ -27,11 +27,9 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -841,6 +839,7 @@ private fun IngredientsContent(
         item(key = "Ingredient Input") {
           var ingredientInput by remember { mutableStateOf("") }
 
+          //TODO: find some sort of onPaste callback
           OutlinedTextField(
             value = ingredientInput,
             onValueChange = { ingredientInput = it },
@@ -865,14 +864,26 @@ private fun IngredientsContent(
               onDone = {
                 // TODO: parse multiple ingredients when a list is pasted in
                 if (ingredientInput.isNotBlank()) {
-                  runCatching { IngredientParser.parseIngredient(ingredientInput) }
-                    .onSuccess {
-                      onIngredientChanged(it)
-                      ingredientInput = ""
-                      scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
-                    }.onFailure {
-                      onUserMessage("Failed to parse ingredient: ${it.message}")
-                    }
+                  if (ingredientInput.contains("\n")) {
+                    runCatching { IngredientParser.parseIngredients(ingredientInput) }
+                      .onSuccess { newIngredients ->
+                        newIngredients.forEach{ onIngredientChanged(it) }
+                        ingredientInput = ""
+                        scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
+                      }
+                      .onFailure {
+                        onUserMessage("Failed to parse ingredients: ${it.message}")
+                      }
+                  } else {
+                    runCatching { IngredientParser.parseIngredient(ingredientInput) }
+                      .onSuccess {
+                        onIngredientChanged(it)
+                        ingredientInput = ""
+                        scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
+                      }.onFailure {
+                        onUserMessage("Failed to parse ingredient: ${it.message}")
+                      }
+                  }
                 }
                 keyboard?.hide()
               }
