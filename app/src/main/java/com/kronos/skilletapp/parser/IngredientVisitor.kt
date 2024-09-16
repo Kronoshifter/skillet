@@ -8,10 +8,7 @@ import com.kronos.skilletapp.parser.grammar.IngredientGrammarParser
 import com.kronos.skilletapp.utils.Fraction
 
 class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
-//  override fun visitRecipe(ctx: IngredientGrammarParser.RecipeContext): Ingredient {
-//    val ingredients = ctx.ingredient().map { it.visit(this) }
-//    return Ingredient(ingredients)
-//  }
+  fun visitIngredients(ctx: IngredientGrammarParser.RecipeContext) = ctx.ingredient().map { visitIngredient(it) }
 
   override fun visitIngredient(ctx: IngredientGrammarParser.IngredientContext): Ingredient {
     val name = ctx.name()?.text ?: ""

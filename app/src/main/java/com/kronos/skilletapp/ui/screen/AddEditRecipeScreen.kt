@@ -42,7 +42,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
@@ -1043,10 +1042,13 @@ fun InstructionsContent(
             ),
             keyboardActions = KeyboardActions(
               onDone = {
-                // TODO: parse multiple instructions when multiple instructions are pasted
                 if (instructionInput.isNotBlank()) {
-                  val instruction = Instruction(instructionInput)
-                  onInstructionChanged(instruction)
+                  if (instructionInput.contains("\n")) {
+                    instructionInput.split("\n").map { Instruction(it) }.forEach { onInstructionChanged(it) }
+                  } else {
+                    val instruction = Instruction(instructionInput)
+                    onInstructionChanged(instruction)
+                  }
                   instructionInput = ""
                   scope.launch { lazyListState.animateScrollToItem(instructions.size) }
                 }

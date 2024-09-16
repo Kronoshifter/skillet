@@ -19,4 +19,16 @@ object IngredientParser {
       )
     ).ingredient()
   )
+
+  fun parseIngredients(text: String): List<Ingredient> = IngredientVisitor().visitIngredients(
+    IngredientGrammarParser(
+      CommonTokenStream(
+        IngredientGrammarLexer(
+          CharStreams.fromString(
+            "$text\n"
+          )
+        )
+      )
+    ).recipe()
+  )
 }
