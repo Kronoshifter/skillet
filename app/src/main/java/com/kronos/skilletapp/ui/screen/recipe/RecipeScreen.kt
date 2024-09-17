@@ -19,7 +19,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -28,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.unwrap
+import com.kronos.skilletapp.R
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.LoadingContent
@@ -58,7 +61,8 @@ private enum class RecipeContentTab {
 @Composable
 fun RecipeScreen(
   onBack: () -> Unit,
-  onEdit: () -> Unit = {},
+  onEdit: () -> Unit,
+  onCook: () -> Unit,
   vm: RecipeViewModel = getViewModel(),
 ) {
   Scaffold(
@@ -80,6 +84,11 @@ fun RecipeScreen(
           }
         }
       )
+    },
+    floatingActionButton = {
+      FloatingActionButton(onClick = onCook) {
+        Icon(painter = painterResource(id = R.drawable.skillet_24px), contentDescription = "Cook")
+      }
     }
   ) { paddingValues ->
     val uiState by vm.uiState.collectAsStateWithLifecycle()
@@ -126,8 +135,13 @@ private fun RecipeContent(
         style = MaterialTheme.typography.headlineLarge,
         modifier = Modifier
           .fillMaxWidth()
-          .padding(16.dp)
+          .padding(horizontal = 16.dp)
       )
+
+      //TODO: add recipe image
+      //TODO: add recipe time
+      //TODO: add source
+      //TODO: add notes
 
       var scale by remember { mutableDoubleStateOf(1.0) }
       var servings by remember { mutableIntStateOf(recipe.servings) }
