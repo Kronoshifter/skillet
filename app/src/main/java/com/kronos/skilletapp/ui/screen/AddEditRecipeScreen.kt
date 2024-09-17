@@ -48,6 +48,7 @@ import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -102,7 +103,6 @@ fun AddEditRecipeScreen(
           }
         },
         actions = {
-          //TODO: add some sort of saving indicator
           IconButton(onClick = vm::saveRecipe, enabled = !recipeState.isSaveInProgress) {
             Icon(imageVector = Icons.Default.Save, contentDescription = "Save")
           }
@@ -182,7 +182,7 @@ fun AddEditRecipeScreen(
   }
 
   if (recipeState.isSaveInProgress) {
-    CompositionLocalProvider(LocalRippleConfiguration provides null) {
+    DisableRipple {
       Surface(
         modifier = Modifier.fillMaxSize(),
         color = BottomSheetDefaults.ScrimColor,

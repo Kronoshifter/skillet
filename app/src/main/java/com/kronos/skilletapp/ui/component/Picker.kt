@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.modifier.verticalFadingEdge
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -60,7 +61,7 @@ fun <T> InfiniteScrollingPicker(
         .verticalFadingEdge(),
     ) {
       items(scrollCount) { index -> 
-        CompositionLocalProvider(LocalRippleConfiguration provides null){
+        DisableRipple {
           Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
