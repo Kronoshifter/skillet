@@ -180,6 +180,20 @@ fun AddEditRecipeScreen(
       text = "Unsaved changes will be lost",
     )
   }
+
+  if (recipeState.isSaveInProgress) {
+    CompositionLocalProvider(LocalRippleConfiguration provides null) {
+      Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = BottomSheetDefaults.ScrimColor,
+        onClick = {}
+      ) {
+        CircularProgressIndicator(
+          modifier = Modifier.wrapContentSize()
+        )
+      }
+    }
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
