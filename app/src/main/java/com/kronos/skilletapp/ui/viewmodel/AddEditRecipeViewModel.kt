@@ -29,6 +29,8 @@ data class RecipeState(
   val equipment: List<Equipment> = emptyList(),
   val userMessage: String? = null,
   val isRecipeSaved: Boolean = false,
+  val tharBeChanges: Boolean = false,
+  val isSaveInProgress: Boolean = false,
 )
 
 class AddEditRecipeViewModel(
@@ -45,20 +47,20 @@ class AddEditRecipeViewModel(
   val uiState = _uiState.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
 
-  val tharBeChanges: Boolean
-    get() = _recipeState.value.let {
-      it.name != originalRecipeState.name ||
-          it.description != originalRecipeState.description ||
-          it.notes != originalRecipeState.notes ||
-          it.servings != originalRecipeState.servings ||
-          it.prepTime != originalRecipeState.prepTime ||
-          it.cookTime != originalRecipeState.cookTime ||
-          it.source != originalRecipeState.source ||
-          it.sourceName != originalRecipeState.sourceName ||
-          it.ingredients != originalRecipeState.ingredients ||
-          it.instructions != originalRecipeState.instructions ||
-          it.equipment != originalRecipeState.equipment
-    }
+//  val tharBeChanges: Boolean
+//    get() = _recipeState.value.let {
+//      it.name != originalRecipeState.name ||
+//      it.description != originalRecipeState.description ||
+//      it.notes != originalRecipeState.notes ||
+//      it.servings != originalRecipeState.servings ||
+//      it.prepTime != originalRecipeState.prepTime ||
+//      it.cookTime != originalRecipeState.cookTime ||
+//      it.source != originalRecipeState.source ||
+//      it.sourceName != originalRecipeState.sourceName ||
+//      it.ingredients != originalRecipeState.ingredients ||
+//      it.instructions != originalRecipeState.instructions ||
+//      it.equipment != originalRecipeState.equipment
+//    }
 
   init {
     recipeId?.let {
@@ -83,54 +85,66 @@ class AddEditRecipeViewModel(
     } else {
       updateRecipe()
     }
+
+    _recipeState.update {
+      it.copy(isSaveInProgress = true)
+    }
   }
 
   fun updateName(name: String) {
     _recipeState.update {
       it.copy(name = name)
     }
+    checkForChanges()
   }
 
   fun updateDescription(description: String) {
     _recipeState.update {
       it.copy(description = description)
     }
+    checkForChanges()
   }
 
   fun updateNotes(notes: String) {
     _recipeState.update {
       it.copy(notes = notes)
     }
+    checkForChanges()
   }
 
   fun updateServings(servings: Int) {
     _recipeState.update {
       it.copy(servings = servings)
     }
+    checkForChanges()
   }
 
   fun updatePrepTime(prepTime: Int) {
     _recipeState.update {
       it.copy(prepTime = prepTime)
     }
+    checkForChanges()
   }
 
   fun updateCookTime(cookTime: Int) {
     _recipeState.update {
       it.copy(cookTime = cookTime)
     }
+    checkForChanges()
   }
 
   fun updateSource(source: String) {
     _recipeState.update {
       it.copy(source = source)
     }
+    checkForChanges()
   }
 
   fun updateSourceName(sourceName: String) {
     _recipeState.update {
       it.copy(sourceName = sourceName)
     }
+    checkForChanges()
   }
 
   fun updateIngredient(ingredient: Ingredient) {
@@ -142,6 +156,7 @@ class AddEditRecipeViewModel(
         }
       )
     }
+    checkForChanges()
   }
 
   fun removeIngredient(ingredient: Ingredient) {
@@ -153,6 +168,7 @@ class AddEditRecipeViewModel(
         }
       )
     }
+    checkForChanges()
   }
 
   fun moveIngredient(from: Int, to: Int) {
@@ -161,6 +177,7 @@ class AddEditRecipeViewModel(
         ingredients = it.ingredients.move(from, to),
       )
     }
+    checkForChanges()
   }
 
   fun updateInstruction(instruction: Instruction) {
@@ -169,12 +186,14 @@ class AddEditRecipeViewModel(
         instructions = state.instructions.upsert(instruction) { it.id }
       )
     }
+    checkForChanges()
   }
 
   fun removeInstruction(instruction: Instruction) {
     _recipeState.update {
       it.copy(instructions = it.instructions - instruction)
     }
+    checkForChanges()
   }
 
   fun moveInstruction(from: Int, to: Int) {
@@ -183,6 +202,7 @@ class AddEditRecipeViewModel(
         instructions = it.instructions.move(from, to),
       )
     }
+    checkForChanges()
   }
 
   fun updateEquipment(equipment: Equipment) {
@@ -191,12 +211,14 @@ class AddEditRecipeViewModel(
         equipment = state.equipment.upsert(equipment) { it.id }
       )
     }
+    checkForChanges()
   }
 
   fun removeEquipment(equipment: Equipment) {
     _recipeState.update {
       it.copy(equipment = it.equipment - equipment)
     }
+    checkForChanges()
   }
 
   fun moveEquipment(from: Int, to: Int) {
@@ -205,17 +227,40 @@ class AddEditRecipeViewModel(
         equipment = it.equipment.move(from, to),
       )
     }
+    checkForChanges()
   }
 
   fun showMessage(message: String) {
     _recipeState.update {
       it.copy(userMessage = message)
     }
+    checkForChanges()
   }
 
   fun userMessageShown() {
     _recipeState.update {
       it.copy(userMessage = null)
+    }
+    checkForChanges()
+  }
+
+  private fun checkForChanges() {
+    _recipeState.update { state ->
+      state.copy(
+        tharBeChanges = state.let {
+          it.name != originalRecipeState.name ||
+          it.description != originalRecipeState.description ||
+          it.notes != originalRecipeState.notes ||
+          it.servings != originalRecipeState.servings ||
+          it.prepTime != originalRecipeState.prepTime ||
+          it.cookTime != originalRecipeState.cookTime ||
+          it.source != originalRecipeState.source ||
+          it.sourceName != originalRecipeState.sourceName ||
+          it.ingredients != originalRecipeState.ingredients ||
+          it.instructions != originalRecipeState.instructions ||
+          it.equipment != originalRecipeState.equipment
+        }
+      )
     }
   }
 

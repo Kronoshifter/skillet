@@ -81,6 +81,8 @@ fun AddEditRecipeScreen(
 ) {
   var showDiscardChangesDialog by remember { mutableStateOf(false) }
 
+  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+
   Scaffold(
     modifier = modifier.fillMaxSize(),
     topBar = {
@@ -89,7 +91,7 @@ fun AddEditRecipeScreen(
         navigationIcon = {
           IconButton(
             onClick = {
-              if (vm.tharBeChanges) {
+              if (recipeState.tharBeChanges) {
                 showDiscardChangesDialog = true
               } else {
                 onBack()
@@ -100,7 +102,8 @@ fun AddEditRecipeScreen(
           }
         },
         actions = {
-          IconButton(onClick = vm::saveRecipe) {
+          //TODO: add some sort of saving indicator
+          IconButton(onClick = vm::saveRecipe, enabled = !recipeState.isSaveInProgress) {
             Icon(imageVector = Icons.Default.Save, contentDescription = "Save")
           }
         }
@@ -120,7 +123,6 @@ fun AddEditRecipeScreen(
         .fillMaxSize()
         .padding(paddingValues),
     ) {
-      val recipeState by vm.recipeState.collectAsStateWithLifecycle()
 
       AddEditRecipeContent(
         name = recipeState.name,
