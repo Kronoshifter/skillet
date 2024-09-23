@@ -1,8 +1,9 @@
 package com.kronos.skilletapp.model
 
+import kotlinx.serialization.Serializable
 import java.util.*
 
-//TODO: consider adding ingredient string that this ingredient was parsed from
+@Serializable
 data class Ingredient(
   val name: String,
   val measurement: Measurement,

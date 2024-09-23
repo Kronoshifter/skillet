@@ -6,7 +6,9 @@ import kotlin.math.roundToInt
 import com.kronos.skilletapp.model.IngredientType.*
 import com.kronos.skilletapp.utils.roundToNearestFraction
 import com.kronos.skilletapp.utils.toFraction
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Measurement(
   val quantity: Double,
   val unit: MeasurementUnit,
@@ -131,6 +133,7 @@ enum class MeasurementSystem {
   Other
 }
 
+@Serializable
 sealed class MeasurementUnit(
   open val name: String,
   val factor: Double,

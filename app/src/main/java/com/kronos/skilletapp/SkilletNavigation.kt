@@ -1,13 +1,15 @@
 package com.kronos.skilletapp
 
 import androidx.navigation.NavHostController
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.MeasurementUnit
 import kotlinx.serialization.Serializable
 
 sealed interface Route {
   @Serializable data object RecipeList : Route
   @Serializable data class Recipe(val recipeId: String) : Route
   @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null) : Route
-  @Serializable data class Cooking(val recipeId: String) : Route
+  @Serializable data class Cooking(val recipeId: String, val selectedUnits: Map<Ingredient, MeasurementUnit?>) : Route
 }
 
 class SkilletNavigationActions(private val navController: NavHostController) {
@@ -30,7 +32,7 @@ class SkilletNavigationActions(private val navController: NavHostController) {
     navController.navigate(Route.AddEditRecipe(title, recipeId))
   }
 
-  fun navigateToCooking(recipeId: String) {
-    navController.navigate(Route.Cooking(recipeId))
+  fun navigateToCooking(recipeId: String, selectedUnits: Map<Ingredient, MeasurementUnit?>) {
+    navController.navigate(Route.Cooking(recipeId, selectedUnits))
   }
 }

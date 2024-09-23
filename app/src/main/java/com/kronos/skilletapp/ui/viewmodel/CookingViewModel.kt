@@ -10,8 +10,10 @@ import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.Recipe
 import kotlinx.coroutines.flow.*
-
 
 class CookingViewModel(
   private val recipeRepository: RecipeRepository,
@@ -19,6 +21,9 @@ class CookingViewModel(
 ) : ViewModel() {
   private val args = handle.toRoute<Route.Cooking>()
   private val recipeId = args.recipeId
+
+  private val _selectedUnits = MutableStateFlow(args.selectedUnits)
+  val selectedUnits = _selectedUnits.asStateFlow()
 
   private val _isLoading = MutableStateFlow(false)
   private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
@@ -46,4 +51,10 @@ class CookingViewModel(
     started = SharingStarted.WhileSubscribed(5000L),
     initialValue = UiState.Loading
   )
+
+  fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
+    _selectedUnits.update {
+      it + (ingredient to unit)
+    }
+  }
 }

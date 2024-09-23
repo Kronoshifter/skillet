@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
+import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
 
@@ -45,7 +46,7 @@ fun SkilletNavGraph(
       RecipeScreen(
         onBack = { navController.popBackStack() },
         onEdit = { navActions.navigateToAddEditRecipe("Edit Recipe", args.recipeId) },
-        onCook = { navActions.navigateToCooking(args.recipeId) }
+        onCook = { selectedUnits -> navActions.navigateToCooking(args.recipeId, selectedUnits) }
       )
     }
     composable<Route.AddEditRecipe> { backStackEntry ->
@@ -60,7 +61,9 @@ fun SkilletNavGraph(
     }
     composable<Route.Cooking> { backStackEntry ->
       val args = backStackEntry.toRoute<Route.Cooking>()
-
+      CookingScreen(
+        onBack = { navController.popBackStack() },
+      )
     }
   }
 }

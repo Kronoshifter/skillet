@@ -62,9 +62,12 @@ private enum class RecipeContentTab {
 fun RecipeScreen(
   onBack: () -> Unit,
   onEdit: () -> Unit,
-  onCook: () -> Unit,
+  onCook: (selectedUnits: Map<Ingredient, MeasurementUnit?>) -> Unit,
   vm: RecipeViewModel = getViewModel(),
 ) {
+  val uiState by vm.uiState.collectAsStateWithLifecycle()
+  val selectedUnits by vm.selectedUnits.collectAsStateWithLifecycle()
+
   Scaffold(
     topBar = {
       TopAppBar(
@@ -86,13 +89,11 @@ fun RecipeScreen(
       )
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = onCook) {
+      FloatingActionButton(onClick = { onCook(selectedUnits.toMap()) }) {
         Icon(painter = painterResource(id = R.drawable.skillet_24px), contentDescription = "Cook")
       }
     }
   ) { paddingValues ->
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val selectedUnits by vm.selectedUnits.collectAsStateWithLifecycle()
 
     LoadingContent(
       state = uiState,
