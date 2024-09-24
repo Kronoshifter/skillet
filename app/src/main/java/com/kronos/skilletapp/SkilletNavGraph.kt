@@ -46,7 +46,12 @@ fun SkilletNavGraph(
       RecipeScreen(
         onBack = { navController.popBackStack() },
         onEdit = { navActions.navigateToAddEditRecipe("Edit Recipe", args.recipeId) },
-        onCook = { selectedUnits -> navActions.navigateToCooking(args.recipeId, selectedUnits) }
+        onCook = { selectedUnits ->
+          navActions.navigateToCooking(
+            recipeId = args.recipeId,
+            selectedUnits = selectedUnits
+          )
+        }
       )
     }
     composable<Route.AddEditRecipe> { backStackEntry ->

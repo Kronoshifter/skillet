@@ -94,7 +94,6 @@ fun RecipeScreen(
       }
     }
   ) { paddingValues ->
-
     LoadingContent(
       state = uiState,
       modifier = Modifier
