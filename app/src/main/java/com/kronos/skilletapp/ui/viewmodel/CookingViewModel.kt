@@ -22,7 +22,8 @@ class CookingViewModel(
   private val args = handle.toRoute<Route.Cooking>()
   private val recipeId = args.recipeId
 
-  private val _selectedUnits = MutableStateFlow(args.selectedUnits)
+//  private val _selectedUnits = MutableStateFlow(args.selectedUnits)
+  private val _selectedUnits = MutableStateFlow<Map<Ingredient, MeasurementUnit?>>(emptyMap())
   val selectedUnits = _selectedUnits.asStateFlow()
 
   private val _isLoading = MutableStateFlow(false)
