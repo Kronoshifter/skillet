@@ -138,7 +138,7 @@ sealed class MeasurementUnit(
   open val name: String,
   val factor: Double,
   val abbreviation: String,
-  val aliases: List<String>, //TODO: add abbreviation back in, potentially replace aliases here with lookup table
+  val aliases: List<String>, //TODO: potentially replace aliases here with lookup table
   val system: MeasurementSystem,
   val normalizationLow: Double,
   val normalizationHigh: Double,
@@ -411,5 +411,7 @@ sealed class MeasurementUnit(
       Ounce to either,
       Pound to either,
     )
+
+    fun fromName(name: String) = values.firstOrNull { it.name == name } ?: if (name == "none") None else Custom(name)
   }
 }

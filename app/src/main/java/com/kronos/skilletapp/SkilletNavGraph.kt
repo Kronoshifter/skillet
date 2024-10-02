@@ -8,11 +8,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
+import com.kronos.skilletapp.utils.mapEntries
+import com.kronos.skilletapp.utils.navTypeOf
+import kotlin.reflect.typeOf
 
 @Composable
 fun SkilletNavGraph(
@@ -44,12 +48,12 @@ fun SkilletNavGraph(
     ) {
       val args = it.toRoute<Route.Recipe>()
       RecipeScreen(
-        onBack = { navController.popBackStack() },
+        onBack = { navController.popBackStack(route = Route.RecipeList, inclusive = false, saveState = true) },
         onEdit = { navActions.navigateToAddEditRecipe("Edit Recipe", args.recipeId) },
-        onCook = { selectedUnits ->
+        onCook = { scale ->
           navActions.navigateToCooking(
             recipeId = args.recipeId,
-            selectedUnits = selectedUnits
+            scale = scale
           )
         }
       )
@@ -64,7 +68,9 @@ fun SkilletNavGraph(
         },
       )
     }
-    composable<Route.Cooking> { backStackEntry ->
+    composable<Route.Cooking>(
+      typeMap = mapOf(typeOf<LinkedHashMap<String, String?>>() to navTypeOf<LinkedHashMap<String, String>>()),
+    ) { backStackEntry ->
       val args = backStackEntry.toRoute<Route.Cooking>()
       CookingScreen(
         onBack = { navController.popBackStack() },

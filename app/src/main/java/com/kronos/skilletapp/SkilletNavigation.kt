@@ -11,7 +11,7 @@ sealed interface Route {
   @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null) : Route
 
   //TODO: create custom NavType for selectedUnits
-  @Serializable data class Cooking(val recipeId: String, /*val selectedUnits: Map<Ingredient, MeasurementUnit?>*/) : Route
+  @Serializable data class Cooking(val recipeId: String, val scale: Double) : Route
 }
 
 class SkilletNavigationActions(private val navController: NavHostController) {
@@ -27,6 +27,7 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   fun navigateToRecipe(recipeId: String) {
     navController.navigate(Route.Recipe(recipeId)) {
       popUpTo<Route.RecipeList>()
+      restoreState = true
     }
   }
 
@@ -34,7 +35,7 @@ class SkilletNavigationActions(private val navController: NavHostController) {
     navController.navigate(Route.AddEditRecipe(title, recipeId))
   }
 
-  fun navigateToCooking(recipeId: String, selectedUnits: Map<Ingredient, MeasurementUnit?>) {
-    navController.navigate(Route.Cooking(recipeId, /*selectedUnits*/))
+  fun navigateToCooking(recipeId: String, scale: Double) {
+    navController.navigate(Route.Cooking(recipeId, scale))
   }
 }

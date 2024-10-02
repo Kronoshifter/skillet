@@ -15,3 +15,7 @@ fun <T, R : Comparable<R>> List<T>.upsert(
 }
 
 fun <T> List<T>.move(from: Int, to: Int): List<T> = toMutableList().apply { add(to, removeAt(from)) }.toList()
+
+fun <K, V, NK, NV> Map<K, V>.mapEntries(
+  transform: (Map.Entry<K, V>) -> Pair<NK, NV>
+): Map<NK, NV> = entries.associate(transform)
