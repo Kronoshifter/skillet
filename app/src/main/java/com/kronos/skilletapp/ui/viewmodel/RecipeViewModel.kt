@@ -11,12 +11,13 @@ import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.MeasurementUnit
-import com.kronos.skilletapp.model.Recipe
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class RecipeUiState(
-  val recipe: Recipe,
+  val servings: Int = 1,
+  val selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
+  val scale: Float = 1f,
 )
 
 class RecipeViewModel(
@@ -30,6 +31,9 @@ class RecipeViewModel(
   private val _selectedUnits = MutableStateFlow<Map<Ingredient, MeasurementUnit?>>(emptyMap())
   val selectedUnits = _selectedUnits.asStateFlow()
 
+  private val _uiState = MutableStateFlow(RecipeUiState())
+  val uiState = _uiState.asStateFlow()
+
   private val _isLoading = MutableStateFlow(false)
   private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
     .map { result ->
@@ -39,17 +43,16 @@ class RecipeViewModel(
     }
     .catch { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
 
-  val uiState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
+  val recipeState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
     when {
       loading -> UiState.Loading
       else -> when (recipeAsync) {
         UiState.Loading -> UiState.Loading
         is UiState.Error -> recipeAsync
-        is UiState.LoadedWithData -> UiState.LoadedWithData(
-          RecipeUiState(
-            recipe = recipeAsync.data,
-          )
-        )
+        is UiState.LoadedWithData -> {
+          _uiState.update { it.copy(servings = recipeAsync.data.servings) }
+          UiState.LoadedWithData(recipeAsync.data)
+        }
         else -> UiState.Error(SkilletError("UiState.Loaded should not be used here"))
       }
     }
@@ -60,9 +63,13 @@ class RecipeViewModel(
   )
 
   fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
-    _selectedUnits.update {
-      it + (ingredient to unit)
+    _uiState.update {
+      it.copy(selectedUnits = it.selectedUnits + (ingredient to unit))
     }
+  }
+
+  fun setScaling(scale: Float, servings: Int) {
+    _uiState.update { it.copy(servings = servings, scale = scale) }
   }
 
   fun refresh() {

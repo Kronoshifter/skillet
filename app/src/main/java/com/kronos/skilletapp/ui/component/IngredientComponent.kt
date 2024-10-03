@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 fun IngredientRow(
   ingredient: Ingredient,
   modifier: Modifier = Modifier,
-  scale: Double = 1.0,
+  scale: Float = 1f,
   selectedUnit: MeasurementUnit? = null,
   enabled: Boolean = true,
   onClick: () -> Unit = {},
@@ -100,7 +100,7 @@ fun IngredientRow(
 @OptIn(ExperimentalMaterial3Api::class)
 fun IngredientPill(
   ingredient: Ingredient,
-  scale: Double = 1.0,
+  scale: Float = 1f,
 //  selectedUnits: Map<Ingredient, MeasurementUnit?> = mapOf(),
   selectedUnit: MeasurementUnit? = null,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit = { _, _ -> },
@@ -197,14 +197,14 @@ fun IngredientPill(
 private fun IngredientRowPreview() {
   val ingredient = Ingredient(
     name = "Pasta",
-    measurement = Measurement(8.0, MeasurementUnit.Ounce),
+    measurement = Measurement(8f, MeasurementUnit.Ounce),
     raw = "8 oz Pasta",
   )
   SkilletAppTheme {
     Surface {
       IngredientRow(
         ingredient = ingredient,
-        scale = 1.0,
+        scale = 1f,
         trailingIcon = {
           IconButton(onClick = {}) {
             Icon(imageVector = Icons.Default.DragHandle, contentDescription = "Dragging")
@@ -220,7 +220,7 @@ private fun IngredientRowPreview() {
 private fun IngredientPillPreview() {
   val ingredient = Ingredient(
     name = "Pasta",
-    measurement = Measurement(8.0, MeasurementUnit.Ounce),
+    measurement = Measurement(8f, MeasurementUnit.Ounce),
     raw = "8 oz Pasta",
   )
 
@@ -228,7 +228,7 @@ private fun IngredientPillPreview() {
     Surface {
       IngredientPill(
         ingredient = ingredient,
-        scale = 1.0,
+        scale = 1f,
       )
     }
   }
@@ -239,7 +239,7 @@ private fun IngredientPillPreview() {
 fun IngredientPillNoQuantityPreview() {
   val ingredient = Ingredient(
     name = "Salt",
-    measurement = Measurement(0.0, MeasurementUnit.None),
+    measurement = Measurement(0f, MeasurementUnit.None),
     raw = "Salt, to taste",
     comment = "to taste"
   )
@@ -248,7 +248,7 @@ fun IngredientPillNoQuantityPreview() {
     Surface {
       IngredientPill(
         ingredient = ingredient,
-        scale = 1.0,
+        scale = 1f,
       )
     }
   }
@@ -259,7 +259,7 @@ fun IngredientPillNoQuantityPreview() {
 fun IngredientPillNoMeasurementPreview() {
   val ingredient = Ingredient(
     name = "Pepe",
-    measurement = Measurement(1.0, MeasurementUnit.None),
+    measurement = Measurement(1f, MeasurementUnit.None),
     raw = "Pepe",
   )
 
@@ -267,7 +267,7 @@ fun IngredientPillNoMeasurementPreview() {
     Surface {
       IngredientPill(
         ingredient = ingredient,
-        scale = 1.0,
+        scale = 1f,
       )
     }
   }

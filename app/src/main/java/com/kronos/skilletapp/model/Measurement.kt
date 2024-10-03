@@ -10,14 +10,16 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Measurement(
-  val quantity: Double,
+  val quantity: Float,
   val unit: MeasurementUnit,
 ) {
-  operator fun times(factor: Double) = scale(factor)
-  operator fun times(factor: Int) = scale(factor.toDouble())
+  operator fun times(factor: Float) = scale(factor)
+  operator fun times(factor: Double) = scale(factor.toFloat())
+  operator fun times(factor: Int) = scale(factor.toFloat())
 
-  operator fun div(factor: Double) = scale(1 / factor)
-  operator fun div(factor: Int) = scale(1 / factor.toDouble())
+  operator fun div(factor: Float) = scale(1 / factor)
+  operator fun div(factor: Double) = scale(1 / factor.toFloat())
+  operator fun div(factor: Int) = scale(1 / factor.toFloat())
 
   operator fun unaryMinus() = copy(quantity = -quantity)
 
@@ -63,7 +65,7 @@ data class Measurement(
     }
   }
 
-  fun scale(factor: Double) = copy(quantity = quantity * factor)
+  fun scale(factor: Float) = copy(quantity = quantity * factor)
 
   private fun convert(to: MeasurementUnit.Mass) = convert(to) {
     check(unit is MeasurementUnit.Mass)
@@ -82,10 +84,10 @@ data class Measurement(
     MeasurementUnit.None -> this
   }
 
-  fun convert(to: MeasurementUnit, converter: (Double) -> Double) = Measurement(converter(quantity), unit = to)
+  fun convert(to: MeasurementUnit, converter: (Float) -> Float) = Measurement(converter(quantity), unit = to)
   
 
-  fun scaleAndNormalize(factor: Double) = scale(factor).normalize()
+  fun scaleAndNormalize(factor: Float) = scale(factor).normalize()
 
   fun normalize(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
@@ -100,9 +102,9 @@ data class Measurement(
   }
 
   fun roundToEighth() = copy(quantity = quantity.roundToEighth())
-  fun round() = copy(quantity = quantity.roundToInt().toDouble())
+  fun round() = copy(quantity = quantity.roundToInt().toFloat())
 
-  fun scaleAndRound(factor: Double) = scale(factor).roundToEighth()
+  fun scaleAndRound(factor: Float) = scale(factor).roundToEighth()
 
   val displayQuantity
     get() = when (unit.system) {
@@ -136,22 +138,22 @@ enum class MeasurementSystem {
 @Serializable
 sealed class MeasurementUnit(
   open val name: String,
-  val factor: Double,
+  val factor: Float,
   val abbreviation: String,
   val aliases: List<String>, //TODO: potentially replace aliases here with lookup table
   val system: MeasurementSystem,
-  val normalizationLow: Double,
-  val normalizationHigh: Double,
+  val normalizationLow: Float,
+  val normalizationHigh: Float,
   val type: MeasurementType,
 ) {
 
   sealed class Mass(
     name: String,
-    factor: Double,
+    factor: Float,
     abbreviation: String,
     aliases: List<String>,
-    normalizationLow: Double,
-    normalizationHigh: Double,
+    normalizationLow: Float,
+    normalizationHigh: Float,
     system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
@@ -166,11 +168,11 @@ sealed class MeasurementUnit(
 
   sealed class Volume(
     name: String,
-    factor: Double,
+    factor: Float,
     abbreviation: String,
     aliases: List<String>,
-    normalizationLow: Double,
-    normalizationHigh: Double,
+    normalizationLow: Float,
+    normalizationHigh: Float,
     system: MeasurementSystem,
   ) : MeasurementUnit(
     name = name,
@@ -187,23 +189,23 @@ sealed class MeasurementUnit(
     override val name: String,
   ) : MeasurementUnit(
     name = name,
-    factor = 1.0,
+    factor = 1f,
     abbreviation = name,
     aliases = listOf(name),
     system = MeasurementSystem.Other,
-    normalizationLow = 0.0,
-    normalizationHigh = Double.POSITIVE_INFINITY,
+    normalizationLow = 0f,
+    normalizationHigh = Float.POSITIVE_INFINITY,
     type = MeasurementType.Other
   )
 
   data object None : MeasurementUnit(
     name = "none",
-    factor = 1.0,
+    factor = 1f,
     abbreviation = "none",
     aliases = listOf("none"),
     system = MeasurementSystem.Other,
-    normalizationLow = 0.0,
-    normalizationHigh = Double.POSITIVE_INFINITY,
+    normalizationLow = 0f,
+    normalizationHigh = Float.POSITIVE_INFINITY,
     type = MeasurementType.Other
   )
 
@@ -213,113 +215,113 @@ sealed class MeasurementUnit(
 
   data object Milliliter : Volume(
     name = "milliliter",
-    factor = 1.0,
+    factor = 1f,
     abbreviation = "mL",
     aliases = listOf("mL"),
-    normalizationLow = 0.0,
-    normalizationHigh = 1000.0,
+    normalizationLow = 0f,
+    normalizationHigh = 1000f,
     system = MeasurementSystem.Metric
   )
 
   data object Liter : Volume(
     name = "liter",
-    factor = 1000.0,
+    factor = 1000f,
     abbreviation = "L",
     aliases = listOf("L"),
-    normalizationLow = 0.5,
-    normalizationHigh = Double.POSITIVE_INFINITY,
+    normalizationLow = 0.5f,
+    normalizationHigh = Float.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 
   //// Imperial
 
   data object Pinch : Volume(
-    factor = 0.3080575,
+    factor = 0.3080575f,
     name = "pinch",
     abbreviation = "pinch",
     aliases = listOf("pinch"),
-    normalizationLow = 0.0,
-    normalizationHigh = 2.0,
+    normalizationLow = 0f,
+    normalizationHigh = 2f,
     system = MeasurementSystem.Imperial
   )
 
   data object Dash : Volume(
-    factor = 0.616115,
+    factor = 0.616115f,
     name = "dash",
     abbreviation = "dash",
     aliases = listOf("dash"),
-    normalizationLow = 0.5,
-    normalizationHigh = 2.0,
+    normalizationLow = 0.5f,
+    normalizationHigh = 2f,
     system = MeasurementSystem.Imperial
   )
 
   data object Teaspoon : Volume(
-    factor = 4.92892,
+    factor = 4.92892f,
     name = "teaspoon",
     abbreviation = "tsp",
     aliases = listOf("tsp", "t", "teaspoons"),
-    normalizationLow = 0.25,
-    normalizationHigh = 3.0,
+    normalizationLow = 0.25f,
+    normalizationHigh = 3f,
     system = MeasurementSystem.Imperial
   )
 
   data object Tablespoon : Volume(
-    factor = 14.7868,
+    factor = 14.7868f,
     name = "tablespoon",
     abbreviation = "tbsp",
     aliases = listOf("tbsp", "Tbsp", "T", "tbs", "Tbs", "tablespoons", "Tablespoons"),
-    normalizationLow = 0.334,
-    normalizationHigh = 4.0,
+    normalizationLow = 0.334f,
+    normalizationHigh = 4f,
     system = MeasurementSystem.Imperial
   )
 
   data object Cup : Volume(
-    factor = 236.588,
+    factor = 236.588f,
     name = "cup",
     abbreviation = "cup",
     aliases = listOf("cup", "c", "C", "cups"),
-    normalizationLow = 0.25,
-    normalizationHigh = Double.POSITIVE_INFINITY,
+    normalizationLow = 0.25f,
+    normalizationHigh = Float.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
 
   data object Pint : Volume(
-    factor = 473.176,
+    factor = 473.176f,
     name = "pint",
     abbreviation = "pt",
     aliases = listOf("pt", "pints", "Pint"),
-    normalizationLow = 0.5,
-    normalizationHigh = 2.0,
+    normalizationLow = 0.5f,
+    normalizationHigh = 2f,
     system = MeasurementSystem.Imperial
   )
 
   data object Quart : Volume(
-    factor = 946.353,
+    factor = 946.353f,
     name = "quart",
     abbreviation = "qt",
     aliases = listOf("qt", "quarts", "Quart"),
-    normalizationLow = 0.5,
-    normalizationHigh = 4.0,
+    normalizationLow = 0.5f,
+    normalizationHigh = 4f,
     system = MeasurementSystem.Imperial
   )
 
   data object Gallon : Volume(
-    factor = 3785.41,
+    factor = 3785.41f,
     name = "gallon",
     abbreviation = "gal",
     aliases = listOf("gal", "gallons", "Gallon"),
-    normalizationLow = 0.25,
-    normalizationHigh = Double.POSITIVE_INFINITY,
+    normalizationLow = 0.25f,
+    normalizationHigh = Float.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
 
   data object FluidOunce : Volume(
-    factor = 29.5735,
+    factor = 29.5735f,
     name = "fluid ounce",
     abbreviation = "fl oz",
     aliases = listOf("fl oz"),
-    normalizationLow = 0.5,
-    normalizationHigh = 8.0,
+    normalizationLow = 0.5f,
+    normalizationHigh = 8f,
     system = MeasurementSystem.Imperial
   )
 
@@ -328,44 +330,44 @@ sealed class MeasurementUnit(
   //// Metric
 
   data object Gram : Mass(
-    factor = 1.0,
+    factor = 1f,
     name = "gram",
     abbreviation = "g",
     aliases = listOf("g", "grams"),
-    normalizationLow = 0.0,
-    normalizationHigh = 1000.0,
+    normalizationLow = 0f,
+    normalizationHigh = 1000f,
     system = MeasurementSystem.Metric
   )
 
   data object Kilogram : Mass(
-    factor = 1000.0,
+    factor = 1000f,
     name = "kilogram",
     abbreviation = "kg",
     aliases = listOf("kg", "kilograms"),
-    normalizationLow = 0.5,
-    normalizationHigh = Double.POSITIVE_INFINITY,
+    normalizationLow = 0.5f,
+    normalizationHigh = Float.POSITIVE_INFINITY,
     system = MeasurementSystem.Metric
   )
 
   //// Standard
 
   data object Ounce : Mass(
-    factor = 28.3495,
+    factor = 28.3495f,
     name = "ounce",
     abbreviation = "oz",
     aliases = listOf("oz", "ounces", "Ounce"),
-    normalizationLow = 0.0,
-    normalizationHigh = 16.0,
+    normalizationLow = 0f,
+    normalizationHigh = 16f,
     system = MeasurementSystem.Imperial
   )
 
   data object Pound : Mass(
-    factor = 453.592,
+    factor = 453.592f,
     name = "pound",
     abbreviation = "lb",
     aliases = listOf("lb", "lbs", "pounds", "Pound"),
-    normalizationLow = 0.5,
-    normalizationHigh = Double.POSITIVE_INFINITY,
+    normalizationLow = 0.5f,
+    normalizationHigh = Float.POSITIVE_INFINITY,
     system = MeasurementSystem.Imperial
   )
 

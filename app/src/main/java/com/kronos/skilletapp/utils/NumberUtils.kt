@@ -14,6 +14,9 @@ import kotlin.math.*
 fun Double.roundToEighth() = (this * 8.0).roundToInt() / 8.0
 fun Double.roundToThird() = (this * 3.0).roundToInt() / 3.0
 
+fun Float.roundToEighth() = (this * 8f).roundToInt() / 8f
+fun Float.roundToThird() = (this * 3f).roundToInt() / 3f
+
 fun Double.roundToNearestFraction(): Double {
   val eighthDiff = abs(this - roundToEighth())
   val thirdDiff = abs(this - roundToThird())
@@ -25,6 +28,12 @@ fun Double.roundToNearestFraction(): Double {
 }
 
 fun Double.toFraction(): Fraction {
+  val numerator = (this * 1000).toInt()
+  val denominator = 1000
+  return Fraction(numerator, denominator).reduce()
+}
+
+fun Float.toFraction(): Fraction {
   val numerator = (this * 1000).toInt()
   val denominator = 1000
   return Fraction(numerator, denominator).reduce()

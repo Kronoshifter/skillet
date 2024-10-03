@@ -1557,8 +1557,8 @@ fun IngredientsTabPreview() {
 @Preview
 @Composable
 fun IngredientEditPreview() {
-  val ingredients = mutableListOf(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup), "1 cup test"))
-  ingredients.add(Ingredient("test", Measurement(1.0, MeasurementUnit.Cup), "1 cup test"))
+  val ingredients = mutableListOf(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
+  ingredients.add(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
 
   Surface {
     Column(

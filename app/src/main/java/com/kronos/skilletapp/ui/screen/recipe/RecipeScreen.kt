@@ -19,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -44,11 +43,6 @@ import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
-import org.koin.androidx.viewmodel.dsl.viewModelOf
-import org.koin.core.KoinApplication
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.KoinAppDeclaration
-import org.koin.dsl.module
 import kotlin.collections.set
 import kotlin.math.roundToInt
 
@@ -62,13 +56,11 @@ private enum class RecipeContentTab {
 fun RecipeScreen(
   onBack: () -> Unit,
   onEdit: () -> Unit,
-  onCook: (scale: Double) -> Unit,
+  onCook: (scale: Float) -> Unit,
   vm: RecipeViewModel = getViewModel(),
 ) {
-  //TODO: decouple loading state from ui state
-  //TODO: add scale and selected units to ui state
+  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
-  val selectedUnits by vm.selectedUnits.collectAsStateWithLifecycle()
 
   Scaffold(
     topBar = {
@@ -91,20 +83,23 @@ fun RecipeScreen(
       )
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = { onCook() }) {
+      FloatingActionButton(onClick = { onCook(uiState.scale) }) {
         Icon(painter = painterResource(id = R.drawable.skillet_24px), contentDescription = "Cook")
       }
     }
   ) { paddingValues ->
     LoadingContent(
-      state = uiState,
+      state = recipeState,
       modifier = Modifier
         .fillMaxSize()
         .padding(paddingValues),
-    ) { data ->
+    ) { recipe ->
       RecipeContent(
-        recipe = data.recipe,
-        selectedUnits = selectedUnits,
+        recipe = recipe,
+        scale = uiState.scale,
+        servings = uiState.servings,
+        selectedUnits = uiState.selectedUnits,
+        onScalingChanged = vm::setScaling,
         onUnitSelect = vm::selectUnit,
         modifier = Modifier
           .fillMaxSize()
@@ -117,7 +112,10 @@ fun RecipeScreen(
 @Composable
 private fun RecipeContent(
   recipe: Recipe,
+  scale: Float,
+  servings: Int,
   selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
+  onScalingChanged: (scale: Float, servings: Int) -> Unit,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -145,17 +143,11 @@ private fun RecipeContent(
       //TODO: add source
       //TODO: add notes
 
-      var scale by remember { mutableDoubleStateOf(1.0) }
-      var servings by remember { mutableIntStateOf(recipe.servings) }
-
       ScalingControls(
         scale = scale,
         servings = servings,
         baseServings = recipe.servings,
-        onScalingChanged = { newScale, newServings ->
-          scale = newScale
-          servings = newServings
-        },
+        onScalingChanged = onScalingChanged,
       )
 
       HorizontalDivider(modifier = Modifier.fillMaxWidth())
@@ -220,10 +212,10 @@ private fun RecipeContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ScalingControls(
-  scale: Double,
+  scale: Float,
   servings: Int,
   baseServings: Int,
-  onScalingChanged: (scale: Double, servings: Int) -> Unit,
+  onScalingChanged: (scale: Float, servings: Int) -> Unit,
   maxScale: Int = 3,
 ) {
   val scaleOptions = 1..maxScale
@@ -243,7 +235,7 @@ private fun ScalingControls(
       OutlinedIconButton(
         onClick = {
           val newServings = (servings - 1).coerceAtLeast(1)
-          val newScale = newServings / baseServings.toDouble()
+          val newScale = newServings / baseServings.toFloat()
           onScalingChanged(newScale, newServings)
         },
         enabled = servings > 1,
@@ -271,7 +263,7 @@ private fun ScalingControls(
       OutlinedIconButton(
         onClick = {
           val newServings = servings + 1
-          val newScale = newServings / baseServings.toDouble()
+          val newScale = newServings / baseServings.toFloat()
           onScalingChanged(newScale, newServings)
         },
 //        modifier = Modifier.weight(1f)
@@ -286,11 +278,11 @@ private fun ScalingControls(
         .weight(1f)
     ) {
       scaleOptions.forEach { option ->
-        val selected = scale == option.toDouble()
+        val selected = scale == option.toFloat()
         SegmentedButton(
           selected = selected,
           onClick = {
-            val newScale = option.toDouble()
+            val newScale = option.toFloat()
             val newServings = (baseServings * newScale).roundToInt()
             onScalingChanged(newScale, newServings)
           },
@@ -315,7 +307,7 @@ private fun ScalingControls(
 @Composable
 private fun IngredientsList(
   ingredients: List<Ingredient>,
-  scale: Double,
+  scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
 ) {
@@ -380,7 +372,7 @@ private fun IngredientsList(
 @Composable
 private fun InstructionsList(
   instructions: List<Instruction>,
-  scale: Double,
+  scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
 ) {
@@ -418,7 +410,7 @@ private fun InstructionsList(
 private fun InstructionComponent(
   step: Int,
   instruction: Instruction,
-  scale: Double,
+  scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
 ) {
@@ -473,16 +465,25 @@ private fun InstructionComponent(
 @Composable
 private fun RecipeContentPreview() {
   val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
+  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
+
+  var scale by remember { mutableFloatStateOf(1f) }
+  var servings by remember { mutableIntStateOf(recipe.servings) }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       RecipeContent(
-        recipe = recipe.unwrap(),
+        recipe = recipe,
         selectedUnits = selectedUnits,
-        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
+        onScalingChanged = { newScale, newServings ->
+          scale = newScale
+          servings = newServings
+        },
+        scale = scale,
+        servings = servings
       )
     }
   }
@@ -498,7 +499,7 @@ private fun IngredientsListEmptyPreview() {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       IngredientsList(
         ingredients = ingredients,
-        scale = 1.0,
+        scale = 1f,
         selectedUnits = selectedUnits,
         onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
       )
@@ -531,7 +532,7 @@ private fun IngredientListPreview() {
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     IngredientsList(
       ingredients = ingredients,
-      scale = 1.0,
+      scale = 1f,
       selectedUnits = selectedUnits,
       onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
     )
@@ -543,12 +544,12 @@ private fun IngredientListPreview() {
 @Composable
 private fun IngredientComponentPreview() {
   val ingredient =
-    Ingredient("Mini Shells Pasta", measurement = Measurement(8.0, MeasurementUnit.Ounce), raw = "8 oz Mini Shells Pasta")
+    Ingredient("Mini Shells Pasta", measurement = Measurement(8f, MeasurementUnit.Ounce), raw = "8 oz Mini Shells Pasta")
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     IngredientRow(
       ingredient = ingredient,
-      scale = 1.0,
+      scale = 1f,
       selectedUnit = null,
       enabled = false,
       onClick = {}
@@ -561,7 +562,7 @@ private fun IngredientComponentPreview() {
 private fun InstructionsListEmptyPreview() {
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsList(instructions = emptyList(), scale = 1.0, selectedUnits = emptyMap(), onUnitSelect = { _, _ -> })
+      InstructionsList(instructions = emptyList(), scale = 1f, selectedUnits = emptyMap(), onUnitSelect = { _, _ -> })
     }
   }
 }
@@ -577,7 +578,7 @@ private fun InstructionsListPreview() {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       InstructionsList(
         instructions = instructions,
-        scale = 1.0,
+        scale = 1f,
         selectedUnits = selectedUnits,
         onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
       )
@@ -599,7 +600,7 @@ private fun InstructionComponentPreview() {
         InstructionComponent(
           step = 1,
           instruction = instructions.first(),
-          scale = 1.0,
+          scale = 1f,
           selectedUnits = selectedUnits,
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
         )

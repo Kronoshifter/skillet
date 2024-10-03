@@ -19,13 +19,13 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
       } ?: MeasurementUnit.Custom(unit)
     } ?: MeasurementUnit.None
     val quantity = with(ctx.measurement()?.quantity()) {
-      this?.decimal()?.text?.toDoubleOrNull() ?: this?.fraction()?.let {
+      this?.decimal()?.text?.toFloatOrNull() ?: this?.fraction()?.let {
         when (it.NUMBER().size) {
           2 -> Fraction(numerator = it.NUMBER(0).text.toInt(), denominator = it.NUMBER(1).text.toInt())
           else -> Fraction(numerator = it.NUMBER(0).text.toInt() * it.NUMBER(2).text.toInt() + it.NUMBER(1).text.toInt(), denominator = it.NUMBER(2).text.toInt())
         }.decimal
       }
-    } ?: 0.0
+    } ?: 0f
     val measurement = Measurement(quantity, unit)
 
     val comment = ctx.comment()?.WORD()?.joinToString(" ") { it.text }

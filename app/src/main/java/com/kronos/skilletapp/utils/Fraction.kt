@@ -4,8 +4,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 data class Fraction(val numerator: Int, val denominator: Int) {
-  val decimal: Double
-    get() = numerator.toDouble() / denominator
+  val decimal: Float
+    get() = numerator.toFloat() / denominator
 
   val whole: Int
     get() = numerator / denominator
@@ -54,11 +54,11 @@ data class Fraction(val numerator: Int, val denominator: Int) {
   }
 
   fun roundToEighth(): Fraction {
-    return Fraction(((numerator * 8).toDouble() / denominator).roundToInt(), 8)
+    return Fraction(((numerator * 8).toFloat() / denominator).roundToInt(), 8)
   }
 
   fun roundToThird(): Fraction {
-    return Fraction(((numerator * 3).toDouble() / denominator).roundToInt(), 3)
+    return Fraction(((numerator * 3).toFloat() / denominator).roundToInt(), 3)
   }
 
   fun roundToNearestFraction(): Fraction {
