@@ -14,7 +14,8 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import kotlinx.coroutines.flow.*
 
 data class CookingUiState(
-  val selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap()
+  val selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
+  val scale: Float = 1f
 )
 
 class CookingViewModel(
@@ -24,7 +25,7 @@ class CookingViewModel(
   private val args = handle.toRoute<Route.Cooking>()
   private val recipeId = args.recipeId
 
-  private val _uiState = MutableStateFlow(CookingUiState())
+  private val _uiState = MutableStateFlow(CookingUiState(scale = args.scale))
   val uiState = _uiState.asStateFlow()
 
   private val _isLoading = MutableStateFlow(false)

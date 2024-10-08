@@ -1,5 +1,7 @@
 package com.kronos.skilletapp.ui.component
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,21 +42,31 @@ fun ItemRow(
   ) {
     val boxSize = 56.dp
 
-    if (showDetail) {
-      Box(
-        modifier = Modifier
-          .sizeIn(minWidth = boxSize, minHeight = boxSize)
-          .clip(MaterialTheme.shapes.medium)
-          .background(MaterialTheme.colorScheme.primary)
-          .applyIf(decoration) {
-            border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, MaterialTheme.shapes.medium)
-          },
-        contentAlignment = Alignment.Center,
-        content = detail
-      )
-    } else {
-      Spacer(modifier = Modifier.size(boxSize))
+    AnimatedContent(
+      targetState = showDetail,
+      label = "Show Detail",
+      transitionSpec = {
+        fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 120)) togetherWith
+        fadeOut(animationSpec = tween(durationMillis = 90))
+      }
+    ) { showRowDetail ->
+      if (showRowDetail) {
+        Box(
+          modifier = Modifier
+            .sizeIn(minWidth = boxSize, minHeight = boxSize)
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.primary)
+            .applyIf(decoration) {
+              border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, MaterialTheme.shapes.medium)
+            },
+          contentAlignment = Alignment.Center,
+          content = detail
+        )
+      } else {
+        Spacer(modifier = Modifier.size(boxSize))
+      }
     }
+
 
     Box(modifier = Modifier.weight(1f),) {
       content()

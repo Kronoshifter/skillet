@@ -2,6 +2,7 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
@@ -38,6 +40,7 @@ fun IngredientRow(
   selectedUnit: MeasurementUnit? = null,
   enabled: Boolean = true,
   checked: Boolean = false,
+  onCheckedChange: (Boolean) -> Unit = {},
   onClick: () -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
@@ -45,10 +48,17 @@ fun IngredientRow(
     selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
   }
 
+  val bgColor by animateColorAsState(
+    targetValue = if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
+    animationSpec = if (checked) tween(durationMillis = 220, delayMillis = 120) else tween(durationMillis = 90),
+    label = "Background Color"
+  )
+
   ItemRow(
     modifier = Modifier
       .fillMaxWidth()
       .height(IntrinsicSize.Min)
+      .background(bgColor, MaterialTheme.shapes.medium)
       .then(modifier),
     showDetail = measurement.quantity > 0 || checked,
     detail = {
@@ -129,6 +139,8 @@ fun IngredientListItem(
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
   checked: Boolean = false,
+  onCheckedChange: (Boolean) -> Unit = {},
+  trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurements = MeasurementUnit.values
     .filter { it.type == ingredient.measurement.unit.type }
@@ -139,11 +151,14 @@ fun IngredientListItem(
 
   IngredientRow(
     ingredient = ingredient,
+    modifier = modifier,
     scale = scale,
     selectedUnit = selectedUnit,
     checked = checked,
+    onCheckedChange = onCheckedChange,
     enabled = measurements.isNotEmpty(),
     onClick = { showBottomSheet = true },
+    trailingIcon = trailingIcon
   )
 
   val sheetState = rememberModalBottomSheetState()

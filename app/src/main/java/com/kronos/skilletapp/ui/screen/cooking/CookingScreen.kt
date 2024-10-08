@@ -12,14 +12,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.github.michaelbull.result.unwrap
+import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
+import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
+import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
 
 private sealed class CookingContentTab {
@@ -70,6 +76,7 @@ fun CookingScreen(
     ) { paddingValues ->
       CookingContent(
         recipe = recipe,
+        scale = uiState.scale,
         selectedUnits = uiState.selectedUnits,
         onUnitSelect = vm::selectUnit,
         modifier = Modifier
@@ -84,6 +91,7 @@ fun CookingScreen(
 @Composable
 fun CookingContent(
   recipe: Recipe,
+  scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier
@@ -143,6 +151,7 @@ fun CookingContent(
           when (tab) {
             CookingContentTab.Overview -> OverviewContent(
               recipe = recipe,
+              scale = scale,
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect
             )
@@ -161,6 +170,7 @@ fun CookingContent(
 @Composable
 fun OverviewContent(
   recipe: Recipe,
+  scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit
 ) {
@@ -182,28 +192,43 @@ fun OverviewContent(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier.fillMaxWidth()
     ) {
-      stickyHeader {
-        Text(
-          text = "Ingredients",
-          style = MaterialTheme.typography.titleLarge,
-          modifier = Modifier
-            .fillMaxWidth()
-        )
-      }
+      if (recipe.ingredients.isNotEmpty()) {
+        stickyHeader {
+          Text(
+            text = "Gather your ingredients",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier
+              .fillMaxWidth()
+          )
+        }
 
-      items(
-        items = recipe.ingredients,
-        key = { it.id }
-      ) { ingredient ->
-        //TODO: create reusable ingredient list item with unit selection
-        //IngredientListItem(ingredient, selectedUnits[ingredient], onUnitSelect)
-        Text("${ingredient.name} - ${ingredient.measurement.displayQuantity} ${ingredient.measurement.unit.name}")
+        items(
+          items = recipe.ingredients,
+          key = { it.id }
+        ) { ingredient ->
+          var checked by remember { mutableStateOf(false) }
+
+          IngredientListItem(
+            ingredient = ingredient,
+            scale = scale,
+            selectedUnit = selectedUnits[ingredient],
+            onUnitSelect = onUnitSelect,
+            checked = checked,
+            onCheckedChange = { checked = it },
+//            trailingIcon = {
+//              Checkbox(
+//                checked = checked,
+//                onCheckedChange = { checked = it }
+//              )
+//            }
+          )
+        }
       }
 
       if (recipe.equipment.isNotEmpty()) {
         stickyHeader {
           Text(
-            text = "Equipment",
+            text = "Gather your equipment",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
               .fillMaxWidth()
@@ -217,6 +242,32 @@ fun OverviewContent(
           Text(text = equipment.name)
         }
       }
+    }
+  }
+}
+
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+//////////////////// PREVIEWS ///////////////////////
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+
+@Preview
+@Composable
+fun OverviewContentPreview() {
+  val repository = RecipeRepository()
+  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+
+  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      OverviewContent(
+        recipe = recipe,
+        scale = 1f,
+        selectedUnits = selectedUnits,
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+      )
     }
   }
 }
