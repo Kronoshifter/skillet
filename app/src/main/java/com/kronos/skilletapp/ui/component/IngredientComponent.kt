@@ -1,7 +1,10 @@
 package com.kronos.skilletapp.ui.component
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,6 +15,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -47,34 +51,51 @@ fun IngredientRow(
       .fillMaxWidth()
       .height(IntrinsicSize.Min)
       .then(modifier),
-    showDetail = measurement.quantity > 0,
+    showDetail = measurement.quantity > 0 || checked,
     detail = {
-      val quantity = measurement.displayQuantity
-
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceAround,
-        modifier = Modifier.align(Alignment.Center)
-      ) {
-
-        Text(
-          text = quantity,
-          color = MaterialTheme.colorScheme.onPrimary,
-          fontSize = 18.sp,
-          modifier = Modifier
-            .applyUnless(measurement.unit is MeasurementUnit.None) {
-              offset(y = 4.dp)
-            }
-        )
-
-        if (measurement.unit !is MeasurementUnit.None) {
-          Text(
-            text = measurement.unit.abbreviation,
-            color = MaterialTheme.colorScheme.onPrimary,
-            fontSize = 12.sp
+      AnimatedContent(
+        targetState = checked,
+        label = "Detail Box",
+        transitionSpec = {
+          fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 120)) togetherWith
+          fadeOut(animationSpec = tween(durationMillis = 90))
+        }
+      ) { isChecked ->
+        if (isChecked) {
+          Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = "Checked",
+            tint = MaterialTheme.colorScheme.onPrimary,
           )
+        } else {
+          val quantity = measurement.displayQuantity
+
+          Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceAround,
+            modifier = Modifier.align(Alignment.Center)
+          ) {
+            Text(
+              text = quantity,
+              color = MaterialTheme.colorScheme.onPrimary,
+              fontSize = 18.sp,
+              modifier = Modifier
+                .applyUnless(measurement.unit is MeasurementUnit.None) {
+                  offset(y = 4.dp)
+                }
+            )
+
+            if (measurement.unit !is MeasurementUnit.None) {
+              Text(
+                text = measurement.unit.abbreviation,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontSize = 12.sp
+              )
+            }
+          }
         }
       }
+
     },
     decoration = selectedUnit != null,
     enabled = enabled,
@@ -84,14 +105,16 @@ fun IngredientRow(
     Column {
       Text(
         text = ingredient.name.lowercase(),
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.Bold,
+        textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
       )
 
       ingredient.comment?.let {
         Text(
           text = it.lowercase(),
           color = MaterialTheme.colorScheme.secondary,
-          fontSize = 14.sp
+          fontSize = 14.sp,
+          textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None
         )
       }
     }
@@ -211,6 +234,34 @@ private fun IngredientRowPreview() {
           IconButton(onClick = {}) {
             Icon(imageVector = Icons.Default.DragHandle, contentDescription = "Dragging")
           }
+        }
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun IngredientRowCheckablePreview() {
+  val ingredient = Ingredient(
+    name = "Pasta",
+    measurement = Measurement(8f, MeasurementUnit.Ounce),
+    raw = "8 oz Pasta",
+  )
+
+  var checked by remember { mutableStateOf(false) }
+
+  SkilletAppTheme {
+    Surface {
+      IngredientRow(
+        ingredient = ingredient,
+        scale = 1f,
+        checked = checked,
+        trailingIcon = {
+          Checkbox(
+            checked = checked,
+            onCheckedChange = { checked = it }
+          )
         }
       )
     }
