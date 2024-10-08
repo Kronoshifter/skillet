@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.github.michaelbull.result.map
 import com.github.michaelbull.result.mapOrElse
 import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
@@ -12,8 +11,11 @@ import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.MeasurementUnit
-import com.kronos.skilletapp.model.Recipe
 import kotlinx.coroutines.flow.*
+
+data class CookingUiState(
+  val selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap()
+)
 
 class CookingViewModel(
   private val recipeRepository: RecipeRepository,
@@ -22,9 +24,8 @@ class CookingViewModel(
   private val args = handle.toRoute<Route.Cooking>()
   private val recipeId = args.recipeId
 
-//  private val _selectedUnits = MutableStateFlow(args.selectedUnits)
-  private val _selectedUnits = MutableStateFlow<Map<Ingredient, MeasurementUnit?>>(emptyMap())
-  val selectedUnits = _selectedUnits.asStateFlow()
+  private val _uiState = MutableStateFlow(CookingUiState())
+  val uiState = _uiState.asStateFlow()
 
   private val _isLoading = MutableStateFlow(false)
   private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
@@ -35,7 +36,7 @@ class CookingViewModel(
     }
     .catch { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
 
-  val uiState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
+  val recipeState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
     when {
       loading -> UiState.Loading
       else -> when (recipeAsync) {
@@ -54,8 +55,8 @@ class CookingViewModel(
   )
 
   fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
-    _selectedUnits.update {
-      it + (ingredient to unit)
+    _uiState.update {
+      it.copy(selectedUnits = it.selectedUnits + (ingredient to unit))
     }
   }
 }

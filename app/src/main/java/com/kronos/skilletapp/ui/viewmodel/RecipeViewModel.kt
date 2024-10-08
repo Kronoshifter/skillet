@@ -28,9 +28,6 @@ class RecipeViewModel(
   private val args = handle.toRoute<Route.Recipe>()
   private val recipeId = args.recipeId
 
-  private val _selectedUnits = MutableStateFlow<Map<Ingredient, MeasurementUnit?>>(emptyMap())
-  val selectedUnits = _selectedUnits.asStateFlow()
-
   private val _uiState = MutableStateFlow(RecipeUiState())
   val uiState = _uiState.asStateFlow()
 

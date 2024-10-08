@@ -1,6 +1,9 @@
 package com.kronos.skilletapp.ui.screen.cooking
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -9,11 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
 import org.koin.androidx.compose.getViewModel
 
@@ -43,11 +48,11 @@ fun CookingScreen(
   onBack: () -> Unit,
   vm: CookingViewModel = getViewModel(),
 ) {
+  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
-  val selectedUnits by vm.selectedUnits.collectAsStateWithLifecycle()
 
   LoadingContent(
-    state = uiState,
+    state = recipeState,
     modifier = Modifier
       .fillMaxSize()
   ) { recipe ->
@@ -65,7 +70,8 @@ fun CookingScreen(
     ) { paddingValues ->
       CookingContent(
         recipe = recipe,
-        selectedUnits = selectedUnits,
+        selectedUnits = uiState.selectedUnits,
+        onUnitSelect = vm::selectUnit,
         modifier = Modifier
           .fillMaxSize()
           .padding(paddingValues),
@@ -74,11 +80,12 @@ fun CookingScreen(
   }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CookingContent(
   recipe: Recipe,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier
 ) {
   var tab: CookingContentTab by remember { mutableStateOf(CookingContentTab.Overview) }
@@ -134,10 +141,80 @@ fun CookingContent(
           contentAlignment = Alignment.Center
         ) {
           when (tab) {
-            CookingContentTab.Overview -> Text(text = "Overview")
+            CookingContentTab.Overview -> OverviewContent(
+              recipe = recipe,
+              selectedUnits = selectedUnits,
+              onUnitSelect = onUnitSelect
+            )
             is CookingContentTab.Instruction -> Text(text = "Step ${(tab as CookingContentTab.Instruction).index + 1}")
             CookingContentTab.Complete -> Text(text = "Complete")
           }
+        }
+      }
+    }
+  }
+
+
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun OverviewContent(
+  recipe: Recipe,
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit
+) {
+  Column(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(16.dp)
+  ) {
+    Text(
+      text = "Overview",
+      style = MaterialTheme.typography.headlineLarge,
+      modifier = Modifier
+        .fillMaxWidth()
+    )
+
+    LazyColumn(
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      stickyHeader {
+        Text(
+          text = "Ingredients",
+          style = MaterialTheme.typography.titleLarge,
+          modifier = Modifier
+            .fillMaxWidth()
+        )
+      }
+
+      items(
+        items = recipe.ingredients,
+        key = { it.id }
+      ) { ingredient ->
+        //TODO: create reusable ingredient list item with unit selection
+        //IngredientListItem(ingredient, selectedUnits[ingredient], onUnitSelect)
+        Text("${ingredient.name} - ${ingredient.measurement.displayQuantity} ${ingredient.measurement.unit.name}")
+      }
+
+      if (recipe.equipment.isNotEmpty()) {
+        stickyHeader {
+          Text(
+            text = "Equipment",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier
+              .fillMaxWidth()
+          )
+        }
+
+        items(
+          items = recipe.equipment,
+          key = { it.id }
+        ) { equipment ->
+          Text(text = equipment.name)
         }
       }
     }

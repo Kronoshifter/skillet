@@ -33,9 +33,11 @@ fun IngredientRow(
   scale: Float = 1f,
   selectedUnit: MeasurementUnit? = null,
   enabled: Boolean = true,
+  checked: Boolean = false,
   onClick: () -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
+  //TODO: make this do something when checked off
   val measurement = with(ingredient.measurement.scale(scale)) {
     selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
   }

@@ -326,7 +326,11 @@ private fun IngredientsList(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    items(ingredients) { ingredient ->
+    items(
+      items = ingredients,
+      key = { it.id }
+    ) { ingredient ->
+      //TODO: create reusable ingredient list item with unit selection
       val selectedUnit = selectedUnits[ingredient]
       val measurements = MeasurementUnit.values
         .filter { it.type == ingredient.measurement.unit.type }
