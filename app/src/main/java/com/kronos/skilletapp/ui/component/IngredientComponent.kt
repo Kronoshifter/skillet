@@ -41,7 +41,6 @@ fun IngredientRow(
   onClick: () -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-  //TODO: make this do something when checked off
   val measurement = with(ingredient.measurement.scale(scale)) {
     selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
   }
@@ -118,6 +117,55 @@ fun IngredientRow(
         )
       }
     }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun IngredientListItem(
+  ingredient: Ingredient,
+  scale: Float,
+  selectedUnit: MeasurementUnit?,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  modifier: Modifier = Modifier,
+  checked: Boolean = false,
+) {
+  val measurements = MeasurementUnit.values
+    .filter { it.type == ingredient.measurement.unit.type }
+    .map { ingredient.measurement.convert(it).scale(scale) }
+    .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+
+  var showBottomSheet by remember { mutableStateOf(false) }
+
+  IngredientRow(
+    ingredient = ingredient,
+    scale = scale,
+    selectedUnit = selectedUnit,
+    checked = checked,
+    enabled = measurements.isNotEmpty(),
+    onClick = { showBottomSheet = true },
+  )
+
+  val sheetState = rememberModalBottomSheetState()
+  val scope = rememberCoroutineScope()
+
+  if (showBottomSheet) {
+    UnitSelectionBottomSheet(
+      onDismissRequest = { showBottomSheet = false },
+      onUnitSelect = {
+        onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
+
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+          if (!sheetState.isVisible) {
+            showBottomSheet = false
+          }
+        }
+      },
+      ingredient = ingredient,
+      measurements = measurements,
+      selectedUnit = selectedUnit,
+      sheetState = sheetState
+    )
   }
 }
 

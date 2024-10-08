@@ -33,6 +33,7 @@ import com.kronos.skilletapp.R
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.component.UnitSelectionBottomSheet
@@ -330,44 +331,12 @@ private fun IngredientsList(
       items = ingredients,
       key = { it.id }
     ) { ingredient ->
-      //TODO: create reusable ingredient list item with unit selection
-      val selectedUnit = selectedUnits[ingredient]
-      val measurements = MeasurementUnit.values
-        .filter { it.type == ingredient.measurement.unit.type }
-        .map { ingredient.measurement.convert(it).scale(scale) }
-        .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
-
-      var showBottomSheet by remember { mutableStateOf(false) }
-
-      IngredientRow(
+      IngredientListItem(
         ingredient = ingredient,
         scale = scale,
-        selectedUnit = selectedUnit,
-        enabled = measurements.isNotEmpty(),
-        onClick = { showBottomSheet = true },
+        selectedUnit = selectedUnits[ingredient],
+        onUnitSelect = onUnitSelect,
       )
-
-      val sheetState = rememberModalBottomSheetState()
-      val scope = rememberCoroutineScope()
-
-      if (showBottomSheet) {
-        UnitSelectionBottomSheet(
-          onDismissRequest = { showBottomSheet = false },
-          onUnitSelect = {
-            onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
-
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-              if (!sheetState.isVisible) {
-                showBottomSheet = false
-              }
-            }
-          },
-          ingredient = ingredient,
-          measurements = measurements,
-          selectedUnit = selectedUnit,
-          sheetState = sheetState
-        )
-      }
     }
   }
 }
