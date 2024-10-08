@@ -2,9 +2,8 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.modifier.applyIf
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ItemRow(
   modifier: Modifier = Modifier,
@@ -32,13 +32,19 @@ fun ItemRow(
   decoration: Boolean = false,
   enabled: Boolean = true,
   onClick: () -> Unit = {},
+  onLongClick: () -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = modifier.clickable(enabled = enabled, onClick = onClick)
+    modifier = modifier
+      .combinedClickable(
+        enabled = enabled,
+        onClick = onClick,
+        onLongClick = onLongClick
+      )
   ) {
     val boxSize = 56.dp
 

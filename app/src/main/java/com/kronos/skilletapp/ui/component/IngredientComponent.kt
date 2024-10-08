@@ -2,6 +2,7 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -40,8 +42,8 @@ fun IngredientRow(
   selectedUnit: MeasurementUnit? = null,
   enabled: Boolean = true,
   checked: Boolean = false,
-  onCheckedChange: (Boolean) -> Unit = {},
   onClick: () -> Unit = {},
+  onLongClick: () -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurement = with(ingredient.measurement.scale(scale)) {
@@ -59,6 +61,7 @@ fun IngredientRow(
       .fillMaxWidth()
       .height(IntrinsicSize.Min)
       .background(bgColor, MaterialTheme.shapes.medium)
+      .clip(MaterialTheme.shapes.medium)
       .then(modifier),
     showDetail = measurement.quantity > 0 || checked,
     detail = {
@@ -109,6 +112,7 @@ fun IngredientRow(
     decoration = selectedUnit != null,
     enabled = enabled,
     onClick = onClick,
+    onLongClick = onLongClick,
     trailingIcon = trailingIcon
   ) {
     Column {
@@ -155,9 +159,12 @@ fun IngredientListItem(
     scale = scale,
     selectedUnit = selectedUnit,
     checked = checked,
-    onCheckedChange = onCheckedChange,
-    enabled = measurements.isNotEmpty(),
-    onClick = { showBottomSheet = true },
+    onClick = { onCheckedChange(!checked) },
+    onLongClick = {
+      if (measurements.isNotEmpty()) {
+        showBottomSheet = true
+      }
+    },
     trailingIcon = trailingIcon
   )
 
