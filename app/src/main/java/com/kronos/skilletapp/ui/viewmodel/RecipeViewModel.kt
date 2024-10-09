@@ -47,7 +47,9 @@ class RecipeViewModel(
         UiState.Loading -> UiState.Loading
         is UiState.Error -> recipeAsync
         is UiState.LoadedWithData -> {
-          _uiState.update { it.copy(servings = recipeAsync.data.servings) }
+          if (_uiState.value.scale == 1f) {
+            _uiState.update { it.copy(servings = recipeAsync.data.servings) }
+          }
           UiState.LoadedWithData(recipeAsync.data)
         }
         else -> UiState.Error(SkilletError("UiState.Loaded should not be used here"))

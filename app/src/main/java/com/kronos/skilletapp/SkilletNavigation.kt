@@ -27,7 +27,6 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   fun navigateToRecipe(recipeId: String) {
     navController.navigate(Route.Recipe(recipeId)) {
       popUpTo<Route.RecipeList>()
-      restoreState = true
     }
   }
 
