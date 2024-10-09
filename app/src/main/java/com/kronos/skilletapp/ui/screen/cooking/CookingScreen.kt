@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -144,18 +145,20 @@ fun CookingContent(
         state = pagerState,
         modifier = Modifier.fillMaxWidth()
       ) {
+        val page = CookingContentTab.fromIndex(it, recipe)
+
         Box(
           modifier = Modifier.fillMaxSize(),
           contentAlignment = Alignment.Center
         ) {
-          when (tab) {
+          when (page) {
             CookingContentTab.Overview -> OverviewContent(
               recipe = recipe,
               scale = scale,
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect
             )
-            is CookingContentTab.Instruction -> Text(text = "Step ${(tab as CookingContentTab.Instruction).index + 1}")
+            is CookingContentTab.Instruction -> Text(text = "Step ${page.index + 1}")
             CookingContentTab.Complete -> Text(text = "Complete")
           }
         }
@@ -206,7 +209,7 @@ fun OverviewContent(
           items = recipe.ingredients,
           key = { it.id }
         ) { ingredient ->
-          var checked by remember { mutableStateOf(false) }
+          var checked by rememberSaveable { mutableStateOf(false) }
 
           IngredientListItem(
             ingredient = ingredient,
