@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
@@ -30,9 +31,9 @@ import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.getViewModel
 
 private sealed class CookingContentTab {
-  data object Overview: CookingContentTab()
-  data class Instruction(val index: Int): CookingContentTab()
-  data object Complete: CookingContentTab()
+  data object Overview : CookingContentTab()
+  data class Instruction(val index: Int) : CookingContentTab()
+  data object Complete : CookingContentTab()
 
   fun index(recipe: Recipe): Int = when (this) {
     Overview -> 0
@@ -95,7 +96,7 @@ fun CookingContent(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   var tab: CookingContentTab by remember { mutableStateOf(CookingContentTab.Overview) }
   val pagerState = rememberPagerState { recipe.instructions.size + 2 }
@@ -115,7 +116,7 @@ fun CookingContent(
           text = { Text(text = "Overview") },
           modifier = Modifier
         )
-        
+
         recipe.instructions.forEachIndexed { index, _ ->
           Tab(
             selected = tab == CookingContentTab.Instruction(index),
@@ -124,7 +125,7 @@ fun CookingContent(
             modifier = Modifier
           )
         }
-        
+
         Tab(
           selected = tab == CookingContentTab.Complete,
           onClick = { tab = CookingContentTab.Complete },
@@ -132,7 +133,7 @@ fun CookingContent(
           modifier = Modifier
         )
       }
-      
+
       LaunchedEffect(tab) {
         pagerState.animateScrollToPage(tab.index(recipe))
       }
@@ -149,7 +150,7 @@ fun CookingContent(
 
         Box(
           modifier = Modifier.fillMaxSize(),
-          contentAlignment = Alignment.Center
+          contentAlignment = Alignment.TopCenter
         ) {
           when (page) {
             CookingContentTab.Overview -> OverviewContent(
@@ -158,7 +159,15 @@ fun CookingContent(
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect
             )
-            is CookingContentTab.Instruction -> Text(text = "Step ${page.index + 1}")
+
+            is CookingContentTab.Instruction -> InstructionContent(
+              index = page.index,
+              instruction = recipe.instructions[page.index],
+              scale = scale,
+              selectedUnits = selectedUnits,
+              onUnitSelect = onUnitSelect
+            )
+
             CookingContentTab.Complete -> Text(text = "Complete")
           }
         }
@@ -175,14 +184,15 @@ fun OverviewContent(
   recipe: Recipe,
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
-  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
-    modifier = Modifier
+    modifier = modifier
       .fillMaxWidth()
-      .padding(16.dp)
+      .padding(horizontal = 16.dp)
   ) {
     Text(
       text = "Overview",
@@ -218,12 +228,6 @@ fun OverviewContent(
             onUnitSelect = onUnitSelect,
             checked = checked,
             onCheckedChange = { checked = it },
-//            trailingIcon = {
-//              Checkbox(
-//                checked = checked,
-//                onCheckedChange = { checked = it }
-//              )
-//            }
           )
         }
       }
@@ -249,6 +253,76 @@ fun OverviewContent(
   }
 }
 
+@Composable
+fun InstructionContent(
+  index: Int,
+  instruction: Instruction,
+  scale: Float,
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  LazyColumn(
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp)
+  ) {
+    item {
+      Text(
+        text = "Step ${index + 1}",
+        style = MaterialTheme.typography.headlineLarge,
+        modifier = Modifier
+          .fillMaxWidth()
+      )
+
+      Text(
+        text = instruction.text,
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = Modifier
+          .fillMaxWidth()
+      )
+    }
+
+    //TODO: parse instruction for timers
+    //TODO: implement recipe timer
+
+    if (instruction.ingredients.isNotEmpty()) {
+      item { HorizontalDivider() }
+
+      item {
+        Text(
+          text = "Ingredients used in this step",
+          style = MaterialTheme.typography.titleMedium,
+          modifier = Modifier.fillMaxWidth()
+        )
+      }
+
+      items(
+        items = instruction.ingredients,
+        key = { it.id }
+      ) { ingredient ->
+        var checked by rememberSaveable { mutableStateOf(false) }
+
+        IngredientListItem(
+          ingredient = ingredient,
+          scale = scale,
+          selectedUnit = selectedUnits[ingredient],
+          onUnitSelect = onUnitSelect,
+          checked = checked,
+          onCheckedChange = { checked = it },
+        )
+
+        if (ingredient == instruction.ingredients.last()) {
+          Spacer(modifier = Modifier.height(16.dp))
+        }
+      }
+
+    }
+  }
+}
+
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 //////////////////// PREVIEWS ///////////////////////
@@ -267,6 +341,27 @@ fun OverviewContentPreview() {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       OverviewContent(
         recipe = recipe,
+        scale = 1f,
+        selectedUnits = selectedUnits,
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun InstructionContentPreview() {
+  val repository = RecipeRepository()
+  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+
+  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      InstructionContent(
+        index = 0,
+        instruction = recipe.instructions.first(),
         scale = 1f,
         selectedUnits = selectedUnits,
         onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
