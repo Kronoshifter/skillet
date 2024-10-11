@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -332,6 +333,32 @@ fun IngredientRowCheckablePreview() {
             checked = checked,
             onCheckedChange = { checked = it }
           )
+        }
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun IngredientListItemPreview() {
+  val ingredient = Ingredient(
+    name = "Pasta",
+    measurement = Measurement(8f, MeasurementUnit.Ounce),
+    raw = "8 oz Pasta",
+  )
+
+  SkilletAppTheme {
+    Surface {
+      IngredientListItem(
+        ingredient = ingredient,
+        scale = 1f,
+        selectedUnit = null,
+        onUnitSelect = { _, _ -> },
+        trailingIcon = {
+          IconButton(onClick = {}) {
+            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More Options")
+          }
         }
       )
     }

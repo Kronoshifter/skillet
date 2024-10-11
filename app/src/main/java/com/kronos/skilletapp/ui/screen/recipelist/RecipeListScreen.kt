@@ -171,7 +171,7 @@ fun RecipeCardPreview() {
 
   RecipeCard(
     recipe = recipe,
-    onClick = { /*TODO*/ },
+    onClick = {  },
     modifier = Modifier
       .aspectRatio(1f)
   )
@@ -186,8 +186,8 @@ fun RecipeListPreview() {
   Surface {
     RecipeListContent(
       recipes = recipes,
-      onRecipeClick = { /*TODO*/ },
-      onAddRecipe = { /*TODO*/ },
+      onRecipeClick = {  },
+      onAddRecipe = {  },
       modifier = Modifier
         .fillMaxSize()
     )

@@ -24,7 +24,6 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientListItem
-import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
 import kotlinx.coroutines.runBlocking
@@ -32,12 +31,12 @@ import org.koin.androidx.compose.getViewModel
 
 private sealed class CookingContentTab {
   data object Overview : CookingContentTab()
-  data class Instruction(val index: Int) : CookingContentTab()
+  data class Instruction(val instruction: Int) : CookingContentTab()
   data object Complete : CookingContentTab()
 
   fun index(recipe: Recipe): Int = when (this) {
     Overview -> 0
-    is Instruction -> index + 1
+    is Instruction -> instruction + 1
     Complete -> recipe.instructions.size + 1
   }
 
@@ -153,22 +152,24 @@ fun CookingContent(
           contentAlignment = Alignment.TopCenter
         ) {
           when (page) {
-            CookingContentTab.Overview -> OverviewContent(
+            CookingContentTab.Overview -> OverviewTabContent(
               recipe = recipe,
               scale = scale,
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect
             )
 
-            is CookingContentTab.Instruction -> InstructionContent(
-              index = page.index,
-              instruction = recipe.instructions[page.index],
+            is CookingContentTab.Instruction -> InstructionTabContent(
+              index = page.instruction,
+              instruction = recipe.instructions[page.instruction],
               scale = scale,
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect
             )
 
-            CookingContentTab.Complete -> Text(text = "Complete")
+            CookingContentTab.Complete -> CompleteTabContent(
+              recipe = recipe,
+            )
           }
         }
       }
@@ -180,7 +181,7 @@ fun CookingContent(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun OverviewContent(
+fun OverviewTabContent(
   recipe: Recipe,
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
@@ -254,7 +255,7 @@ fun OverviewContent(
 }
 
 @Composable
-fun InstructionContent(
+fun InstructionTabContent(
   index: Int,
   instruction: Instruction,
   scale: Float,
@@ -318,9 +319,17 @@ fun InstructionContent(
           Spacer(modifier = Modifier.height(16.dp))
         }
       }
-
     }
   }
+}
+
+@Composable
+fun CompleteTabContent(
+  recipe: Recipe
+) {
+  TODO("Not yet implemented")
+  // TODO: display cover or 'take a photo'
+  // TODO: Text(text = "Enjoy your ${recipe.name}!")
 }
 
 /////////////////////////////////////////////////////
@@ -339,7 +348,7 @@ fun OverviewContentPreview() {
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      OverviewContent(
+      OverviewTabContent(
         recipe = recipe,
         scale = 1f,
         selectedUnits = selectedUnits,
@@ -359,7 +368,7 @@ fun InstructionContentPreview() {
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionContent(
+      InstructionTabContent(
         index = 0,
         instruction = recipe.instructions.first(),
         scale = 1f,

@@ -10,7 +10,6 @@ sealed interface Route {
   @Serializable data class Recipe(val recipeId: String) : Route
   @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null) : Route
 
-  //TODO: create custom NavType for selectedUnits
   @Serializable data class Cooking(val recipeId: String, val scale: Float) : Route
 }
 
