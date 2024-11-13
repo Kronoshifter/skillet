@@ -32,3 +32,15 @@ object IngredientParser {
     ).recipe()
   )
 }
+
+//TODO: investigate using Chaquopy to use ingredient-parser-nlp
+
+//>>> ingredient = {
+//  ... "name": parsed.name.text,
+//  ... "raw": parsed.sentence,
+//  ... "comment": parsed.comment,
+//  ... "measurement": {
+//    ... "quantity": parsed.amount[0].quantity,
+//    ... "unit": str(parsed.amount[0].unit),
+//    ... }
+//  ... }
