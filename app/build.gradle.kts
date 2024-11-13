@@ -3,6 +3,7 @@ plugins {
   id("org.jetbrains.kotlin.android")
   kotlin("plugin.serialization") version "2.0.0"
   id("kotlin-parcelize")
+  id("com.chaquo.python")
 }
 
 android {
@@ -19,6 +20,10 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables {
       useSupportLibrary = true
+    }
+
+    ndk {
+      abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
     }
   }
 
@@ -50,6 +55,14 @@ android {
   testOptions {
     unitTests.all {
       it.useJUnitPlatform()
+    }
+  }
+}
+
+chaquopy {
+  defaultConfig {
+    pip {
+      install("ingredient-parser-nlp")
     }
   }
 }
