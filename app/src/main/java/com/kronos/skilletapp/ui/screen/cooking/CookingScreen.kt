@@ -272,13 +272,6 @@ fun InstructionTabContent(
   ) {
     item {
       Text(
-        text = "Step ${index + 1}",
-        style = MaterialTheme.typography.headlineLarge,
-        modifier = Modifier
-          .fillMaxWidth()
-      )
-
-      Text(
         text = instruction.text,
         style = MaterialTheme.typography.headlineSmall,
         modifier = Modifier
