@@ -2,6 +2,7 @@ package com.kronos.skilletapp
 
 import android.app.Application
 import com.kronos.skilletapp.data.RecipeRepository
+import com.kronos.skilletapp.parser.python.IngredientSlicer
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
@@ -28,7 +29,7 @@ class SkilletApp : Application() {
 
 val appModule = module {
   singleOf(::RecipeRepository)
-//  single { IngredientAiParser(androidContext()) }
+  single { IngredientSlicer(androidContext()) }
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)

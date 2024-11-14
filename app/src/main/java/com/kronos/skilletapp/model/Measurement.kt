@@ -414,6 +414,10 @@ sealed class MeasurementUnit(
       Pound to either,
     )
 
-    fun fromName(name: String) = values.firstOrNull { it.name == name } ?: if (name == "none") None else Custom(name)
+    fun fromName(unit: String?) = unit?.let {
+      values.firstOrNull {
+        it.name == unit || it.abbreviation == unit || it.aliases.contains(unit)
+      } ?: Custom(unit)
+    } ?: None
   }
 }

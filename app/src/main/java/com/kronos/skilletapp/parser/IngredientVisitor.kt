@@ -13,11 +13,7 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
   override fun visitIngredient(ctx: IngredientGrammarParser.IngredientContext): Ingredient {
     val name = ctx.name()?.text ?: ""
 
-    val unit = ctx.measurement()?.WORD()?.text?.let { unit ->
-      MeasurementUnit.values.firstOrNull {
-        it.name == unit || it.abbreviation == unit || it.aliases.contains(unit)
-      } ?: MeasurementUnit.Custom(unit)
-    } ?: MeasurementUnit.None
+    val unit = MeasurementUnit.fromName(ctx.measurement()?.WORD()?.text)
     val quantity = with(ctx.measurement()?.quantity()) {
       this?.decimal()?.text?.toFloatOrNull() ?: this?.fraction()?.let {
         when (it.NUMBER().size) {
