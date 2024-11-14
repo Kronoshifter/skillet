@@ -327,9 +327,8 @@ fun InstructionTabContent(
 fun CompleteTabContent(
   recipe: Recipe
 ) {
-  TODO("Not yet implemented")
   // TODO: display cover or 'take a photo'
-  // TODO: Text(text = "Enjoy your ${recipe.name}!")
+   Text(text = "Enjoy your ${recipe.name}!")
 }
 
 /////////////////////////////////////////////////////
@@ -374,6 +373,21 @@ fun InstructionContentPreview() {
         scale = 1f,
         selectedUnits = selectedUnits,
         onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun CompleteContentPreview() {
+  val repository = RecipeRepository()
+  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+
+  SkilletAppTheme {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      CompleteTabContent(
+        recipe = recipe
       )
     }
   }
