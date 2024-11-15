@@ -321,7 +321,18 @@ fun CompleteTabContent(
   recipe: Recipe
 ) {
   // TODO: display cover or 'take a photo'
-   Text(text = "Enjoy your ${recipe.name}!")
+  Box(
+    modifier = Modifier
+      .fillMaxWidth()
+      .fillMaxHeight()
+      .padding(horizontal = 16.dp)
+  ) {
+    Text(
+      text = "Enjoy your ${recipe.name}!",
+      style = MaterialTheme.typography.headlineSmall,
+      modifier = Modifier.align(Alignment.Center)
+    )
+  }
 }
 
 /////////////////////////////////////////////////////
