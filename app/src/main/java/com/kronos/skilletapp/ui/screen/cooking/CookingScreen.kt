@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,6 +81,7 @@ fun CookingScreen(
         scale = uiState.scale,
         selectedUnits = uiState.selectedUnits,
         onUnitSelect = vm::selectUnit,
+        onBack = onBack,
         modifier = Modifier
           .fillMaxSize()
           .padding(paddingValues),
@@ -95,6 +97,7 @@ fun CookingContent(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  onBack: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var tab: CookingContentTab by remember { mutableStateOf(CookingContentTab.Overview) }
@@ -169,6 +172,11 @@ fun CookingContent(
 
             CookingContentTab.Complete -> CompleteTabContent(
               recipe = recipe,
+              onBack = onBack,
+              modifier = Modifier
+              .fillMaxWidth()
+              .fillMaxHeight()
+              .padding(horizontal = 16.dp)
             )
           }
         }
@@ -318,20 +326,34 @@ fun InstructionTabContent(
 
 @Composable
 fun CompleteTabContent(
-  recipe: Recipe
+  recipe: Recipe,
+  onBack: () -> Unit,
+  modifier: Modifier = Modifier
 ) {
   // TODO: display cover or 'take a photo'
+
   Box(
-    modifier = Modifier
-      .fillMaxWidth()
-      .fillMaxHeight()
-      .padding(horizontal = 16.dp)
+    modifier = modifier
   ) {
-    Text(
-      text = "Enjoy your ${recipe.name}!",
-      style = MaterialTheme.typography.headlineSmall,
-      modifier = Modifier.align(Alignment.Center)
-    )
+    Column(
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier.fillMaxWidth().align(Alignment.Center)
+    ) {
+      Text(
+        text = "Enjoy your ${recipe.name}!",
+        style = MaterialTheme.typography.headlineSmall,
+        textAlign = TextAlign.Center,
+      )
+
+      Button(
+        onClick = onBack
+      ) {
+        Text(text = "All Done!")
+      }
+    }
+
+    // TODO: possibly allow for adding notes here
   }
 }
 
@@ -391,7 +413,8 @@ fun CompleteContentPreview() {
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       CompleteTabContent(
-        recipe = recipe
+        recipe = recipe,
+        onBack = {}
       )
     }
   }
