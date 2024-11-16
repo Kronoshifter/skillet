@@ -41,9 +41,10 @@ fun RecipeListScreen(
       TopAppBar(
         title = { Text(text = "Recipes") },
         actions = {
-          IconButton(onClick = { /*TODO*/ }) {
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
-          }
+          //TODO: Implement search
+//          IconButton(onClick = { /*TODO*/ }) {
+//            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+//          }
 
           IconButton(onClick = { /*TODO*/ }) {
             Icon(Icons.Default.MoreVert, contentDescription = "More Options")
@@ -125,7 +126,7 @@ fun RecipeCard(
   ) {
     Box(modifier = Modifier.fillMaxSize()) {
       Text(
-        text = recipe.name.first().toString(),
+        text = recipe.name.first().uppercase(),
         style = MaterialTheme.typography.titleLarge,
         fontSize = 192.sp,
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
