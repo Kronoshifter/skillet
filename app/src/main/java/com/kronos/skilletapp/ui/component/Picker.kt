@@ -77,8 +77,8 @@ fun <T> InfiniteScrollingPicker(
       }
     }
 
-    divider(offset = itemHeight * (center))
-    divider(offset = itemHeight * (center + 1))
+    divider(itemHeight * (center))
+    divider(itemHeight * (center + 1))
   }
 
   LaunchedEffect(listState) {
