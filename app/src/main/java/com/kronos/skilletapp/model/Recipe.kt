@@ -1,5 +1,8 @@
 package com.kronos.skilletapp.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Recipe(
   val id: String,
   val name: String,
@@ -17,6 +20,7 @@ data class Recipe(
 //  val allInstructions by lazy { instructions.flatMap { it.instructions } }
 }
 
+@Serializable
 data class RecipeTime(
   val preparation: Int = 0,
   val cooking: Int = 0,
@@ -26,6 +30,7 @@ data class RecipeTime(
     get() = preparation + cooking
 }
 
+@Serializable
 data class RecipeSource(
   val name: String = "",
   val source: String = ""
