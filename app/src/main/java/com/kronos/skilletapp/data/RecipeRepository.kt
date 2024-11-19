@@ -3,6 +3,7 @@ package com.kronos.skilletapp.data
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.toResultOr
+import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.model.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.flow
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
-class RecipeRepository {
+class RecipeRepository(private val database: RecipeDao) {
   private val recipeSource = mutableMapOf<String, Recipe>()
 
   suspend fun fetchRecipe(id: String): Result<Recipe, SkilletError> {
@@ -22,6 +23,10 @@ class RecipeRepository {
     emit(fetchRecipe(id))
   }
 
+  fun fetchRecipeFromDatabase(id: String) = database.getById(id)
+
+  fun fetchRecipeStreamFromDatabase(id: String) = database.getByIdFlow(id)
+
   suspend fun fetchRecipes(): List<Recipe> {
     delay(1.seconds)
     return recipeSource.values.toList()
@@ -29,8 +34,14 @@ class RecipeRepository {
 
   fun fetchRecipesStream(): Flow<List<Recipe>> = flow { emit(fetchRecipes()) }
 
+  fun fetchRecipesFromDatabase() = database.getAll()
+
   fun upsert(recipe: Recipe) {
     recipeSource[recipe.id] = recipe
+  }
+
+  suspend fun upsertToDatabase(recipe: Recipe) {
+    database.upsert(recipe)
   }
 
   suspend fun createRecipe(
@@ -60,6 +71,7 @@ class RecipeRepository {
     )
 
     upsert(recipe)
+    upsertToDatabase(recipe)
 
     return recipe.id
   }
@@ -78,7 +90,7 @@ class RecipeRepository {
     instructions: List<Instruction>,
     equipment: List<Equipment>,
   ) {
-    val recipe = fetchRecipe(id).expect { "No recipe with id: $id" }.copy(
+    val recipe = fetchRecipeFromDatabase(id).copy(
       name = name,
       description = description,
       notes = notes,
@@ -91,6 +103,7 @@ class RecipeRepository {
     )
 
     upsert(recipe)
+    upsertToDatabase(recipe)
   }
 
   suspend fun refreshRecipes() {
@@ -100,10 +113,12 @@ class RecipeRepository {
   }
 
   init {
-    initFakeRecipes()
+    runBlocking {
+      initFakeRecipes()
+    }
   }
 
-  private fun initFakeRecipes() {
+  private suspend fun initFakeRecipes() {
     val ingredients = listOf(
       Ingredient("Mini Shells Pasta", measurement = Measurement(8f, MeasurementUnit.Ounce), "8 oz Mini Shells Pasta"),
       Ingredient("Olive Oil", measurement = Measurement(1f, MeasurementUnit.Tablespoon), "1 tbsp Olive Oil"),
@@ -150,7 +165,7 @@ class RecipeRepository {
     upsert(recipe)
 
     repeat(10) {
-      upsert(
+      upsertToDatabase(
         Recipe(
           id = "recipe-$it",
           name = "Recipe $it",

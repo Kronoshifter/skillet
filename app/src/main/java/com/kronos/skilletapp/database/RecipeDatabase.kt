@@ -21,7 +21,10 @@ interface RecipeDao {
   fun getAll(): Flow<List<Recipe>>
 
   @Query("SELECT * FROM recipe WHERE id = :id")
-  fun getById(id: String): Flow<Recipe>
+  fun getById(id: String): Recipe
+
+  @Query("SELECT * FROM recipe WHERE id = :id")
+  fun getByIdFlow(id: String): Flow<Recipe>
 
   @Query("SELECT * FROM recipe WHERE name LIKE :name LIMIT 1")
   fun getByName(name: String): Recipe

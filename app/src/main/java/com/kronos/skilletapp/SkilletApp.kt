@@ -29,7 +29,6 @@ class SkilletApp : Application() {
 }
 
 val appModule = module {
-  singleOf(::RecipeRepository)
 //  single { IngredientAiParser(androidContext()) }
 
   single<RecipeDatabase>(createdAtStart = true) {
@@ -39,6 +38,10 @@ val appModule = module {
       name = "recipes.db"
     ).build()
   }
+
+  single { (get<RecipeDatabase>().recipeDao()) }
+
+  singleOf(::RecipeRepository)
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)
