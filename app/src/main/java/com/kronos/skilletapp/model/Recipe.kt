@@ -4,9 +4,12 @@ import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.kronos.skilletapp.database.RecipeConverters
 import kotlinx.serialization.Serializable
 
 @Entity(tableName = "recipe")
+@TypeConverters(RecipeConverters::class)
 @Serializable
 data class Recipe(
   @PrimaryKey val id: String,
