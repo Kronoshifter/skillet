@@ -30,8 +30,8 @@ data class Recipe(
 
 @Serializable
 data class RecipeTime(
-  val preparation: Int = 0,
-  val cooking: Int = 0,
+  @ColumnInfo(name = "prep_time") val preparation: Int = 0,
+  @ColumnInfo(name = "cook_time") val cooking: Int = 0,
 ) {
 
   val total: Int
@@ -40,6 +40,6 @@ data class RecipeTime(
 
 @Serializable
 data class RecipeSource(
-  val name: String = "",
-  val source: String = ""
+  @ColumnInfo(name = "source_name") val name: String = "",
+  @ColumnInfo(name = "source_url") val source: String = ""
 )
