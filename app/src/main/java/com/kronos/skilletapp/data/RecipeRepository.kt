@@ -163,22 +163,11 @@ class RecipeRepository(private val database: RecipeDao) {
     )
 
     upsert(recipe)
+    upsertToDatabase(recipe)
 
     repeat(10) {
-      upsertToDatabase(
-        Recipe(
-          id = "recipe-$it",
-          name = "Recipe $it",
-          ingredients = ingredients,
-          instructions = instructions,
-          equipment = emptyList(),
-          servings = 4,
-          description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          time = RecipeTime(15, 15),
-          source = RecipeSource("My Brain", "My Brain"),
-          notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-        )
-      )
+      upsert(recipe.copy(id = "recipe-$it", name = "Recipe $it"))
+      upsertToDatabase(recipe.copy(id = "recipe-$it", name = "Recipe $it"))
     }
   }
 }

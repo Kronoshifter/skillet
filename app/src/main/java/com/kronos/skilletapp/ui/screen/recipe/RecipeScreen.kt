@@ -33,6 +33,7 @@ import com.kronos.skilletapp.R
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.PreviewKoinStart
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
@@ -43,6 +44,7 @@ import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 import kotlin.collections.set
 import kotlin.math.roundToInt
@@ -437,7 +439,9 @@ private fun InstructionComponent(
 @Preview
 @Composable
 private fun RecipeContentPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
   val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
@@ -483,7 +487,9 @@ private fun IngredientsListEmptyPreview() {
 @Preview
 @Composable
 private fun IngredientListPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
 
 //  val ingredients = listOf(
 //    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
@@ -543,7 +549,9 @@ private fun InstructionsListEmptyPreview() {
 @Preview
 @Composable
 private fun InstructionsListPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
   val instructions = runBlocking { repository.fetchRecipe("test").unwrap().instructions }
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
@@ -562,7 +570,9 @@ private fun InstructionsListPreview() {
 @Preview
 @Composable
 private fun InstructionComponentPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
   val instructions = runBlocking { repository.fetchRecipe("test").unwrap().instructions }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }

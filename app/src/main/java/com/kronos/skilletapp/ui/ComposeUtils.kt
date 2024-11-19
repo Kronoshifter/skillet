@@ -15,8 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.kronos.skilletapp.appModule
+import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
+import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.compose.get
+import org.koin.core.context.GlobalContext.startKoin
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -100,3 +106,16 @@ fun DisableRipple(
   value = LocalRippleConfiguration provides null,
   content = content
 )
+
+@Composable
+fun PreviewKoinStart() {
+  val context = LocalContext.current
+
+  startKoin {
+    androidContext(context)
+
+    modules(
+      appModule
+    )
+  }
+}

@@ -24,10 +24,12 @@ import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.PreviewKoinStart
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
 import kotlinx.coroutines.runBlocking
+import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 
 private sealed class CookingContentTab {
@@ -366,7 +368,9 @@ fun CompleteTabContent(
 @Preview
 @Composable
 fun OverviewContentPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
   val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
@@ -386,7 +390,9 @@ fun OverviewContentPreview() {
 @Preview
 @Composable
 fun InstructionContentPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
   val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
@@ -407,7 +413,9 @@ fun InstructionContentPreview() {
 @Preview
 @Composable
 fun CompleteContentPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
   val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
 
   SkilletAppTheme {
