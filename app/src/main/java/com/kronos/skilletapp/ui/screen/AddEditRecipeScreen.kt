@@ -1491,7 +1491,7 @@ fun AddEditRecipeContentPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  val recipe = runBlocking { repository.fetchRecipeFromDatabase("test") }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -1538,7 +1538,7 @@ fun IngredientsTabPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  val recipe = runBlocking { repository.fetchRecipeFromDatabase("test") }
 
   val ingredients = recipe.ingredients.toMutableStateList()
 
@@ -1602,7 +1602,7 @@ fun InstructionsTabPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  val recipe = runBlocking { repository.fetchRecipeFromDatabase("test") }
 
   var instructions by remember { mutableStateOf(recipe.instructions) }
   val ingredients = recipe.ingredients

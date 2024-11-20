@@ -1,7 +1,6 @@
 package com.kronos.skilletapp.data
 
 import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.toResultOr
 import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.model.*
@@ -23,9 +22,9 @@ class RecipeRepository(private val database: RecipeDao) {
     emit(fetchRecipe(id))
   }
 
-  fun fetchRecipeFromDatabase(id: String) = database.getById(id)
+  suspend fun fetchRecipeFromDatabase(id: String) = database.getById(id)
 
-  fun fetchRecipeStreamFromDatabase(id: String) = database.getByIdFlow(id)
+  fun observeRecipe(id: String) = database.observeById(id)
 
   suspend fun fetchRecipes(): List<Recipe> {
     delay(1.seconds)

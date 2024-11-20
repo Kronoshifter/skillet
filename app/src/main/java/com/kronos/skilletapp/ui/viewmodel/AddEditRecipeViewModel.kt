@@ -318,7 +318,7 @@ class AddEditRecipeViewModel(
   private fun loadRecipe(id: String) {
     _uiState.update { UiState.Loading }
     viewModelScope.launch {
-      recipeRepository.fetchRecipe(id).onSuccess { recipe ->
+      recipeRepository.fetchRecipeFromDatabase(id).let { recipe ->
         _recipeState.update {
           RecipeState(
             name = recipe.name,

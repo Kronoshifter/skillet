@@ -442,7 +442,7 @@ private fun RecipeContentPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  val recipe = runBlocking { repository.fetchRecipeFromDatabase("test") }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
@@ -505,7 +505,7 @@ private fun IngredientListPreview() {
 //    Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
 //  )
 
-  val ingredients = runBlocking { repository.fetchRecipe("test").unwrap().ingredients }
+  val ingredients = runBlocking { repository.fetchRecipeFromDatabase("test").ingredients }
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -552,7 +552,7 @@ private fun InstructionsListPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val instructions = runBlocking { repository.fetchRecipe("test").unwrap().instructions }
+  val instructions = runBlocking { repository.fetchRecipeFromDatabase("test").instructions }
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
   SkilletAppTheme {
@@ -573,7 +573,7 @@ private fun InstructionComponentPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val instructions = runBlocking { repository.fetchRecipe("test").unwrap().instructions }
+  val instructions = runBlocking { repository.fetchRecipeFromDatabase("test").instructions }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
