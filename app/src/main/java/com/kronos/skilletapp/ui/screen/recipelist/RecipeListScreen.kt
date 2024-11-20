@@ -173,7 +173,7 @@ fun RecipeCard(
 @Preview
 @Composable
 fun RecipeCardPreview() {
-//  PreviewKoinStart()
+  PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
   val recipe = runBlocking { repository.fetchRecipeFromDatabase("test") }

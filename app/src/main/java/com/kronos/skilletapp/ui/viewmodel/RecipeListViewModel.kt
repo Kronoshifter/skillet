@@ -26,7 +26,8 @@ class RecipeListViewModel(
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
   private val _isLoading = MutableStateFlow(false)
-  private val _recipesAsync = recipeRepository.fetchRecipesStream()
+  private val _recipesAsync = recipeRepository.fetchRecipesFromDatabase() //TODO: fetch from database
+    .distinctUntilChanged()
     .map { UiState.LoadedWithData(it) }
     .catch<UiState<List<Recipe>>> { emit(UiState.Error(SkilletError("Error loading recipes"))) }
 

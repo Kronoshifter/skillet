@@ -3,6 +3,7 @@ package com.kronos.skilletapp
 import android.app.Application
 import androidx.room.Room
 import com.kronos.skilletapp.data.RecipeRepository
+import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.database.RecipeDatabase
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
@@ -39,7 +40,7 @@ val appModule = module {
     ).build()
   }
 
-  single { (get<RecipeDatabase>().recipeDao()) }
+  single<RecipeDao> { (get<RecipeDatabase>().recipeDao()) }
 
   singleOf(::RecipeRepository)
 
