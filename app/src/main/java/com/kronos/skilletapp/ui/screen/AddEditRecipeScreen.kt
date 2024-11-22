@@ -27,7 +27,6 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.TextRange
@@ -44,12 +43,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
-import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.PreviewKoinStart
 import com.kronos.skilletapp.ui.component.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
@@ -58,6 +57,7 @@ import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.pluralize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
@@ -1483,8 +1483,10 @@ private fun TextFieldValue.isNotBlank() = text.isNotBlank()
 @Preview
 @Composable
 fun AddEditRecipeContentPreview() {
-  val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -1528,8 +1530,10 @@ fun AddEditRecipeContentPreview() {
 @Preview
 @Composable
 fun IngredientsTabPreview() {
-  val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   val ingredients = recipe.ingredients.toMutableStateList()
 
@@ -1590,8 +1594,10 @@ fun IngredientEditPreview() {
 @Preview
 @Composable
 fun InstructionsTabPreview() {
-  val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   var instructions by remember { mutableStateOf(recipe.instructions) }
   val ingredients = recipe.ingredients

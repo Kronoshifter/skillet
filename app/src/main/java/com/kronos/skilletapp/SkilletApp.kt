@@ -1,7 +1,10 @@
 package com.kronos.skilletapp
 
 import android.app.Application
+import androidx.room.Room
 import com.kronos.skilletapp.data.RecipeRepository
+import com.kronos.skilletapp.database.RecipeDao
+import com.kronos.skilletapp.database.RecipeDatabase
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
@@ -27,8 +30,19 @@ class SkilletApp : Application() {
 }
 
 val appModule = module {
-  singleOf(::RecipeRepository)
 //  single { IngredientAiParser(androidContext()) }
+
+  single<RecipeDatabase>(createdAtStart = true) {
+    Room.databaseBuilder(
+      context = androidContext(),
+      klass = RecipeDatabase::class.java,
+      name = "recipes.db"
+    ).build()
+  }
+
+  single<RecipeDao> { (get<RecipeDatabase>().recipeDao()) }
+
+  singleOf(::RecipeRepository)
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)

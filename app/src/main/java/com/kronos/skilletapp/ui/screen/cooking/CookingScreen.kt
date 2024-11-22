@@ -17,17 +17,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.PreviewKoinStart
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
 import kotlinx.coroutines.runBlocking
+import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 
 private sealed class CookingContentTab {
@@ -366,8 +367,10 @@ fun CompleteTabContent(
 @Preview
 @Composable
 fun OverviewContentPreview() {
-  val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
@@ -386,8 +389,10 @@ fun OverviewContentPreview() {
 @Preview
 @Composable
 fun InstructionContentPreview() {
-  val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
@@ -407,8 +412,10 @@ fun InstructionContentPreview() {
 @Preview
 @Composable
 fun CompleteContentPreview() {
-  val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

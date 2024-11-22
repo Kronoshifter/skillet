@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,13 +19,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.PreviewKoinStart
 import com.kronos.skilletapp.ui.RefreshingContent
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import kotlinx.coroutines.runBlocking
+import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,9 +41,10 @@ fun RecipeListScreen(
       TopAppBar(
         title = { Text(text = "Recipes") },
         actions = {
-          IconButton(onClick = { /*TODO*/ }) {
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
-          }
+          //TODO: Implement search
+//          IconButton(onClick = { /*TODO*/ }) {
+//            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+//          }
 
           IconButton(onClick = { /*TODO*/ }) {
             Icon(Icons.Default.MoreVert, contentDescription = "More Options")
@@ -60,7 +61,6 @@ fun RecipeListScreen(
   ) { paddingValues ->
 
     val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val refreshing by vm.isRefreshing.collectAsStateWithLifecycle()
 
     LoadingContent(
       state = uiState,
@@ -68,16 +68,12 @@ fun RecipeListScreen(
         .fillMaxSize()
         .padding(paddingValues)
     ) { data ->
-      RefreshingContent(refreshing = refreshing, onRefresh = { vm.refresh() }) {
-        RecipeListContent(
-          recipes = data.recipes,
-          onRecipeClick = onRecipeClick,
-          onAddRecipe = onAddRecipe,
-          modifier = Modifier
-//            .padding(paddingValues)
-            .fillMaxSize()
-        )
-      }
+      RecipeListContent(
+        recipes = data.recipes,
+        onRecipeClick = onRecipeClick,
+        modifier = Modifier
+          .fillMaxSize()
+      )
     }
   }
 }
@@ -86,7 +82,6 @@ fun RecipeListScreen(
 private fun RecipeListContent(
   recipes: List<Recipe>,
   onRecipeClick: (id: String) -> Unit,
-  onAddRecipe: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   if (recipes.isEmpty()) {
@@ -125,7 +120,7 @@ fun RecipeCard(
   ) {
     Box(modifier = Modifier.fillMaxSize()) {
       Text(
-        text = recipe.name.first().toString(),
+        text = recipe.name.first().uppercase(),
         style = MaterialTheme.typography.titleLarge,
         fontSize = 192.sp,
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
@@ -166,12 +161,14 @@ fun RecipeCard(
 @Preview
 @Composable
 fun RecipeCardPreview() {
-  val repository = RecipeRepository()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   RecipeCard(
     recipe = recipe,
-    onClick = {  },
+    onClick = { },
     modifier = Modifier
       .aspectRatio(1f)
   )
@@ -180,14 +177,15 @@ fun RecipeCardPreview() {
 @Preview
 @Composable
 fun RecipeListPreview() {
-  val repository = RecipeRepository()
+  PreviewKoinStart()
+
+  val repository = get<RecipeRepository>()
   val recipes = runBlocking { repository.fetchRecipes() }
 
   Surface {
     RecipeListContent(
       recipes = recipes,
-      onRecipeClick = {  },
-      onAddRecipe = {  },
+      onRecipeClick = { },
       modifier = Modifier
         .fillMaxSize()
     )

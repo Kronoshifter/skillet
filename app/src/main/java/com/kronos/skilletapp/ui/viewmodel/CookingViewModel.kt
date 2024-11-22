@@ -11,6 +11,7 @@ import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.Recipe
 import kotlinx.coroutines.flow.*
 
 data class CookingUiState(
@@ -29,13 +30,9 @@ class CookingViewModel(
   val uiState = _uiState.asStateFlow()
 
   private val _isLoading = MutableStateFlow(false)
-  private val _recipeAsync = recipeRepository.fetchRecipeStream(recipeId)
-    .map { result ->
-      result.mapOrElse({ UiState.Error(it) }) {
-        UiState.LoadedWithData(it)
-      }
-    }
-    .catch { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
+  private val _recipeAsync = recipeRepository.observeRecipe(recipeId)
+    .map { UiState.LoadedWithData(it) }
+    .catch<UiState<Recipe>> { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
 
   val recipeState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
     when {
@@ -46,6 +43,7 @@ class CookingViewModel(
         is UiState.LoadedWithData -> UiState.LoadedWithData(
           recipeAsync.data
         )
+
         else -> UiState.Error(SkilletError("UiState.Loaded should not be used here"))
       }
     }

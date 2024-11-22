@@ -1,7 +1,9 @@
 package com.kronos.skilletapp.model
 
+import kotlinx.serialization.Serializable
 import java.util.*
 
+@Serializable
 data class Instruction(
   val text: String,
   val image: String? = null,
