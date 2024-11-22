@@ -186,7 +186,6 @@ fun RecipeListPreview() {
     RecipeListContent(
       recipes = recipes,
       onRecipeClick = { },
-      onAddRecipe = { },
       modifier = Modifier
         .fillMaxSize()
     )
