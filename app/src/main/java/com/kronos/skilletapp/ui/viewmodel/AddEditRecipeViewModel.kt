@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.github.michaelbull.result.onSuccess
 import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
@@ -318,7 +317,7 @@ class AddEditRecipeViewModel(
   private fun loadRecipe(id: String) {
     _uiState.update { UiState.Loading }
     viewModelScope.launch {
-      recipeRepository.fetchRecipeFromDatabase(id).let { recipe ->
+      recipeRepository.fetchRecipe(id).let { recipe ->
         _recipeState.update {
           RecipeState(
             name = recipe.name,

@@ -17,7 +17,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
@@ -371,7 +370,7 @@ fun OverviewContentPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
@@ -393,7 +392,7 @@ fun InstructionContentPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
@@ -416,7 +415,7 @@ fun CompleteContentPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }.unwrap()
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

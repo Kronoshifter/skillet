@@ -18,7 +18,10 @@ abstract class RecipeDatabase : RoomDatabase() {
 interface RecipeDao {
 
   @Query("SELECT * FROM recipe")
-  fun getAll(): Flow<List<Recipe>>
+  suspend fun getAll(): List<Recipe>
+
+  @Query("SELECT * FROM recipe")
+  fun observeAll(): Flow<List<Recipe>>
 
   @Query("SELECT * FROM recipe WHERE id = :id")
   suspend fun getById(id: String): Recipe

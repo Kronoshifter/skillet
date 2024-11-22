@@ -8,21 +8,17 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.michaelbull.result.unwrap
-import com.kronos.skilletapp.appModule
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
@@ -30,10 +26,8 @@ import com.kronos.skilletapp.ui.PreviewKoinStart
 import com.kronos.skilletapp.ui.RefreshingContent
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import kotlinx.coroutines.runBlocking
-import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
-import org.koin.core.context.GlobalContext.startKoin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,7 +170,7 @@ fun RecipeCardPreview() {
   PreviewKoinStart()
 
   val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipeFromDatabase("test") }
+  val recipe = runBlocking { repository.fetchRecipe("test") }
 
   RecipeCard(
     recipe = recipe,
