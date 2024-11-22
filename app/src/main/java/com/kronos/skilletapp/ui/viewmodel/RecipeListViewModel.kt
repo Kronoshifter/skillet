@@ -20,9 +20,6 @@ class RecipeListViewModel(
   private val recipeRepository: RecipeRepository,
   private val handle: SavedStateHandle
 ) : ViewModel() {
-  private val _isRefreshing = MutableStateFlow(false)
-  val isRefreshing = _isRefreshing.asStateFlow()
-
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
   private val _isLoading = MutableStateFlow(false)
@@ -42,17 +39,12 @@ class RecipeListViewModel(
             recipes = recipesAsync.data,
           )
         )
+
         else -> UiState.Error(SkilletError("UiState.Loaded should not be used here"))
       }
     }
   }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
 
-  fun refresh() {
-    viewModelScope.launch {
-      _isRefreshing.value = true
-      recipeRepository.refreshRecipes()
-    }.invokeOnCompletion { _isRefreshing.value = false }
-  }
 }
 
 const val RECIPES_SORT_TYPE_KEY = "RECIPES_SORT_TYPE_KEY"

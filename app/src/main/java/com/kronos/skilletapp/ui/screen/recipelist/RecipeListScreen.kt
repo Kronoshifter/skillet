@@ -61,7 +61,6 @@ fun RecipeListScreen(
   ) { paddingValues ->
 
     val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val refreshing by vm.isRefreshing.collectAsStateWithLifecycle()
 
     LoadingContent(
       state = uiState,
@@ -69,16 +68,12 @@ fun RecipeListScreen(
         .fillMaxSize()
         .padding(paddingValues)
     ) { data ->
-      RefreshingContent(refreshing = refreshing, onRefresh = { vm.refresh() }) {
-        RecipeListContent(
-          recipes = data.recipes,
-          onRecipeClick = onRecipeClick,
-          onAddRecipe = onAddRecipe,
-          modifier = Modifier
-//            .padding(paddingValues)
-            .fillMaxSize()
-        )
-      }
+      RecipeListContent(
+        recipes = data.recipes,
+        onRecipeClick = onRecipeClick,
+        modifier = Modifier
+          .fillMaxSize()
+      )
     }
   }
 }
@@ -87,7 +82,6 @@ fun RecipeListScreen(
 private fun RecipeListContent(
   recipes: List<Recipe>,
   onRecipeClick: (id: String) -> Unit,
-  onAddRecipe: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   if (recipes.isEmpty()) {
@@ -174,7 +168,7 @@ fun RecipeCardPreview() {
 
   RecipeCard(
     recipe = recipe,
-    onClick = {  },
+    onClick = { },
     modifier = Modifier
       .aspectRatio(1f)
   )
@@ -191,8 +185,8 @@ fun RecipeListPreview() {
   Surface {
     RecipeListContent(
       recipes = recipes,
-      onRecipeClick = {  },
-      onAddRecipe = {  },
+      onRecipeClick = { },
+      onAddRecipe = { },
       modifier = Modifier
         .fillMaxSize()
     )
