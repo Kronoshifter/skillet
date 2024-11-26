@@ -75,7 +75,6 @@ dependencies {
   implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
   implementation("androidx.navigation:navigation-compose:$nav_version")
   implementation(platform("io.insert-koin:koin-bom:$koin_version"))
-//  implementation("io.insert-koin:koin-android")
   implementation("io.insert-koin:koin-androidx-compose")
   implementation("io.insert-koin:koin-androidx-compose-navigation")
   implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
