@@ -11,10 +11,9 @@ import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
-import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.context.startKoin
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
+import org.koin.core.module.dsl.*
 
 class SkilletApp : Application() {
 
@@ -40,9 +39,11 @@ val appModule = module {
     ).build()
   }
 
-  single<RecipeDao> { (get<RecipeDatabase>().recipeDao()) }
+  single<RecipeDao>(createdAtStart = true) { (get<RecipeDatabase>().recipeDao()) }
 
-  singleOf(::RecipeRepository)
+  singleOf(::RecipeRepository) {
+    createdAtStart()
+  }
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)

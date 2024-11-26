@@ -32,15 +32,15 @@ import com.kronos.skilletapp.R
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.LoadingContent
-import com.kronos.skilletapp.ui.PreviewKoinStart
+import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import kotlinx.coroutines.runBlocking
-import org.koin.androidx.compose.get
-import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import kotlin.collections.set
 import kotlin.math.roundToInt
 
@@ -55,7 +55,7 @@ fun RecipeScreen(
   onBack: () -> Unit,
   onEdit: () -> Unit,
   onCook: (scale: Float) -> Unit,
-  vm: RecipeViewModel = getViewModel(),
+  vm: RecipeViewModel = koinViewModel(),
 ) {
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
@@ -434,29 +434,28 @@ private fun InstructionComponent(
 @Preview
 @Composable
 private fun RecipeContentPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
+    val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
-  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
+    var scale by remember { mutableFloatStateOf(1f) }
+    var servings by remember { mutableIntStateOf(recipe.servings) }
 
-  var scale by remember { mutableFloatStateOf(1f) }
-  var servings by remember { mutableIntStateOf(recipe.servings) }
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      RecipeContent(
-        recipe = recipe,
-        selectedUnits = selectedUnits,
-        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
-        onScalingChanged = { newScale, newServings ->
-          scale = newScale
-          servings = newServings
-        },
-        scale = scale,
-        servings = servings
-      )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        RecipeContent(
+          recipe = recipe,
+          selectedUnits = selectedUnits,
+          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
+          onScalingChanged = { newScale, newServings ->
+            scale = newScale
+            servings = newServings
+          },
+          scale = scale,
+          servings = servings
+        )
+      }
     }
   }
 }
@@ -482,36 +481,20 @@ private fun IngredientsListEmptyPreview() {
 @Preview
 @Composable
 private fun IngredientListPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
+    val ingredients = recipe.ingredients
+    val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
-  val repository = get<RecipeRepository>()
-
-//  val ingredients = listOf(
-//    Ingredient("Mini Shells Pasta", IngredientType.Dry, measurement = Measurement(8.0, MeasurementUnit.Ounce)),
-//    Ingredient("Olive Oil", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-//    Ingredient("Butter", IngredientType.Wet, measurement = Measurement(1.0, MeasurementUnit.Tablespoon)),
-//    Ingredient(
-//      "Garlic",
-//      IngredientType.Dry,
-//      measurement = Measurement(2.0, MeasurementUnit.Custom("clove", "clove"))
-//    ),
-//    Ingredient("Flour", IngredientType.Dry, measurement = Measurement(2.0, MeasurementUnit.Tablespoon)),
-//    Ingredient("Chicken Broth", IngredientType.Wet, measurement = Measurement(0.75, MeasurementUnit.Cup)),
-//    Ingredient("Milk", IngredientType.Wet, measurement = Measurement(2.5, MeasurementUnit.Cup)),
-//  )
-
-  val ingredients = runBlocking { repository.fetchRecipe("test").ingredients }
-  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
-
-  Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    IngredientsList(
-      ingredients = ingredients,
-      scale = 1f,
-      selectedUnits = selectedUnits,
-      onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
-    )
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+      IngredientsList(
+        ingredients = ingredients,
+        scale = 1f,
+        selectedUnits = selectedUnits,
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+      )
+    }
   }
-
 }
 
 @Preview(showBackground = true)
@@ -544,20 +527,20 @@ private fun InstructionsListEmptyPreview() {
 @Preview
 @Composable
 private fun InstructionsListPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
+    val instructions = recipe.instructions
+    val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
-  val repository = get<RecipeRepository>()
-  val instructions = runBlocking { repository.fetchRecipe("test").instructions }
-  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsList(
-        instructions = instructions,
-        scale = 1f,
-        selectedUnits = selectedUnits,
-        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
-      )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        InstructionsList(
+          instructions = instructions,
+          scale = 1f,
+          selectedUnits = selectedUnits,
+          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+        )
+      }
     }
   }
 }
@@ -565,23 +548,23 @@ private fun InstructionsListPreview() {
 @Preview
 @Composable
 private fun InstructionComponentPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
+    val instructions = recipe.instructions
 
-  val repository = get<RecipeRepository>()
-  val instructions = runBlocking { repository.fetchRecipe("test").instructions }
+    val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
-  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      Box(modifier = Modifier.padding(16.dp)) {
-        InstructionComponent(
-          step = 1,
-          instruction = instructions.first(),
-          scale = 1f,
-          selectedUnits = selectedUnits,
-          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
-        )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Box(modifier = Modifier.padding(16.dp)) {
+          InstructionComponent(
+            step = 1,
+            instruction = instructions.first(),
+            scale = 1f,
+            selectedUnits = selectedUnits,
+            onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+          )
+        }
       }
     }
   }

@@ -77,11 +77,11 @@ class RecipeRepository(private val database: RecipeDao) {
     upsert(recipe)
   }
 
-  init {
-    runBlocking {
-      initFakeRecipes()
-    }
-  }
+//  init {
+//    runBlocking {
+//      initFakeRecipes()
+//    }
+//  }
 
   private suspend fun initFakeRecipes() {
     val ingredients = listOf(

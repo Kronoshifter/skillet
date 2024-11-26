@@ -22,19 +22,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
-import com.kronos.skilletapp.ui.PreviewKoinStart
-import com.kronos.skilletapp.ui.RefreshingContent
+import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import kotlinx.coroutines.runBlocking
-import org.koin.androidx.compose.get
-import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeListScreen(
   onAddRecipe: () -> Unit,
   onRecipeClick: (id: String) -> Unit,
-  vm: RecipeListViewModel = getViewModel(),
+  vm: RecipeListViewModel = koinViewModel(),
 ) {
   Scaffold(
     topBar = {
@@ -161,33 +160,33 @@ fun RecipeCard(
 @Preview
 @Composable
 fun RecipeCardPreview() {
-  PreviewKoinStart()
+  KoinPreview {
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
+    val repository = koinInject<RecipeRepository>()
+    val recipe = runBlocking { repository.fetchRecipe("test") }
 
-  RecipeCard(
-    recipe = recipe,
-    onClick = { },
-    modifier = Modifier
-      .aspectRatio(1f)
-  )
-}
+    RecipeCard(
+      recipe = recipe,
+      onClick = { },
+      modifier = Modifier
+        .aspectRatio(1f)
+    )
+  }}
 
 @Preview
 @Composable
 fun RecipeListPreview() {
-  PreviewKoinStart()
+  KoinPreview {
 
-  val repository = get<RecipeRepository>()
-  val recipes = runBlocking { repository.fetchRecipes() }
+    val repository = koinInject<RecipeRepository>()
+    val recipes = runBlocking { repository.fetchRecipes() }
 
-  Surface {
-    RecipeListContent(
-      recipes = recipes,
-      onRecipeClick = { },
-      modifier = Modifier
-        .fillMaxSize()
-    )
-  }
-}
+    Surface {
+      RecipeListContent(
+        recipes = recipes,
+        onRecipeClick = { },
+        modifier = Modifier
+          .fillMaxSize()
+      )
+    }
+  }}
