@@ -48,7 +48,7 @@ import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.LoadingContent
-import com.kronos.skilletapp.ui.PreviewKoinStart
+import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.*
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
@@ -57,8 +57,8 @@ import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.pluralize
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.koin.androidx.compose.get
-import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -78,7 +78,7 @@ fun AddEditRecipeScreen(
   onRecipeUpdate: (String) -> Unit,
   modifier: Modifier = Modifier,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
-  vm: AddEditRecipeViewModel = getViewModel(),
+  vm: AddEditRecipeViewModel = koinViewModel(),
 ) {
   var showDiscardChangesDialog by remember { mutableStateOf(false) }
 
@@ -475,7 +475,7 @@ private fun RecipeInfoContent(
             OutlinedTextField(
               value = sourceInput,
               onValueChange = { sourceInput = it },
-              label = { Text("Source")},
+              label = { Text("Source") },
               placeholder = { Text("Website URL, recipe book and page number...") },
               singleLine = true,
               keyboardOptions = KeyboardOptions(
@@ -883,7 +883,7 @@ private fun IngredientsContent(
                   if (ingredientInput.contains("\n")) {
                     runCatching { IngredientParser.parseIngredients(ingredientInput) }
                       .onSuccess { newIngredients ->
-                        newIngredients.forEach{ onIngredientChanged(it) }
+                        newIngredients.forEach { onIngredientChanged(it) }
                         ingredientInput = ""
                         scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
                       }
@@ -951,12 +951,12 @@ private fun IngredientEdit(
       onDone = {
         if (ingredientInput.isNotBlank()) {
           runCatching { IngredientParser.parseIngredient(ingredientInput.text) }
-          .onSuccess {
-            onEdit(it.copy(id = ingredient.id))
-            ingredientInput = ingredientInput.copy(text = "")
-          }.onFailure {
-            onUserMessage("Failed to parse ingredient: ${it.message}")
-          }
+            .onSuccess {
+              onEdit(it.copy(id = ingredient.id))
+              ingredientInput = ingredientInput.copy(text = "")
+            }.onFailure {
+              onUserMessage("Failed to parse ingredient: ${it.message}")
+            }
         } else {
           ingredientInput = ingredientInput.copy(text = "")
           onRemove(ingredient)
@@ -1483,45 +1483,44 @@ private fun TextFieldValue.isNotBlank() = text.isNotBlank()
 @Preview
 @Composable
 fun AddEditRecipeContentPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      AddEditRecipeContent(
-        modifier = Modifier.fillMaxSize(),
-        name = recipe.name,
-        description = recipe.description,
-        ingredients = recipe.ingredients,
-        instructions = recipe.instructions,
-        equipment = recipe.equipment,
-        source = recipe.source.source,
-        sourceName = recipe.source.name,
-        servings = recipe.servings,
-        prepTime = recipe.time.preparation,
-        cookTime = recipe.time.cooking,
-        notes = recipe.notes,
-        onNameChanged = {},
-        onDescriptionChanged = {},
-        onIngredientChanged = {},
-        onRemoveIngredient = {},
-        onUserMessage = {},
-        onInstructionChanged = {},
-        onServingsChanged = {},
-        onPrepTimeChanged = {},
-        onCookTimeChanged = {},
-        onNotesChanged = {},
-        onSourceChanged = {},
-        onSourceNameChanged = {},
-        onRemoveInstruction = {},
-        onRemoveEquipment = {},
-        onEquipmentChanged = {},
-        onMoveIngredient = { _, _ -> },
-        onMoveInstruction = { _, _ -> },
-        onMoveEquipment = { _, _ -> },
-      )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        AddEditRecipeContent(
+          modifier = Modifier.fillMaxSize(),
+          name = recipe.name,
+          description = recipe.description,
+          ingredients = recipe.ingredients,
+          instructions = recipe.instructions,
+          equipment = recipe.equipment,
+          source = recipe.source.source,
+          sourceName = recipe.source.name,
+          servings = recipe.servings,
+          prepTime = recipe.time.preparation,
+          cookTime = recipe.time.cooking,
+          notes = recipe.notes,
+          onNameChanged = {},
+          onDescriptionChanged = {},
+          onIngredientChanged = {},
+          onRemoveIngredient = {},
+          onUserMessage = {},
+          onInstructionChanged = {},
+          onServingsChanged = {},
+          onPrepTimeChanged = {},
+          onCookTimeChanged = {},
+          onNotesChanged = {},
+          onSourceChanged = {},
+          onSourceNameChanged = {},
+          onRemoveInstruction = {},
+          onRemoveEquipment = {},
+          onEquipmentChanged = {},
+          onMoveIngredient = { _, _ -> },
+          onMoveInstruction = { _, _ -> },
+          onMoveEquipment = { _, _ -> },
+        )
+      }
     }
   }
 }
@@ -1530,30 +1529,29 @@ fun AddEditRecipeContentPreview() {
 @Preview
 @Composable
 fun IngredientsTabPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
+    val ingredients = recipe.ingredients.toMutableStateList()
 
-  val ingredients = recipe.ingredients.toMutableStateList()
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      IngredientsContent(
-        ingredients = ingredients,
-        onIngredientChanged = {
-          ingredients.add(it)
-        },
-        onRemoveIngredient = {
-          ingredients.remove(it)
-        },
-        onMoveIngredient = { from, to ->
-          with(ingredients) {
-            add(to, removeAt(from))
-          }
-        },
-        onUserMessage = {}
-      )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        IngredientsContent(
+          ingredients = ingredients,
+          onIngredientChanged = {
+            ingredients.add(it)
+          },
+          onRemoveIngredient = {
+            ingredients.remove(it)
+          },
+          onMoveIngredient = { from, to ->
+            with(ingredients) {
+              add(to, removeAt(from))
+            }
+          },
+          onUserMessage = {}
+        )
+      }
     }
   }
 }
@@ -1594,36 +1592,35 @@ fun IngredientEditPreview() {
 @Preview
 @Composable
 fun InstructionsTabPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
+    var instructions by remember { mutableStateOf(recipe.instructions) }
+    val ingredients = recipe.ingredients
 
-  var instructions by remember { mutableStateOf(recipe.instructions) }
-  val ingredients = recipe.ingredients
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsContent(
-        instructions = instructions,
-        ingredients = ingredients,
-        onInstructionChanged = { instruction ->
-          instructions = if (instructions.any { it.id == instruction.id }) {
-            instructions.map { i ->
-              if (i.id == instruction.id) instruction else i
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        InstructionsContent(
+          instructions = instructions,
+          ingredients = ingredients,
+          onInstructionChanged = { instruction ->
+            instructions = if (instructions.any { it.id == instruction.id }) {
+              instructions.map { i ->
+                if (i.id == instruction.id) instruction else i
+              }
+            } else {
+              instructions + instruction
             }
-          } else {
-            instructions + instruction
-          }
-        },
-        onRemoveInstruction = {
-          instructions = instructions - it
-        },
-        onMoveInstruction = { from, to ->
-          instructions = instructions.move(from, to)
-        },
-        onUserMessage = {}
-      )
+          },
+          onRemoveInstruction = {
+            instructions = instructions - it
+          },
+          onMoveInstruction = { from, to ->
+            instructions = instructions.move(from, to)
+          },
+          onUserMessage = {}
+        )
+      }
     }
   }
 }

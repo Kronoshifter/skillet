@@ -59,7 +59,7 @@ tasks.withType<Test>().configureEach {
 
 dependencies {
   val nav_version = "2.8.0-beta05"
-  val koin_version = "3.4.0"
+  val koin_version = "4.0.0"
   val room_version = "2.6.1"
 
   implementation("androidx.core:core-ktx:1.13.1")
@@ -74,8 +74,10 @@ dependencies {
   implementation("androidx.compose.material:material-icons-extended:1.6.8")
   implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
   implementation("androidx.navigation:navigation-compose:$nav_version")
-  implementation("io.insert-koin:koin-android:$koin_version")
-  implementation("io.insert-koin:koin-androidx-compose:$koin_version")
+  implementation(platform("io.insert-koin:koin-bom:$koin_version"))
+//  implementation("io.insert-koin:koin-android")
+  implementation("io.insert-koin:koin-androidx-compose")
+  implementation("io.insert-koin:koin-androidx-compose-navigation")
   implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
   implementation("org.antlr:antlr4:4.13.0")
   implementation("sh.calvin.reorderable:reorderable:2.3.1")

@@ -23,13 +23,13 @@ import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
-import com.kronos.skilletapp.ui.PreviewKoinStart
+import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
 import kotlinx.coroutines.runBlocking
-import org.koin.androidx.compose.get
-import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 private sealed class CookingContentTab {
   data object Overview : CookingContentTab()
@@ -55,7 +55,7 @@ private sealed class CookingContentTab {
 @Composable
 fun CookingScreen(
   onBack: () -> Unit,
-  vm: CookingViewModel = getViewModel(),
+  vm: CookingViewModel = koinViewModel(),
 ) {
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
@@ -175,9 +175,9 @@ fun CookingContent(
               recipe = recipe,
               onBack = onBack,
               modifier = Modifier
-              .fillMaxWidth()
-              .fillMaxHeight()
-              .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .padding(horizontal = 16.dp)
             )
           }
         }
@@ -339,7 +339,9 @@ fun CompleteTabContent(
     Column(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       horizontalAlignment = Alignment.CenterHorizontally,
-      modifier = Modifier.fillMaxWidth().align(Alignment.Center)
+      modifier = Modifier
+        .fillMaxWidth()
+        .align(Alignment.Center)
     ) {
       Text(
         text = "Enjoy your ${recipe.name}!",
@@ -367,21 +369,20 @@ fun CompleteTabContent(
 @Preview
 @Composable
 fun OverviewContentPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
+    val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
-  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      OverviewTabContent(
-        recipe = recipe,
-        scale = 1f,
-        selectedUnits = selectedUnits,
-        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
-      )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        OverviewTabContent(
+          recipe = recipe,
+          scale = 1f,
+          selectedUnits = selectedUnits,
+          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+        )
+      }
     }
   }
 }
@@ -389,22 +390,21 @@ fun OverviewContentPreview() {
 @Preview
 @Composable
 fun InstructionContentPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
+    val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
-  val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionTabContent(
-        index = 0,
-        instruction = recipe.instructions.first(),
-        scale = 1f,
-        selectedUnits = selectedUnits,
-        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
-      )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        InstructionTabContent(
+          index = 0,
+          instruction = recipe.instructions.first(),
+          scale = 1f,
+          selectedUnits = selectedUnits,
+          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+        )
+      }
     }
   }
 }
@@ -412,17 +412,16 @@ fun InstructionContentPreview() {
 @Preview
 @Composable
 fun CompleteContentPreview() {
-  PreviewKoinStart()
+  KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-  val repository = get<RecipeRepository>()
-  val recipe = runBlocking { repository.fetchRecipe("test") }
-
-  SkilletAppTheme {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      CompleteTabContent(
-        recipe = recipe,
-        onBack = {}
-      )
+    SkilletAppTheme {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        CompleteTabContent(
+          recipe = recipe,
+          onBack = {}
+        )
+      }
     }
   }
 }
