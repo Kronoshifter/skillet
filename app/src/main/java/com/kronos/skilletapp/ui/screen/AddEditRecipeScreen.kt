@@ -174,7 +174,10 @@ fun AddEditRecipeScreen(
   if (showDiscardChangesDialog) {
     ConfirmDialog(
       onDismissRequest = { showDiscardChangesDialog = false },
-      onConfirm = { onBack() },
+      onConfirm = {
+        showDiscardChangesDialog = false
+        onBack()
+      },
       onDismiss = { showDiscardChangesDialog = false },
       title = "Discard Changes?",
       text = "Unsaved changes will be lost",
