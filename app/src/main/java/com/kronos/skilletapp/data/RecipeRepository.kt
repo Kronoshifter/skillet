@@ -5,6 +5,8 @@ import com.kronos.skilletapp.model.*
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class RecipeRepository(private val database: RecipeDao) {
   suspend fun fetchRecipe(id: String) = database.getById(id)
@@ -17,6 +19,7 @@ class RecipeRepository(private val database: RecipeDao) {
 
   suspend fun upsert(recipe: Recipe) = database.upsert(recipe)
 
+  @OptIn(ExperimentalUuidApi::class)
   suspend fun createRecipe(
     name: String,
     description: String,
@@ -31,7 +34,7 @@ class RecipeRepository(private val database: RecipeDao) {
     equipment: List<Equipment>,
   ): String {
     val recipe = Recipe(
-      id = UUID.randomUUID().toString(),
+      id = Uuid.random().toString(),
       name = name,
       description = description,
       notes = notes,
