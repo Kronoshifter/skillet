@@ -6,7 +6,7 @@ import com.kronos.skilletapp.parser.grammar.IngredientGrammarParser
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-object IngredientParser {
+class IngredientParser {
 
   fun parseIngredient(text: String): Ingredient = IngredientVisitor().visitIngredient(
     IngredientGrammarParser(

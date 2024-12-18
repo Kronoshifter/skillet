@@ -735,6 +735,7 @@ private fun IngredientsContent(
   onRemoveIngredient: (Ingredient) -> Unit,
   onMoveIngredient: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
+  parser: IngredientParser = koinInject()
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
   val view = LocalView.current
@@ -884,7 +885,7 @@ private fun IngredientsContent(
                 // TODO: parse multiple ingredients when a list is pasted in
                 if (ingredientInput.isNotBlank()) {
                   if (ingredientInput.contains("\n")) {
-                    runCatching { IngredientParser.parseIngredients(ingredientInput) }
+                    runCatching { parser.parseIngredients(ingredientInput) }
                       .onSuccess { newIngredients ->
                         newIngredients.forEach { onIngredientChanged(it) }
                         ingredientInput = ""
@@ -894,7 +895,7 @@ private fun IngredientsContent(
                         onUserMessage("Failed to parse ingredients: ${it.message}")
                       }
                   } else {
-                    runCatching { IngredientParser.parseIngredient(ingredientInput) }
+                    runCatching { parser.parseIngredient(ingredientInput) }
                       .onSuccess {
                         onIngredientChanged(it)
                         ingredientInput = ""
@@ -920,7 +921,8 @@ private fun IngredientEdit(
   modifier: Modifier = Modifier,
   onEdit: (Ingredient) -> Unit = {},
   onRemove: (Ingredient) -> Unit = {},
-  onUserMessage: (String) -> Unit
+  onUserMessage: (String) -> Unit,
+  parser: IngredientParser = koinInject()
 ) {
   var ingredientInput by remember {
     mutableStateOf(
@@ -953,7 +955,7 @@ private fun IngredientEdit(
     keyboardActions = KeyboardActions(
       onDone = {
         if (ingredientInput.isNotBlank()) {
-          runCatching { IngredientParser.parseIngredient(ingredientInput.text) }
+          runCatching { parser.parseIngredient(ingredientInput.text) }
             .onSuccess {
               onEdit(it.copy(id = ingredient.id))
               ingredientInput = ingredientInput.copy(text = "")

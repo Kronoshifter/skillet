@@ -11,15 +11,17 @@ import io.kotest.matchers.shouldNotBe
 class ParserTests : FunSpec({
 
   context("Parser Tests") {
+    val parser = IngredientParser()
+    
     context("Decimal Quantity") {
       test("1 cup") {
-        val ingredient = IngredientParser.parseIngredient("1 cup butter\n")
+        val ingredient = parser.parseIngredient("1 cup butter\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.Cup
         ingredient.measurement.quantity shouldBe (1.0 plusOrMinus 0.01)
       }
 
       test("1.5 cup") {
-        val ingredient = IngredientParser.parseIngredient("1.5 cup butter\n")
+        val ingredient = parser.parseIngredient("1.5 cup butter\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.Cup
         ingredient.measurement.quantity shouldBe (1.5 plusOrMinus 0.01)
       }
@@ -27,19 +29,19 @@ class ParserTests : FunSpec({
 
     context("Fractional Quantity") {
       test("1/2 cup") {
-        val ingredient = IngredientParser.parseIngredient("1/2 cup butter\n")
+        val ingredient = parser.parseIngredient("1/2 cup butter\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.Cup
         ingredient.measurement.quantity shouldBe (0.5 plusOrMinus 0.01)
       }
 
       test("3/4 cup") {
-        val ingredient = IngredientParser.parseIngredient("1/4 cup butter\n")
+        val ingredient = parser.parseIngredient("1/4 cup butter\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.Cup
         ingredient.measurement.quantity shouldBe (0.25 plusOrMinus 0.01)
       }
 
       test("1 1/2 cup") {
-        val ingredient = IngredientParser.parseIngredient("1 1/2 cup butter\n")
+        val ingredient = parser.parseIngredient("1 1/2 cup butter\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.Cup
         ingredient.measurement.quantity shouldBe (1.5 plusOrMinus 0.01)
       }
@@ -47,19 +49,19 @@ class ParserTests : FunSpec({
 
     context("No Unit") {
       test("Decimal") {
-        val ingredient = IngredientParser.parseIngredient("1 onion\n")
+        val ingredient = parser.parseIngredient("1 onion\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.None
         ingredient.measurement.quantity shouldBe 1.0
       }
 
       test("Fractional") {
-        val ingredient = IngredientParser.parseIngredient("1/2 onion\n")
+        val ingredient = parser.parseIngredient("1/2 onion\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.None
         ingredient.measurement.quantity shouldBe 0.5
       }
 
       test("No Quantity") {
-        val ingredient = IngredientParser.parseIngredient("salt\n")
+        val ingredient = parser.parseIngredient("salt\n")
         ingredient.measurement.unit shouldBe MeasurementUnit.None
         ingredient.measurement.quantity shouldBe 0.0
       }
@@ -67,29 +69,29 @@ class ParserTests : FunSpec({
 
     context("Ingredient Name") {
       test("Single Word") {
-        val ingredient = IngredientParser.parseIngredient("1 cup butter\n")
+        val ingredient = parser.parseIngredient("1 cup butter\n")
         ingredient.name shouldBe "butter"
       }
 
       test("Multi-words") {
-        val ingredient = IngredientParser.parseIngredient("1 cup red onion, chopped\n")
+        val ingredient = parser.parseIngredient("1 cup red onion, chopped\n")
         ingredient.name shouldBe "red onion"
       }
     }
 
     context("Comment") {
       test("Comma") {
-        val ingredient = IngredientParser.parseIngredient("1 cup butter, separated\n")
+        val ingredient = parser.parseIngredient("1 cup butter, separated\n")
         ingredient.comment shouldBe "separated"
       }
 
       test("Parenthesis") {
-        val ingredient = IngredientParser.parseIngredient("1 cup butter (sliced)\n")
+        val ingredient = parser.parseIngredient("1 cup butter (sliced)\n")
         ingredient.comment shouldBe "sliced"
       }
 
       test("Multi-words") {
-        val ingredient = IngredientParser.parseIngredient("1 onion, thinly sliced\n")
+        val ingredient = parser.parseIngredient("1 onion, thinly sliced\n")
         ingredient.comment shouldBe "thinly sliced"
       }
     }
