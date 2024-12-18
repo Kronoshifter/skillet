@@ -23,14 +23,15 @@ sealed interface Html {
 
 @Serializable
 data class RecipeHtml(
-  @SerialName("@type") override val type: String,
+  @SerialName("@type")
+  @Serializable(with = StringListUnwrappingSerializer::class) override val type: String,
   val name: String,
   val description: String = "",
   @SerialName("recipeIngredient") val ingredients: List<String>,
   @SerialName("recipeInstructions") val instructions: List<InstructionHtml>,
   val prepTime: String,
   val cookTime: String,
-  @Serializable(with = ListOrStringSerializer::class) val recipeYield: String,
+  @Serializable(with = StringListUnwrappingSerializer::class) val recipeYield: String,
 ) : Html
 
 @Serializable
