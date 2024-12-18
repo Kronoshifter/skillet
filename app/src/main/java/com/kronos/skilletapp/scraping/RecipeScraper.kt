@@ -1,10 +1,6 @@
 package com.kronos.skilletapp.scraping
 
-import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.andThen
-import com.github.michaelbull.result.mapError
-import com.github.michaelbull.result.recoverCatching
-import com.github.michaelbull.result.runCatching
+import com.github.michaelbull.result.*
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.parser.IngredientParser
 import it.skrape.core.htmlDocument
@@ -15,16 +11,16 @@ import it.skrape.selects.html5.script
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-
-@Serializable
-sealed interface Html {
-  @SerialName("@type") val type: String
-}
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
 data class RecipeHtml(
-  @SerialName("@type")
-  @Serializable(with = StringListUnwrappingSerializer::class) override val type: String,
   val name: String,
   val description: String = "",
   @SerialName("recipeIngredient") val ingredients: List<String>,
@@ -32,21 +28,16 @@ data class RecipeHtml(
   val prepTime: String,
   val cookTime: String,
   @Serializable(with = StringListUnwrappingSerializer::class) val recipeYield: String,
-) : Html
+)
 
 @Serializable
 data class InstructionHtml(
   val text: String,
 )
 
-@Serializable
-data class JsonLd(
-  @SerialName("@graph") val list: List<Html>
-)
+class RecipeScraper {
 
-class RecipeScraper(private val recipeParser: IngredientParser) {
-
-  fun scrapeRecipe(url: String) = extractJsonLd(url).andThen { parseJsonLd(it) }
+  fun scrapeRecipe(url: String) = extractJsonLd(url).andThen { extractRecipeJsonLd(it) }.andThen { parseJsonLd(it) }
 
   private fun extractJsonLd(recipeUrl: String): Result<String, SkilletError> = skrape(HttpFetcher) {
     request {
@@ -59,7 +50,6 @@ class RecipeScraper(private val recipeParser: IngredientParser) {
           relaxed = true
           script {
             withAttribute = "type" to "application/ld+json"
-
             findFirst { html }
           }
         }
@@ -69,12 +59,38 @@ class RecipeScraper(private val recipeParser: IngredientParser) {
     }
   }
 
-  private fun parseJsonLd(input: String): Result<RecipeHtml, SkilletError> {
+  private fun extractRecipeJsonLd(input: String): Result<JsonElement, SkilletError> {
+    return runCatching {
+      Json.parseToJsonElement(input)
+    }.mapError {
+      SkilletError("Error parsing JSON: ${it.message}")
+    }.andThen { element ->
+      element.findRecipeJson().toResultOr { SkilletError("Could not find recipe Json") }
+    }
+  }
+
+  private fun JsonElement.findRecipeJson(): JsonElement? {
+    return if (this is JsonObject && "@type" in this && this["@type"]?.isOrContains("Recipe") == true) {
+      this
+    } else if (this is JsonObject && "@type" !in this) {
+      this.firstNotNullOfOrNull { it.value.findRecipeJson() }
+    } else if (this is JsonArray) {
+      this.firstNotNullOfOrNull { it.findRecipeJson() }
+    } else {
+      null
+    }
+  }
+
+  private infix fun JsonElement.isOrContains(s: String): Boolean = when(this) {
+    is JsonPrimitive -> this.content == s
+    is JsonArray -> this.any { it.jsonPrimitive.content == s }
+    else -> false
+  }
+
+  private fun parseJsonLd(element: JsonElement): Result<RecipeHtml, SkilletError> {
     val json = Json { ignoreUnknownKeys = true }
     return runCatching {
-      json.decodeFromString<RecipeHtml>(input)
-    }.recoverCatching {
-      json.decodeFromString<List<RecipeHtml>>(input).first()
+      json.decodeFromJsonElement<RecipeHtml>(element)
     }.mapError {
       SkilletError("Failed to parse JSON-LD: ${it.message}")
     }
