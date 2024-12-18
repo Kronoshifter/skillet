@@ -7,10 +7,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +30,7 @@ import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -31,10 +38,13 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeListScreen(
-  onAddRecipe: () -> Unit,
+  onNewRecipe: () -> Unit,
+  onNewRecipeByUrl: (url: String) -> Unit,
   onRecipeClick: (id: String) -> Unit,
   vm: RecipeListViewModel = koinViewModel(),
 ) {
+  var showAddRecipeBottomSheet by remember { mutableStateOf(false) }
+
   Scaffold(
     topBar = {
       TopAppBar(
@@ -52,7 +62,7 @@ fun RecipeListScreen(
       )
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = onAddRecipe) {
+      FloatingActionButton(onClick = { showAddRecipeBottomSheet = true }) {
         Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
       }
     },
@@ -74,7 +84,66 @@ fun RecipeListScreen(
           .fillMaxSize()
       )
     }
+
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
+    //TODO: convert to speed dial
+    if (showAddRecipeBottomSheet) {
+      ModalBottomSheet(
+        sheetState = sheetState,
+        onDismissRequest = { showAddRecipeBottomSheet = false },
+      ) {
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        ) {
+          Text(
+            text = "Add Recipe",
+            style = MaterialTheme.typography.titleLarge
+          )
+
+          Button(
+            onClick = {
+              onNewRecipe()
+
+              scope.launch { sheetState.hide() }.invokeOnCompletion {
+                if (!sheetState.isVisible) {
+                  showAddRecipeBottomSheet = false
+                }
+              }
+            },
+            modifier = Modifier
+          ) {
+            Icon(imageVector = Icons.Default.AddCircleOutline, contentDescription = "Create new recipe")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Create from scratch")
+          }
+
+          Button(
+            onClick = {
+//              onNewRecipeByUrl()
+              //TODO: open dialog to enter url
+
+              scope.launch { sheetState.hide() }.invokeOnCompletion {
+                if (!sheetState.isVisible) {
+                  showAddRecipeBottomSheet = false
+                }
+              }
+            },
+            modifier = Modifier
+          ) {
+            Icon(imageVector = Icons.Default.Link, contentDescription = "Add Link")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Save recipe link")
+          }
+      }
+    }
   }
+}
 }
 
 @Composable
@@ -171,7 +240,8 @@ fun RecipeCardPreview() {
       modifier = Modifier
         .aspectRatio(1f)
     )
-  }}
+  }
+}
 
 @Preview
 @Composable
@@ -189,4 +259,5 @@ fun RecipeListPreview() {
           .fillMaxSize()
       )
     }
-  }}
+  }
+}

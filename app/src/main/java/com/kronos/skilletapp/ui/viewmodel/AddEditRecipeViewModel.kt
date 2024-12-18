@@ -45,6 +45,7 @@ class AddEditRecipeViewModel(
 ) : ViewModel() {
   private val args = handle.toRoute<Route.AddEditRecipe>()
   private val recipeId = args.recipeId
+  private val recipeUrl = args.url //TODO: scrape recipe from url if it is not null
   private lateinit var createdId: String
 
   private val _uiState: MutableStateFlow<UiState<Nothing>> = MutableStateFlow(UiState.Loaded)

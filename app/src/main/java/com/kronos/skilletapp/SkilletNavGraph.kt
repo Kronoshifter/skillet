@@ -8,13 +8,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
-import com.kronos.skilletapp.utils.mapEntries
 import com.kronos.skilletapp.utils.navTypeOf
 import kotlin.reflect.typeOf
 
@@ -34,7 +32,8 @@ fun SkilletNavGraph(
   ) {
     composable<Route.RecipeList> {
       RecipeListScreen(
-        onAddRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
+        onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
+        onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },
         onRecipeClick = { navActions.navigateToRecipe(it) }
       )
     }
