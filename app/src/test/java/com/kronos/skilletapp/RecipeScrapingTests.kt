@@ -6,7 +6,9 @@ import com.github.michaelbull.result.andThenRecover
 import com.github.michaelbull.result.recoverCatching
 import com.github.michaelbull.result.runCatching
 import com.github.michaelbull.result.unwrap
+import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.RecipeHtml
+import com.kronos.skilletapp.scraping.RecipeScraper
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -22,6 +24,7 @@ import kotlinx.serialization.json.Json
 
 class RecipeScrapingTests : FunSpec({
   context("Scraping") {
+    val scraper = RecipeScraper(IngredientParser())
     val recipeUrl = "https://www.allrecipes.com/recipe/21014/good-old-fashioned-pancakes/"
 
     test("Retrieve JSON-LD") {

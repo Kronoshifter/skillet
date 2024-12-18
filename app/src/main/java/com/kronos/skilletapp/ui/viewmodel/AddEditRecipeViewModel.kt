@@ -8,11 +8,16 @@ import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.scraping.RecipeHtml
+import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlin.collections.map
+import kotlin.time.Duration
 
 data class RecipeState(
   val name: String = "",
@@ -34,6 +39,8 @@ data class RecipeState(
 
 class AddEditRecipeViewModel(
   private val recipeRepository: RecipeRepository,
+  private val scraper: RecipeScraper,
+  private val recipeParser: IngredientParser,
   handle: SavedStateHandle,
 ) : ViewModel() {
   private val args = handle.toRoute<Route.AddEditRecipe>()
@@ -349,4 +356,18 @@ class AddEditRecipeViewModel(
       else -> null
     }
   }
+
+  private fun RecipeHtml.toRecipeState() = RecipeState(
+    name = name,
+    description = description,
+    servings = """\d+""".toRegex().find(recipeYield)?.value?.toInt() ?: 0,
+    prepTime = prepTime.parseMinutes(),
+    cookTime = prepTime.parseMinutes(),
+    source = "", //TODO: add to RecipeHtml
+    sourceName = "", //TODO: add to RecipeHtml
+    ingredients = ingredients.map { recipeParser.parseIngredient(text = it) },
+    instructions = instructions.map { Instruction(text = it.text) }
+  )
+
+  private fun String.parseMinutes() = Duration.parseIsoString(this).inWholeMinutes.toInt()
 }
