@@ -7,6 +7,8 @@ import it.skrape.core.htmlDocument
 import it.skrape.fetcher.HttpFetcher
 import it.skrape.fetcher.response
 import it.skrape.fetcher.skrape
+import it.skrape.selects.eachText
+import it.skrape.selects.html5.a
 import it.skrape.selects.html5.script
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -37,7 +39,13 @@ data class InstructionHtml(
 
 class RecipeScraper {
 
-  fun scrapeRecipe(url: String) = extractJsonLd(url).andThen { extractRecipeJsonLd(it) }.andThen { parseJsonLd(it) }
+  fun scrapeRecipe(url: String): Result<RecipeHtml, SkilletError> {
+    return scrapeJsonLd(url)
+  }
+
+  private fun scrapeJsonLd(url: String): Result<RecipeHtml, SkilletError> = extractJsonLd(url)
+    .andThen { extractRecipeJsonLd(it) }
+    .andThen { parseJsonLd(it) }
 
   private fun extractJsonLd(recipeUrl: String): Result<String, SkilletError> = skrape(HttpFetcher) {
     request {
@@ -70,7 +78,7 @@ class RecipeScraper {
   }
 
   private fun JsonElement.findRecipeJson(): JsonElement? {
-    return if (this is JsonObject && "@type" in this && this["@type"]?.isOrContains("Recipe") == true) {
+    return if (this is JsonObject && "@type" in this && this.getValue("@type") isOrContains "Recipe" == true) {
       this
     } else if (this is JsonObject && "@type" !in this) {
       this.firstNotNullOfOrNull { it.value.findRecipeJson() }
@@ -96,5 +104,34 @@ class RecipeScraper {
     }
   }
 
+  private fun scrapeMicrodata(recipeUrl: String): Result<RecipeHtml, SkilletError> = skrape(HttpFetcher) {
+    request {
+      url = recipeUrl
+    }
 
+    runCatching {
+      response {
+        htmlDocument {
+          relaxed = true
+
+          val name = "[itemprop=name]" {
+            findFirst { text }
+          }
+
+          val ingredients = "[itemprop=recipeIngredient]" {
+            findAll { eachText }
+          }
+
+          RecipeHtml(
+            name = name,
+            ingredients = ingredients,
+            instructions = listOf(),
+            recipeYield = "",
+            prepTime = "",
+            cookTime = ""
+          )
+        }
+      }
+    }.mapError { SkilletError("Failed to scrape microdata: ${it.message}") }
+  }
 }
