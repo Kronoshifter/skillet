@@ -1351,7 +1351,9 @@ fun InstructionComponent(
 
 @Composable
 private fun IngredientQuantity(ingredient: Ingredient) {
-  val quantity = ingredient.measurement.displayQuantity.let {
+  val measurement = ingredient.measurement.normalize { it !is MeasurementUnit.FluidOunce}
+
+  val quantity = measurement.displayQuantity.let {
     if (ingredient.measurement.unit !is MeasurementUnit.None) {
       "$it ${ingredient.measurement.unit.abbreviation}"
     } else {

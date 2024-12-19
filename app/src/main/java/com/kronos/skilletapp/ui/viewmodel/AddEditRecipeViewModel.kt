@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.github.michaelbull.result.expect
+import com.github.michaelbull.result.mapBoth
 import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
@@ -54,24 +56,11 @@ class AddEditRecipeViewModel(
   val uiState = _uiState.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
 
-//  val tharBeChanges: Boolean
-//    get() = _recipeState.value.let {
-//      it.name != originalRecipeState.name ||
-//      it.description != originalRecipeState.description ||
-//      it.notes != originalRecipeState.notes ||
-//      it.servings != originalRecipeState.servings ||
-//      it.prepTime != originalRecipeState.prepTime ||
-//      it.cookTime != originalRecipeState.cookTime ||
-//      it.source != originalRecipeState.source ||
-//      it.sourceName != originalRecipeState.sourceName ||
-//      it.ingredients != originalRecipeState.ingredients ||
-//      it.instructions != originalRecipeState.instructions ||
-//      it.equipment != originalRecipeState.equipment
-//    }
-
   init {
     recipeId?.let {
       loadRecipe(it)
+    } ?: recipeUrl?.let {
+      scrapeRecipe(it)
     }
   }
 
@@ -256,16 +245,16 @@ class AddEditRecipeViewModel(
       state.copy(
         tharBeChanges = state.let {
           it.name != originalRecipeState.name ||
-          it.description != originalRecipeState.description ||
-          it.notes != originalRecipeState.notes ||
-          it.servings != originalRecipeState.servings ||
-          it.prepTime != originalRecipeState.prepTime ||
-          it.cookTime != originalRecipeState.cookTime ||
-          it.source != originalRecipeState.source ||
-          it.sourceName != originalRecipeState.sourceName ||
-          it.ingredients != originalRecipeState.ingredients ||
-          it.instructions != originalRecipeState.instructions ||
-          it.equipment != originalRecipeState.equipment
+              it.description != originalRecipeState.description ||
+              it.notes != originalRecipeState.notes ||
+              it.servings != originalRecipeState.servings ||
+              it.prepTime != originalRecipeState.prepTime ||
+              it.cookTime != originalRecipeState.cookTime ||
+              it.source != originalRecipeState.source ||
+              it.sourceName != originalRecipeState.sourceName ||
+              it.ingredients != originalRecipeState.ingredients ||
+              it.instructions != originalRecipeState.instructions ||
+              it.equipment != originalRecipeState.equipment
         }
       )
     }
@@ -341,6 +330,24 @@ class AddEditRecipeViewModel(
             equipment = recipe.equipment
           ).also { originalRecipeState = it }
         }
+      }
+
+      _uiState.update { UiState.Loaded }
+    }
+  }
+
+  private fun scrapeRecipe(url: String) {
+    _uiState.update { UiState.Loading }
+    viewModelScope.launch {
+      _recipeState.update { state ->
+        scraper.scrapeRecipe(url).mapBoth(
+          success = {
+            it.toRecipeState()
+              .copy(source = url, sourceName = url)
+              .also { originalRecipeState = it }
+          },
+          failure = { state.copy(userMessage = it.message) }
+        )
       }
 
       _uiState.update { UiState.Loaded }
