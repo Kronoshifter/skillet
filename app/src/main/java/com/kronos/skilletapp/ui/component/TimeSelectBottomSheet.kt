@@ -7,6 +7,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kronos.skilletapp.utils.pluralize
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,61 +19,44 @@ fun TimeSelectBottomSheet(
   onTimeSelect: (Int) -> Unit,
   title: @Composable () -> Unit,
 ) {
-  ModalBottomSheet(
+  var hours by remember { mutableIntStateOf(initialTime / 60) }
+  var minutes by remember { mutableIntStateOf(initialTime % 60) }
+
+  ActionBottomSheet(
     sheetState = sheetState,
-    onDismissRequest = onDismissRequest
-  ) {
-    var hours by remember { mutableIntStateOf(initialTime / 60) }
-    var minutes by remember { mutableIntStateOf(initialTime % 60) }
-
-    Column(
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(8.dp)
-    ) {
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
+    onDismissRequest = onDismissRequest,
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(8.dp),
+    title = title,
+    action = {
+      TextButton(
+        onClick = { onTimeSelect(hours * 60 + minutes) },
       ) {
-        CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.titleLarge) {
-          Box(
-            modifier = Modifier.align(Alignment.Center)
-          ) {
-            title()
-          }
-        }
+        Text(text = "Save")
+      }
+    }
+  ) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+      val hoursOptions = (0..23).toList()
+      val minutesOptions = (0..55 step 5).toList()
 
-        TextButton(
-          onClick = { onTimeSelect(hours * 60 + minutes) },
-          modifier = Modifier.align(Alignment.CenterEnd)
-        ) {
-          Text(text = "Save")
-        }
+      InfiniteScrollingPicker(
+        options = hoursOptions,
+        selected = hours,
+        onSelect = { hours = it },
+        modifier = Modifier.weight(1f)
+      ) { i ->
+        Text(text = if (i > 0) "$i hour".pluralize(i) { "${it}s" } else "-")
       }
 
-      Row(modifier = Modifier.fillMaxWidth()) {
-        val hoursOptions = (0..23).toList()
-        val minutesOptions = (0..55 step 5).toList()
-
-        InfiniteScrollingPicker(
-          options = hoursOptions,
-          selected = hours,
-          onSelect = { hours = it },
-          modifier = Modifier.weight(1f)
-        ) { i ->
-          Text(text = if (i > 0) "$i hour".pluralize(i) { "${it}s" } else "-")
-        }
-
-        InfiniteScrollingPicker(
-          options = minutesOptions,
-          selected = minutes,
-          onSelect = { minutes = it },
-          modifier = Modifier.weight(1f)
-        ) { i ->
-          Text(text = if (i > 0) "$i minute".pluralize(i) { "${it}s" } else "-")
-        }
+      InfiniteScrollingPicker(
+        options = minutesOptions,
+        selected = minutes,
+        onSelect = { minutes = it },
+        modifier = Modifier.weight(1f)
+      ) { i ->
+        Text(text = if (i > 0) "$i minute".pluralize(i) { "${it}s" } else "-")
       }
     }
   }
