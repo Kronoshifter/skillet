@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ANTLRGenerationPreferences">
     <option name="perGrammarGenerationSettings">
@@ -9,7 +10,7 @@
           <option name="libDir" value="" />
           <option name="encoding" value="" />
           <option name="pkg" value="grammar" />
-          <option name="language" value="Java" />
+          <option name="language" value="Kotlin" />
           <option name="generateVisitor" value="true" />
         </PerGrammarGenerationSettings>
       </list>
