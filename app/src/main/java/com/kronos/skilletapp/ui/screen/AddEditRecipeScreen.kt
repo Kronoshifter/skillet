@@ -2,7 +2,8 @@ package com.kronos.skilletapp.ui.screen
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,7 +29,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.platform.*
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -43,12 +47,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
-import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.DisableRipple
-import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
+import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.*
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -57,7 +60,6 @@ import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.pluralize
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableCollectionItemScope
@@ -528,44 +530,30 @@ private fun RecipeInfoContent(
       }
 
       if (showServingsPicker) {
-        ModalBottomSheet(
+        ActionBottomSheet(
           sheetState = sheetState,
-          onDismissRequest = { showServingsPicker = false }
+          onDismissRequest = { showServingsPicker = false },
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+          title = { Text(text = "Servings") },
+          action = {
+            TextButton(
+              onClick = {
+                onServingsChanged(servingsSelect)
+                sheetState.dismiss(scope) { showServingsPicker = false }
+              },
+            ) {
+              Text(text = "Save")
+            }
+          }
         ) {
-          Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(8.dp)
+          InfiniteScrollingPicker(
+            options = (0..99).toList(),
+            selected = servingsSelect,
+            onSelect = { servingsSelect = it },
           ) {
-            Box(
-              modifier = Modifier.fillMaxWidth()
-            ) {
-              Text(
-                text = "Servings",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.Center)
-              )
-
-              TextButton(
-                onClick = {
-                  onServingsChanged(servingsSelect)
-                  sheetState.dismiss(scope) { showServingsPicker = false }
-                },
-                modifier = Modifier.align(Alignment.CenterEnd)
-              ) {
-                Text(text = "Save")
-              }
-            }
-
-            InfiniteScrollingPicker(
-              options = (0..99).toList(),
-              selected = servingsSelect,
-              onSelect = { servingsSelect = it },
-            ) {
-              Text(text = if (it != 0) it.toString() else "-")
-            }
+            Text(text = if (it != 0) it.toString() else "-")
           }
         }
       }
@@ -1300,75 +1288,60 @@ fun InstructionComponent(
   }
 
   if (showBottomSheet) {
-    ModalBottomSheet(
+    val newIngredients = remember { instruction.ingredients.toMutableStateList() }
+
+    ActionBottomSheet(
       onDismissRequest = { showBottomSheet = false },
-      sheetState = sheetState
-    ) {
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(8.dp)
-      ) {
-        val newIngredients = remember { instruction.ingredients.toMutableStateList() }
-
-        Box(
-          modifier = Modifier.fillMaxWidth()
+      sheetState = sheetState,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp),
+      title = { Text(text = "Select Ingredients") },
+      action = {
+        TextButton(
+          onClick = {
+            onInstructionChanged(instruction.copy(ingredients = newIngredients))
+            sheetState.dismiss(scope) { showBottomSheet = false }
+          },
         ) {
-          Text(
-            text = "Select Ingredients",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.align(Alignment.Center)
-          )
-
-          TextButton(
-            onClick = {
-              onInstructionChanged(instruction.copy(ingredients = newIngredients))
-
-              sheetState.dismiss(scope) { showBottomSheet = false }
-            },
-            modifier = Modifier.align(Alignment.CenterEnd)
-          ) {
-            Text(text = "Save")
-          }
+          Text(text = "Save")
         }
-
-        LazyColumn(
-          contentPadding = PaddingValues(8.dp),
-          verticalArrangement = Arrangement.spacedBy(8.dp),
-          horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.wrapContentSize()
-        ) {
-          items(ingredients) { ingredient ->
-            ItemPill(
-              modifier = Modifier.fillMaxWidth(),
-              leadingContent = {
-                if (ingredient.measurement.quantity > 0) {
-                  IngredientQuantity(ingredient = ingredient)
-                }
-              },
-              trailingIcon = {
-                Checkbox(
-                  checked = newIngredients.contains(ingredient),
-                  onCheckedChange = null,
-                  modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-              },
-              enabled = true,
-              onClick = {
-                if (newIngredients.contains(ingredient)) {
-                  newIngredients.remove(ingredient)
-                } else {
-                  newIngredients.add(ingredient)
-                }
+      }
+    ) {
+      LazyColumn(
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.wrapContentSize()
+      ) {
+        items(ingredients) { ingredient ->
+          ItemPill(
+            modifier = Modifier.fillMaxWidth(),
+            leadingContent = {
+              if (ingredient.measurement.quantity > 0) {
+                IngredientQuantity(ingredient = ingredient)
               }
-            ) {
-              Text(
-                text = ingredient.name,
-                modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }
+            },
+            trailingIcon = {
+              Checkbox(
+                checked = newIngredients.contains(ingredient),
+                onCheckedChange = null,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
               )
+            },
+            enabled = true,
+            onClick = {
+              if (newIngredients.contains(ingredient)) {
+                newIngredients.remove(ingredient)
+              } else {
+                newIngredients.add(ingredient)
+              }
             }
+          ) {
+            Text(
+              text = ingredient.name,
+              modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }
+            )
           }
         }
       }
