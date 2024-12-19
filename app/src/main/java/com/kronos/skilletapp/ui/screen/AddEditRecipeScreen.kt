@@ -419,77 +419,63 @@ private fun RecipeInfoContent(
       }
 
       if (showSourceSheet) {
-        ModalBottomSheet(
+        var sourceNameInput by remember { mutableStateOf(sourceName) }
+        var sourceInput by remember { mutableStateOf(source) }
+
+        ActionBottomSheet(
           onDismissRequest = { showSourceSheet = false },
-          sheetState = sheetState
-        ) {
-          Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(8.dp)
-          ) {
-            var sourceNameInput by remember { mutableStateOf(sourceName) }
-            var sourceInput by remember { mutableStateOf(source) }
+          sheetState = sheetState,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+          title = { Text(text = "Source") },
+          action = {
+            TextButton(
+              onClick = {
+                onSourceChanged(sourceInput)
+                onSourceNameChanged(sourceNameInput)
 
-            Box(
-              modifier = Modifier.fillMaxWidth()
+                sheetState.dismiss(scope) { showSourceSheet = false }
+              },
             ) {
-              Text(
-                text = "Source",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.Center)
-              )
-
-              TextButton(
-                onClick = {
-                  onSourceChanged(sourceInput)
-                  onSourceNameChanged(sourceNameInput)
-
-                  sheetState.dismiss(scope) { showSourceSheet = false }
-                },
-                modifier = Modifier.align(Alignment.CenterEnd)
-              ) {
-                Text(text = "Save")
-              }
+              Text(text = "Save")
             }
-
-            val focusManager = LocalFocusManager.current
-            val sheetKeyboard = LocalSoftwareKeyboardController.current
-
-            OutlinedTextField(
-              value = sourceNameInput,
-              onValueChange = { sourceNameInput = it },
-              label = { Text("Name") },
-              singleLine = true,
-              keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Next
-              ),
-              keyboardActions = KeyboardActions(
-                onNext = { focusManager.moveFocus(FocusDirection.Next) }
-              ),
-              modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-              value = sourceInput,
-              onValueChange = { sourceInput = it },
-              label = { Text("Source") },
-              placeholder = { Text("Website URL, recipe book and page number...") },
-              singleLine = true,
-              keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done
-              ),
-              keyboardActions = KeyboardActions(
-                onDone = {
-                  sheetKeyboard?.hide()
-                  focusManager.clearFocus()
-                }
-              ),
-              modifier = Modifier.fillMaxWidth()
-            )
           }
+        ) {
+          val focusManager = LocalFocusManager.current
+          val sheetKeyboard = LocalSoftwareKeyboardController.current
+
+          OutlinedTextField(
+            value = sourceNameInput,
+            onValueChange = { sourceNameInput = it },
+            label = { Text("Name") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+              imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+              onNext = { focusManager.moveFocus(FocusDirection.Next) }
+            ),
+            modifier = Modifier.fillMaxWidth()
+          )
+
+          OutlinedTextField(
+            value = sourceInput,
+            onValueChange = { sourceInput = it },
+            label = { Text("Source") },
+            placeholder = { Text("Website URL, recipe book and page number...") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+              imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+              onDone = {
+                sheetKeyboard?.hide()
+                focusManager.clearFocus()
+              }
+            ),
+            modifier = Modifier.fillMaxWidth()
+          )
         }
       }
     }
