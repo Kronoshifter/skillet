@@ -50,6 +50,7 @@ import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.*
+import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.utils.modifier.applyIf
@@ -446,11 +447,7 @@ private fun RecipeInfoContent(
                   onSourceChanged(sourceInput)
                   onSourceNameChanged(sourceNameInput)
 
-                  scope.launch { sheetState.hide() }.invokeOnCompletion {
-                    if (!sheetState.isVisible) {
-                      showSourceSheet = false
-                    }
-                  }
+                  sheetState.dismiss(scope) { showSourceSheet = false }
                 },
                 modifier = Modifier.align(Alignment.CenterEnd)
               ) {
@@ -569,11 +566,7 @@ private fun RecipeInfoContent(
                 onClick = {
                   onServingsChanged(servingsSelect)
 
-                  scope.launch { sheetState.hide() }.invokeOnCompletion {
-                    if (!sheetState.isVisible) {
-                      showServingsPicker = false
-                    }
-                  }
+                  sheetState.dismiss(scope) { showServingsPicker = false }
                 },
                 modifier = Modifier.align(Alignment.CenterEnd)
               ) {
@@ -639,11 +632,7 @@ private fun RecipeInfoContent(
           onTimeSelect = {
             onPrepTimeChanged(it)
 
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-              if (!sheetState.isVisible) {
-                showTimePicker = false
-              }
-            }
+            sheetState.dismiss(scope) { showTimePicker = false }
           }
         )
       }
@@ -695,11 +684,7 @@ private fun RecipeInfoContent(
           onTimeSelect = {
             onCookTimeChanged(it)
 
-            scope.launch { sheetState.hide() }.invokeOnCompletion {
-              if (!sheetState.isVisible) {
-                showTimePicker = false
-              }
-            }
+            sheetState.dismiss(scope) { showTimePicker = false }
           }
         )
       }
@@ -1357,11 +1342,7 @@ fun InstructionComponent(
             onClick = {
               onInstructionChanged(instruction.copy(ingredients = newIngredients))
 
-              scope.launch { sheetState.hide() }.invokeOnCompletion {
-                if (!sheetState.isVisible) {
-                  showBottomSheet = false
-                }
-              }
+              sheetState.dismiss(scope) { showBottomSheet = false }
             },
             modifier = Modifier.align(Alignment.CenterEnd)
           ) {

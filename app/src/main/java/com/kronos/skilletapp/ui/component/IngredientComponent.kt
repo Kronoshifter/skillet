@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
@@ -178,11 +179,7 @@ fun IngredientListItem(
       onUnitSelect = {
         onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
 
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-          if (!sheetState.isVisible) {
-            showBottomSheet = false
-          }
-        }
+        sheetState.dismiss(scope) { showBottomSheet = false }
       },
       ingredient = ingredient,
       measurements = measurements,
@@ -273,11 +270,7 @@ fun IngredientPill(
       onDismissRequest = { showBottomSheet = false },
       onUnitSelect = {
         onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-          if (!sheetState.isVisible) {
-            showBottomSheet = false
-          }
-        }
+        sheetState.dismiss(scope) { showBottomSheet = false }
       },
       ingredient = ingredient,
       measurements = measurements,

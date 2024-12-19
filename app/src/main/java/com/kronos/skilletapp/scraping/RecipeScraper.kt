@@ -2,24 +2,15 @@ package com.kronos.skilletapp.scraping
 
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.data.SkilletError
-import com.kronos.skilletapp.parser.IngredientParser
 import it.skrape.core.htmlDocument
 import it.skrape.fetcher.HttpFetcher
 import it.skrape.fetcher.response
 import it.skrape.fetcher.skrape
 import it.skrape.selects.eachText
-import it.skrape.selects.html5.a
 import it.skrape.selects.html5.script
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
 
 @Serializable
 data class RecipeHtml(
@@ -89,7 +80,7 @@ class RecipeScraper {
     }
   }
 
-  private infix fun JsonElement.isOrContains(s: String): Boolean = when(this) {
+  private infix fun JsonElement.isOrContains(s: String): Boolean = when (this) {
     is JsonPrimitive -> this.content == s
     is JsonArray -> this.any { it.jsonPrimitive.content == s }
     else -> false
