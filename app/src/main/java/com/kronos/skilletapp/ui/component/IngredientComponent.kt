@@ -178,7 +178,6 @@ fun IngredientListItem(
       onDismissRequest = { showBottomSheet = false },
       onUnitSelect = {
         onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
-
         sheetState.dismiss(scope) { showBottomSheet = false }
       },
       ingredient = ingredient,

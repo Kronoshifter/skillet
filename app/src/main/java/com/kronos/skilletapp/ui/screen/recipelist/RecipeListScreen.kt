@@ -4,6 +4,7 @@ import android.R.attr.label
 import android.R.attr.onClick
 import android.R.attr.singleLine
 import android.webkit.URLUtil
+import android.webkit.URLUtil.isValidUrl
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -35,6 +36,7 @@ import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.leinardi.android.speeddial.compose.FabWithLabel
@@ -145,67 +147,55 @@ fun RecipeListScreen(
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-    //TODO: convert to speed dial
     if (showImportRecipeBottomSheet) {
-      ModalBottomSheet(
+      var url by remember { mutableStateOf("") }
+      var isValidUrl = isValidUrl(url)
+
+      ActionBottomSheet(
         sheetState = sheetState,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(8.dp),
         onDismissRequest = { showImportRecipeBottomSheet = false },
-      ) {
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.spacedBy(8.dp),
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        ) {
-          Text(
-            text = "Import Recipe",
-            style = MaterialTheme.typography.titleLarge
-          )
-
-          var url by remember { mutableStateOf("") }
-          var isValidUrl = URLUtil.isValidUrl(url)
-
-          val keyboard = LocalSoftwareKeyboardController.current
-
-          OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
-            label = { Text(text = "URL") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
-            keyboardActions = KeyboardActions(
-              onDone = {
-                if (isValidUrl) {
-                  onNewRecipeByUrl(url)
-                  sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-                }
-
-                keyboard?.hide()
-              }
-            ),
-            singleLine = true,
-            isError = !isValidUrl && url.isNotBlank(),
-            supportingText = {
-              if (!isValidUrl && url.isNotBlank()) {
-                Text(
-                  text = "Invalid URL",
-                )
-              }
-            }
-          )
-
-          Button(
+        title = { Text(text = "Import Recipe") },
+        action = {
+          TextButton(
             onClick = {
               onNewRecipeByUrl(url)
               sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
             },
-            enabled = isValidUrl,
-            modifier = Modifier.fillMaxWidth()
+            enabled = isValidUrl
           ) {
             Text(text = "Import")
           }
-        }
+        },
+      ) {
+        val keyboard = LocalSoftwareKeyboardController.current
+
+        OutlinedTextField(
+          value = url,
+          onValueChange = { url = it },
+          label = { Text(text = "URL") },
+          modifier = Modifier.fillMaxWidth(),
+          keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
+          keyboardActions = KeyboardActions(
+            onDone = {
+              if (isValidUrl) {
+                onNewRecipeByUrl(url)
+                sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
+              }
+
+              keyboard?.hide()
+            }
+          ),
+          singleLine = true,
+          isError = !isValidUrl && url.isNotBlank(),
+          supportingText = {
+            if (!isValidUrl && url.isNotBlank()) {
+              Text(text = "Invalid URL")
+            }
+          }
+        )
       }
     }
   }

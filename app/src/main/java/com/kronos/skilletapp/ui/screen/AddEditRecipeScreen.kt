@@ -565,7 +565,6 @@ private fun RecipeInfoContent(
               TextButton(
                 onClick = {
                   onServingsChanged(servingsSelect)
-
                   sheetState.dismiss(scope) { showServingsPicker = false }
                 },
                 modifier = Modifier.align(Alignment.CenterEnd)
@@ -631,7 +630,6 @@ private fun RecipeInfoContent(
           title = { Text("Prep Time") },
           onTimeSelect = {
             onPrepTimeChanged(it)
-
             sheetState.dismiss(scope) { showTimePicker = false }
           }
         )
