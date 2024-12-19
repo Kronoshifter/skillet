@@ -346,7 +346,7 @@ class AddEditRecipeViewModel(
               .copy(source = url, sourceName = url)
               .also { originalRecipeState = it }
           },
-          failure = { state.copy(userMessage = it.message) }
+          failure = { state.copy(userMessage = "Recipe could not be imported, verify the link and try again, or enter the recipe manually") }
         )
       }
 
