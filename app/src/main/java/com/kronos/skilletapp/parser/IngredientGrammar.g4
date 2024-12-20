@@ -16,7 +16,7 @@ range : (decimal | fraction) ('-' | WHITESPACE)+ (decimal | fraction) ;
 
 name : (WORD | WHITESPACE)*? WORD WHITESPACE? ;
 
-comment : COMMENT_START (WORD | WHITESPACE)+ ')'? ;
+comment : COMMENT_START (WORD | WHITESPACE | NUMBER)+ ')'? ;
 
 fragment LOWERCASE : [a-z] ;
 fragment UPPERCASE : [A-Z] ;

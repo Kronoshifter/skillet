@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.mapBoth
 import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
@@ -16,10 +15,12 @@ import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.collections.map
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 data class RecipeState(
   val name: String = "",
@@ -47,7 +48,7 @@ class AddEditRecipeViewModel(
 ) : ViewModel() {
   private val args = handle.toRoute<Route.AddEditRecipe>()
   private val recipeId = args.recipeId
-  private val recipeUrl = args.url //TODO: scrape recipe from url if it is not null
+  private val recipeUrl = args.url
   private lateinit var createdId: String
 
   private val _uiState: MutableStateFlow<UiState<Nothing>> = MutableStateFlow(UiState.Loaded)
@@ -336,17 +337,24 @@ class AddEditRecipeViewModel(
     }
   }
 
-  private fun scrapeRecipe(url: String) {
+  fun scrapeRecipe(url: String) {
     _uiState.update { UiState.Loading }
     viewModelScope.launch {
       _recipeState.update { state ->
         scraper.scrapeRecipe(url).mapBoth(
           success = {
             it.toRecipeState()
-              .copy(source = url, sourceName = url)
+              .copy(
+                source = url,
+                sourceName = url,
+              )
               .also { originalRecipeState = it }
           },
-          failure = { state.copy(userMessage = "Recipe could not be imported, verify the link and try again, or enter the recipe manually") }
+          failure = {
+            state.copy(
+              userMessage = "Recipe could not be imported, verify the link and try again, or enter the recipe manually",
+            )
+          }
         )
       }
 

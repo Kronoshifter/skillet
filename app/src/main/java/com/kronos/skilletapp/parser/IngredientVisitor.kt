@@ -24,6 +24,7 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
     } ?: 0f
     val measurement = Measurement(quantity, unit)
 
+    //TODO: comment parsing needs to include the numbers in the words
     val comment = ctx.comment()?.WORD()?.joinToString(" ") { it.text }
 
     return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text.trimEnd())

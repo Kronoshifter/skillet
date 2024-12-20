@@ -3,6 +3,7 @@ package com.kronos.skilletapp.scraping
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.data.SkilletError
 import it.skrape.core.htmlDocument
+import it.skrape.fetcher.AsyncFetcher
 import it.skrape.fetcher.HttpFetcher
 import it.skrape.fetcher.response
 import it.skrape.fetcher.skrape
@@ -30,15 +31,15 @@ data class InstructionHtml(
 
 class RecipeScraper {
 
-  fun scrapeRecipe(url: String): Result<RecipeHtml, SkilletError> {
+  suspend fun scrapeRecipe(url: String): Result<RecipeHtml, SkilletError> {
     return scrapeJsonLd(url)
   }
 
-  private fun scrapeJsonLd(url: String): Result<RecipeHtml, SkilletError> = extractJsonLd(url)
+  private suspend fun scrapeJsonLd(url: String): Result<RecipeHtml, SkilletError> = extractJsonLd(url)
     .andThen { extractRecipeJsonLd(it) }
     .andThen { parseJsonLd(it) }
 
-  private fun extractJsonLd(recipeUrl: String): Result<String, SkilletError> = skrape(HttpFetcher) {
+  private suspend fun extractJsonLd(recipeUrl: String): Result<String, SkilletError> = skrape(AsyncFetcher) {
     request {
       url = recipeUrl
     }
