@@ -6,6 +6,7 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.parser.grammar.IngredientGrammarBaseVisitor
 import com.kronos.skilletapp.parser.grammar.IngredientGrammarParser
 import com.kronos.skilletapp.utils.Fraction
+import com.kronos.skilletapp.utils.removePunctuation
 
 class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
   fun visitIngredients(ctx: IngredientGrammarParser.RecipeContext) = ctx.ingredient().map { visitIngredient(it) }
@@ -25,7 +26,8 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
     val measurement = Measurement(quantity, unit)
 
     //TODO: comment parsing needs to include the numbers in the words
-    val comment = ctx.comment()?.WORD()?.joinToString(" ") { it.text }
+//    val comment = ctx.comment()?.WORD()?.joinToString(" ") { it.text }
+    val comment = ctx.comment()?.text?.removePunctuation()?.trim()
 
     return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text.trimEnd())
   }
