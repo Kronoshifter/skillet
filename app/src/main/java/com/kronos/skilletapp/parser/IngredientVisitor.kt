@@ -19,14 +19,12 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
       this?.decimal()?.text?.toFloatOrNull() ?: this?.fraction()?.let {
         when (it.NUMBER().size) {
           2 -> Fraction(numerator = it.NUMBER(0).text.toInt(), denominator = it.NUMBER(1).text.toInt())
-          else -> Fraction(numerator = it.NUMBER(0).text.toInt() * it.NUMBER(2).text.toInt() + it.NUMBER(1).text.toInt(), denominator = it.NUMBER(2).text.toInt())
+          else -> Fraction(whole = it.NUMBER(0).text.toInt(), numerator = it.NUMBER(1).text.toInt(), denominator = it.NUMBER(2).text.toInt())
         }.decimal
       }
     } ?: 0f
     val measurement = Measurement(quantity, unit)
 
-    //TODO: comment parsing needs to include the numbers in the words
-//    val comment = ctx.comment()?.WORD()?.joinToString(" ") { it.text }
     val comment = ctx.comment()?.text?.removePunctuation()?.trim()
 
     return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text.trimEnd())
