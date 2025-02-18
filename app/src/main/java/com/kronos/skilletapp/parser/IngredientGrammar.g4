@@ -9,7 +9,7 @@ measurement : quantity (WHITESPACE WORD)? ;
 quantity : (decimal | fraction | range) ;
 
 decimal : NUMBER ;
-fraction : (NUMBER WHITESPACE)? NUMBER '/' NUMBER ;
+fraction : (NUMBER WHITESPACE)? NUMBER ('/' | WHITESPACE)+ NUMBER ;
 range : (decimal | fraction) ('-' | WHITESPACE)+ (decimal | fraction) ;
 
 name : (WORD | WHITESPACE)*? WORD WHITESPACE? ;
