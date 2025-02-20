@@ -21,7 +21,7 @@ data class RecipeHtml(
   @SerialName("recipeInstructions") val instructions: List<InstructionHtml>,
   val prepTime: String,
   val cookTime: String,
-  @Serializable(with = StringListUnwrappingSerializer::class) val recipeYield: String,
+  @Serializable(with = StringListWrappingSerializer::class) val recipeYield: List<String>,
 )
 
 @Serializable
@@ -153,7 +153,7 @@ class RecipeScraper {
             name = name,
             ingredients = ingredients,
             instructions = listOf(),
-            recipeYield = "",
+            recipeYield = listOf(),
             prepTime = "",
             cookTime = ""
           )

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.core.logger.Logger
 import org.stringtemplate.v4.compiler.Bytecode.instructions
+import kotlin.collections.first
 import kotlin.collections.map
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -351,10 +352,13 @@ class AddEditRecipeViewModel(
             RecipeState(
               name = it.recipe.name,
               description = it.recipe.description,
-              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+//              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+              servings = """\d+""".toRegex().let { regex ->
+                regex.find(it.recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
+              },
               prepTime = it.recipe.prepTime.parseMinutes(),
               cookTime = it.recipe.prepTime.parseMinutes(),
-              source = it.website?.url ?: url,
+              source = url,
               sourceName = it.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
               ingredients = it.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
               instructions = it.recipe.instructions.map { Instruction(text = it.text) }
@@ -387,7 +391,10 @@ class AddEditRecipeViewModel(
   private fun RecipeScrape.toRecipeState() = RecipeState(
     name = recipe.name,
     description = recipe.description,
-    servings = """\d+""".toRegex().find(recipe.recipeYield)?.value?.toInt() ?: 0,
+//              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+    servings = """\d+""".toRegex().let { regex ->
+      regex.find(recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
+    },
     prepTime = recipe.prepTime.parseMinutes(),
     cookTime = recipe.prepTime.parseMinutes(),
     source = website?.url ?: "",
