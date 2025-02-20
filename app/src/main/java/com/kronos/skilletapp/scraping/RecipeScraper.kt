@@ -38,8 +38,8 @@ data class WebSiteHtml(
 
 @Serializable
 data class RecipeScrape(
-  val website: WebSiteHtml?,
-  val recipe: RecipeHtml
+  val recipe: RecipeHtml,
+  val website: WebSiteHtml? = null,
 )
 
 class RecipeScraper {
@@ -79,17 +79,15 @@ class RecipeScraper {
       SkilletError("Error parsing JSON: ${it.message}")
     }.andThen { element ->
       val recipeJson = element.findRecipeJson()
-      val websiteJson = element.findWebsiteJson() ?: JsonObject(emptyMap())
+      val websiteJson = element.findWebsiteJson()
 
       recipeJson.toResultOr {
         SkilletError("Failed to find recipe JSON")
-      }.map {
-        JsonObject(
-          mapOf(
-            "recipe" to it,
-            "website" to websiteJson
-          )
-        )
+      }.map { recipe ->
+        buildJsonObject {
+          put("recipe", recipe)
+          websiteJson?.let { put("website", it) }
+        }
       }
     }
   }

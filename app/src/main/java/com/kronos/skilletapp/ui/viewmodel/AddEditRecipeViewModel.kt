@@ -1,6 +1,7 @@
 package com.kronos.skilletapp.ui.viewmodel
 
 import android.R.attr.description
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,7 @@ import com.kronos.skilletapp.utils.upsert
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.koin.core.logger.Logger
 import org.stringtemplate.v4.compiler.Bytecode.instructions
 import kotlin.collections.map
 import kotlin.time.Duration
@@ -359,6 +361,7 @@ class AddEditRecipeViewModel(
             )
           },
           failure = {
+            Log.w("Recipe Scraping", "Failed to scrape recipe: ${it.message}")
             state.copy(
               userMessage = "Recipe could not be imported, verify the link and try again, or enter the recipe manually",
             )
