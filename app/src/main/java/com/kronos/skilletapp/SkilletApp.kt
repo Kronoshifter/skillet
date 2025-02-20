@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.database.RecipeDatabase
+import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
@@ -44,6 +46,9 @@ val appModule = module {
   singleOf(::RecipeRepository) {
     createdAtStart()
   }
+
+  singleOf(::IngredientParser)
+  factoryOf(::RecipeScraper)
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)

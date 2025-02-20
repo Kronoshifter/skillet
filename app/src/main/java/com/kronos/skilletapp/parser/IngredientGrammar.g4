@@ -1,7 +1,5 @@
 grammar IngredientGrammar;
 
-
-
 recipe : ingredient+ EOF ;
 
 ingredient : (measurement WHITESPACE)? name comment? NEWLINE ;
@@ -11,18 +9,18 @@ measurement : quantity (WHITESPACE WORD)? ;
 quantity : (decimal | fraction | range) ;
 
 decimal : NUMBER ;
-fraction : (NUMBER WHITESPACE)? NUMBER '/' NUMBER ;
+fraction : (NUMBER WHITESPACE)? NUMBER ('/' | WHITESPACE)+ NUMBER ;
 range : (decimal | fraction) ('-' | WHITESPACE)+ (decimal | fraction) ;
 
 name : (WORD | WHITESPACE)*? WORD WHITESPACE? ;
 
-comment : COMMENT_START (WORD | WHITESPACE)+ ')'? ;
+comment : COMMENT_START (~NEWLINE)+ ;
 
 fragment LOWERCASE : [a-z] ;
 fragment UPPERCASE : [A-Z] ;
 fragment DIGIT : [0-9] ;
 
-WORD : (LOWERCASE | UPPERCASE | '_')+ ;
+WORD : (LOWERCASE | UPPERCASE | '_' | '-')+ ;
 WHITESPACE : (' ' | '\t') ;
 
 NUMBER : DIGIT+ ([.,] DIGIT+)? ;
@@ -31,5 +29,7 @@ NUMBER : DIGIT+ ([.,] DIGIT+)? ;
 COMMENT_START : [,(] ;
 
 NEWLINE : ('\r'? '\n' | '\r')+ ;
+
+//PARENTHETICAL : '(' ( PARENTHETICAL | ~[()]+ )* ')' ;
 
 ANY : . ;

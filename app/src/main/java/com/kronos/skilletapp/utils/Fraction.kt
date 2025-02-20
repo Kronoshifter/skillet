@@ -4,6 +4,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 data class Fraction(val numerator: Int, val denominator: Int) {
+  constructor(whole: Int, numerator: Int, denominator: Int) : this(whole * denominator + numerator, denominator)
+
   val decimal: Float
     get() = numerator.toFloat() / denominator
 

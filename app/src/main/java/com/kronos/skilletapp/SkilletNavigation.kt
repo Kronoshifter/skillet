@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 sealed interface Route {
   @Serializable data object RecipeList : Route
   @Serializable data class Recipe(val recipeId: String) : Route
-  @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null) : Route
+  @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null, val url: String? = null) : Route
 
   @Serializable data class Cooking(val recipeId: String, val scale: Float) : Route
 }
@@ -29,8 +29,8 @@ class SkilletNavigationActions(private val navController: NavHostController) {
     }
   }
 
-  fun navigateToAddEditRecipe(title: String, recipeId: String? = null) {
-    navController.navigate(Route.AddEditRecipe(title, recipeId))
+  fun navigateToAddEditRecipe(title: String, recipeId: String? = null, url: String? = null) {
+    navController.navigate(Route.AddEditRecipe(title, recipeId, url))
   }
 
   fun navigateToCooking(recipeId: String, scale: Float) {

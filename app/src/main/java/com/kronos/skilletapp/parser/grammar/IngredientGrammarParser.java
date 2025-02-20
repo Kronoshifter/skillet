@@ -1,4 +1,4 @@
-// Generated from /home/mmattle/SkilletApp/app/src/main/java/com/kronos/skilletapp/parser/IngredientGrammar.g4 by ANTLR 4.13.1
+// Generated from /home/mmattle/skillet/app/src/main/java/com/kronos/skilletapp/parser/IngredientGrammar.g4 by ANTLR 4.13.2
 package com.kronos.skilletapp.parser.grammar;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -9,16 +9,16 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
 
-@SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue"})
+@SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue", "this-escape"})
 public class IngredientGrammarParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.13.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.13.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, WORD=4, WHITESPACE=5, NUMBER=6, COMMENT_START=7, 
-		NEWLINE=8, ANY=9;
+		T__0=1, T__1=2, WORD=3, WHITESPACE=4, NUMBER=5, COMMENT_START=6, NEWLINE=7, 
+		ANY=8;
 	public static final int
 		RULE_recipe = 0, RULE_ingredient = 1, RULE_measurement = 2, RULE_quantity = 3, 
 		RULE_decimal = 4, RULE_fraction = 5, RULE_range = 6, RULE_name = 7, RULE_comment = 8;
@@ -32,14 +32,14 @@ public class IngredientGrammarParser extends Parser {
 
 	private static String[] makeLiteralNames() {
 		return new String[] {
-			null, "'/'", "'-'", "')'"
+			null, "'/'", "'-'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, null, null, null, "WORD", "WHITESPACE", "NUMBER", "COMMENT_START", 
-			"NEWLINE", "ANY"
+			null, null, null, "WORD", "WHITESPACE", "NUMBER", "COMMENT_START", "NEWLINE", 
+			"ANY"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -141,7 +141,7 @@ public class IngredientGrammarParser extends Parser {
 				setState(21); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & 112L) != 0) );
+			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & 56L) != 0) );
 			setState(23);
 			match(EOF);
 			}
@@ -414,7 +414,10 @@ public class IngredientGrammarParser extends Parser {
 		public TerminalNode NUMBER(int i) {
 			return getToken(IngredientGrammarParser.NUMBER, i);
 		}
-		public TerminalNode WHITESPACE() { return getToken(IngredientGrammarParser.WHITESPACE, 0); }
+		public List<TerminalNode> WHITESPACE() { return getTokens(IngredientGrammarParser.WHITESPACE); }
+		public TerminalNode WHITESPACE(int i) {
+			return getToken(IngredientGrammarParser.WHITESPACE, i);
+		}
 		public FractionContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -437,6 +440,7 @@ public class IngredientGrammarParser extends Parser {
 	public final FractionContext fraction() throws RecognitionException {
 		FractionContext _localctx = new FractionContext(_ctx, getState());
 		enterRule(_localctx, 10, RULE_fraction);
+		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
@@ -454,9 +458,29 @@ public class IngredientGrammarParser extends Parser {
 			}
 			setState(52);
 			match(NUMBER);
-			setState(53);
-			match(T__0);
-			setState(54);
+			setState(54); 
+			_errHandler.sync(this);
+			_la = _input.LA(1);
+			do {
+				{
+				{
+				setState(53);
+				_la = _input.LA(1);
+				if ( !(_la==T__0 || _la==WHITESPACE) ) {
+				_errHandler.recoverInline(this);
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
+					consume();
+				}
+				}
+				}
+				setState(56); 
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+			} while ( _la==T__0 || _la==WHITESPACE );
+			setState(58);
 			match(NUMBER);
 			}
 		}
@@ -515,29 +539,29 @@ public class IngredientGrammarParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(58);
+			setState(62);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,6,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,7,_ctx) ) {
 			case 1:
 				{
-				setState(56);
+				setState(60);
 				decimal();
 				}
 				break;
 			case 2:
 				{
-				setState(57);
+				setState(61);
 				fraction();
 				}
 				break;
 			}
-			setState(61); 
+			setState(65); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(60);
+				setState(64);
 				_la = _input.LA(1);
 				if ( !(_la==T__1 || _la==WHITESPACE) ) {
 				_errHandler.recoverInline(this);
@@ -549,22 +573,22 @@ public class IngredientGrammarParser extends Parser {
 				}
 				}
 				}
-				setState(63); 
+				setState(67); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			} while ( _la==T__1 || _la==WHITESPACE );
-			setState(67);
+			setState(71);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,8,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,9,_ctx) ) {
 			case 1:
 				{
-				setState(65);
+				setState(69);
 				decimal();
 				}
 				break;
 			case 2:
 				{
-				setState(66);
+				setState(70);
 				fraction();
 				}
 				break;
@@ -619,14 +643,14 @@ public class IngredientGrammarParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(72);
+			setState(76);
 			_errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(_input,9,_ctx);
+			_alt = getInterpreter().adaptivePredict(_input,10,_ctx);
 			while ( _alt!=1 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1+1 ) {
 					{
 					{
-					setState(69);
+					setState(73);
 					_la = _input.LA(1);
 					if ( !(_la==WORD || _la==WHITESPACE) ) {
 					_errHandler.recoverInline(this);
@@ -639,18 +663,18 @@ public class IngredientGrammarParser extends Parser {
 					}
 					} 
 				}
-				setState(74);
+				setState(78);
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,9,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,10,_ctx);
 			}
-			setState(75);
+			setState(79);
 			match(WORD);
-			setState(77);
+			setState(81);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==WHITESPACE) {
 				{
-				setState(76);
+				setState(80);
 				match(WHITESPACE);
 				}
 			}
@@ -671,13 +695,9 @@ public class IngredientGrammarParser extends Parser {
 	@SuppressWarnings("CheckReturnValue")
 	public static class CommentContext extends ParserRuleContext {
 		public TerminalNode COMMENT_START() { return getToken(IngredientGrammarParser.COMMENT_START, 0); }
-		public List<TerminalNode> WORD() { return getTokens(IngredientGrammarParser.WORD); }
-		public TerminalNode WORD(int i) {
-			return getToken(IngredientGrammarParser.WORD, i);
-		}
-		public List<TerminalNode> WHITESPACE() { return getTokens(IngredientGrammarParser.WHITESPACE); }
-		public TerminalNode WHITESPACE(int i) {
-			return getToken(IngredientGrammarParser.WHITESPACE, i);
+		public List<TerminalNode> NEWLINE() { return getTokens(IngredientGrammarParser.NEWLINE); }
+		public TerminalNode NEWLINE(int i) {
+			return getToken(IngredientGrammarParser.NEWLINE, i);
 		}
 		public CommentContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -705,17 +725,17 @@ public class IngredientGrammarParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(79);
+			setState(83);
 			match(COMMENT_START);
-			setState(81); 
+			setState(85); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(80);
+				setState(84);
 				_la = _input.LA(1);
-				if ( !(_la==WORD || _la==WHITESPACE) ) {
+				if ( _la <= 0 || (_la==NEWLINE) ) {
 				_errHandler.recoverInline(this);
 				}
 				else {
@@ -725,20 +745,10 @@ public class IngredientGrammarParser extends Parser {
 				}
 				}
 				}
-				setState(83); 
+				setState(87); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( _la==WORD || _la==WHITESPACE );
-			setState(86);
-			_errHandler.sync(this);
-			_la = _input.LA(1);
-			if (_la==T__2) {
-				{
-				setState(85);
-				match(T__2);
-				}
-			}
-
+			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & 382L) != 0) );
 			}
 		}
 		catch (RecognitionException re) {
@@ -753,7 +763,7 @@ public class IngredientGrammarParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\u0004\u0001\tY\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
+		"\u0004\u0001\bZ\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
 		"\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0002\u0004\u0007\u0004\u0002"+
 		"\u0005\u0007\u0005\u0002\u0006\u0007\u0006\u0002\u0007\u0007\u0007\u0002"+
 		"\b\u0007\b\u0001\u0000\u0004\u0000\u0014\b\u0000\u000b\u0000\f\u0000\u0015"+
@@ -762,50 +772,52 @@ public class IngredientGrammarParser extends Parser {
 		"\u0001\u0001\u0001\u0002\u0001\u0002\u0001\u0002\u0003\u0002(\b\u0002"+
 		"\u0001\u0003\u0001\u0003\u0001\u0003\u0003\u0003-\b\u0003\u0001\u0004"+
 		"\u0001\u0004\u0001\u0005\u0001\u0005\u0003\u00053\b\u0005\u0001\u0005"+
-		"\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0006\u0001\u0006\u0003\u0006"+
-		";\b\u0006\u0001\u0006\u0004\u0006>\b\u0006\u000b\u0006\f\u0006?\u0001"+
-		"\u0006\u0001\u0006\u0003\u0006D\b\u0006\u0001\u0007\u0005\u0007G\b\u0007"+
-		"\n\u0007\f\u0007J\t\u0007\u0001\u0007\u0001\u0007\u0003\u0007N\b\u0007"+
-		"\u0001\b\u0001\b\u0004\bR\b\b\u000b\b\f\bS\u0001\b\u0003\bW\b\b\u0001"+
-		"\b\u0001H\u0000\t\u0000\u0002\u0004\u0006\b\n\f\u000e\u0010\u0000\u0002"+
-		"\u0002\u0000\u0002\u0002\u0005\u0005\u0001\u0000\u0004\u0005]\u0000\u0013"+
+		"\u0001\u0005\u0004\u00057\b\u0005\u000b\u0005\f\u00058\u0001\u0005\u0001"+
+		"\u0005\u0001\u0006\u0001\u0006\u0003\u0006?\b\u0006\u0001\u0006\u0004"+
+		"\u0006B\b\u0006\u000b\u0006\f\u0006C\u0001\u0006\u0001\u0006\u0003\u0006"+
+		"H\b\u0006\u0001\u0007\u0005\u0007K\b\u0007\n\u0007\f\u0007N\t\u0007\u0001"+
+		"\u0007\u0001\u0007\u0003\u0007R\b\u0007\u0001\b\u0001\b\u0004\bV\b\b\u000b"+
+		"\b\f\bW\u0001\b\u0001L\u0000\t\u0000\u0002\u0004\u0006\b\n\f\u000e\u0010"+
+		"\u0000\u0004\u0002\u0000\u0001\u0001\u0004\u0004\u0002\u0000\u0002\u0002"+
+		"\u0004\u0004\u0001\u0000\u0003\u0004\u0001\u0000\u0007\u0007^\u0000\u0013"+
 		"\u0001\u0000\u0000\u0000\u0002\u001c\u0001\u0000\u0000\u0000\u0004$\u0001"+
 		"\u0000\u0000\u0000\u0006,\u0001\u0000\u0000\u0000\b.\u0001\u0000\u0000"+
-		"\u0000\n2\u0001\u0000\u0000\u0000\f:\u0001\u0000\u0000\u0000\u000eH\u0001"+
-		"\u0000\u0000\u0000\u0010O\u0001\u0000\u0000\u0000\u0012\u0014\u0003\u0002"+
+		"\u0000\n2\u0001\u0000\u0000\u0000\f>\u0001\u0000\u0000\u0000\u000eL\u0001"+
+		"\u0000\u0000\u0000\u0010S\u0001\u0000\u0000\u0000\u0012\u0014\u0003\u0002"+
 		"\u0001\u0000\u0013\u0012\u0001\u0000\u0000\u0000\u0014\u0015\u0001\u0000"+
 		"\u0000\u0000\u0015\u0013\u0001\u0000\u0000\u0000\u0015\u0016\u0001\u0000"+
 		"\u0000\u0000\u0016\u0017\u0001\u0000\u0000\u0000\u0017\u0018\u0005\u0000"+
 		"\u0000\u0001\u0018\u0001\u0001\u0000\u0000\u0000\u0019\u001a\u0003\u0004"+
-		"\u0002\u0000\u001a\u001b\u0005\u0005\u0000\u0000\u001b\u001d\u0001\u0000"+
+		"\u0002\u0000\u001a\u001b\u0005\u0004\u0000\u0000\u001b\u001d\u0001\u0000"+
 		"\u0000\u0000\u001c\u0019\u0001\u0000\u0000\u0000\u001c\u001d\u0001\u0000"+
 		"\u0000\u0000\u001d\u001e\u0001\u0000\u0000\u0000\u001e \u0003\u000e\u0007"+
 		"\u0000\u001f!\u0003\u0010\b\u0000 \u001f\u0001\u0000\u0000\u0000 !\u0001"+
-		"\u0000\u0000\u0000!\"\u0001\u0000\u0000\u0000\"#\u0005\b\u0000\u0000#"+
-		"\u0003\u0001\u0000\u0000\u0000$\'\u0003\u0006\u0003\u0000%&\u0005\u0005"+
-		"\u0000\u0000&(\u0005\u0004\u0000\u0000\'%\u0001\u0000\u0000\u0000\'(\u0001"+
+		"\u0000\u0000\u0000!\"\u0001\u0000\u0000\u0000\"#\u0005\u0007\u0000\u0000"+
+		"#\u0003\u0001\u0000\u0000\u0000$\'\u0003\u0006\u0003\u0000%&\u0005\u0004"+
+		"\u0000\u0000&(\u0005\u0003\u0000\u0000\'%\u0001\u0000\u0000\u0000\'(\u0001"+
 		"\u0000\u0000\u0000(\u0005\u0001\u0000\u0000\u0000)-\u0003\b\u0004\u0000"+
 		"*-\u0003\n\u0005\u0000+-\u0003\f\u0006\u0000,)\u0001\u0000\u0000\u0000"+
 		",*\u0001\u0000\u0000\u0000,+\u0001\u0000\u0000\u0000-\u0007\u0001\u0000"+
-		"\u0000\u0000./\u0005\u0006\u0000\u0000/\t\u0001\u0000\u0000\u000001\u0005"+
-		"\u0006\u0000\u000013\u0005\u0005\u0000\u000020\u0001\u0000\u0000\u0000"+
-		"23\u0001\u0000\u0000\u000034\u0001\u0000\u0000\u000045\u0005\u0006\u0000"+
-		"\u000056\u0005\u0001\u0000\u000067\u0005\u0006\u0000\u00007\u000b\u0001"+
-		"\u0000\u0000\u00008;\u0003\b\u0004\u00009;\u0003\n\u0005\u0000:8\u0001"+
-		"\u0000\u0000\u0000:9\u0001\u0000\u0000\u0000;=\u0001\u0000\u0000\u0000"+
-		"<>\u0007\u0000\u0000\u0000=<\u0001\u0000\u0000\u0000>?\u0001\u0000\u0000"+
-		"\u0000?=\u0001\u0000\u0000\u0000?@\u0001\u0000\u0000\u0000@C\u0001\u0000"+
-		"\u0000\u0000AD\u0003\b\u0004\u0000BD\u0003\n\u0005\u0000CA\u0001\u0000"+
-		"\u0000\u0000CB\u0001\u0000\u0000\u0000D\r\u0001\u0000\u0000\u0000EG\u0007"+
-		"\u0001\u0000\u0000FE\u0001\u0000\u0000\u0000GJ\u0001\u0000\u0000\u0000"+
-		"HI\u0001\u0000\u0000\u0000HF\u0001\u0000\u0000\u0000IK\u0001\u0000\u0000"+
-		"\u0000JH\u0001\u0000\u0000\u0000KM\u0005\u0004\u0000\u0000LN\u0005\u0005"+
-		"\u0000\u0000ML\u0001\u0000\u0000\u0000MN\u0001\u0000\u0000\u0000N\u000f"+
-		"\u0001\u0000\u0000\u0000OQ\u0005\u0007\u0000\u0000PR\u0007\u0001\u0000"+
-		"\u0000QP\u0001\u0000\u0000\u0000RS\u0001\u0000\u0000\u0000SQ\u0001\u0000"+
-		"\u0000\u0000ST\u0001\u0000\u0000\u0000TV\u0001\u0000\u0000\u0000UW\u0005"+
-		"\u0003\u0000\u0000VU\u0001\u0000\u0000\u0000VW\u0001\u0000\u0000\u0000"+
-		"W\u0011\u0001\u0000\u0000\u0000\r\u0015\u001c \',2:?CHMSV";
+		"\u0000\u0000./\u0005\u0005\u0000\u0000/\t\u0001\u0000\u0000\u000001\u0005"+
+		"\u0005\u0000\u000013\u0005\u0004\u0000\u000020\u0001\u0000\u0000\u0000"+
+		"23\u0001\u0000\u0000\u000034\u0001\u0000\u0000\u000046\u0005\u0005\u0000"+
+		"\u000057\u0007\u0000\u0000\u000065\u0001\u0000\u0000\u000078\u0001\u0000"+
+		"\u0000\u000086\u0001\u0000\u0000\u000089\u0001\u0000\u0000\u00009:\u0001"+
+		"\u0000\u0000\u0000:;\u0005\u0005\u0000\u0000;\u000b\u0001\u0000\u0000"+
+		"\u0000<?\u0003\b\u0004\u0000=?\u0003\n\u0005\u0000><\u0001\u0000\u0000"+
+		"\u0000>=\u0001\u0000\u0000\u0000?A\u0001\u0000\u0000\u0000@B\u0007\u0001"+
+		"\u0000\u0000A@\u0001\u0000\u0000\u0000BC\u0001\u0000\u0000\u0000CA\u0001"+
+		"\u0000\u0000\u0000CD\u0001\u0000\u0000\u0000DG\u0001\u0000\u0000\u0000"+
+		"EH\u0003\b\u0004\u0000FH\u0003\n\u0005\u0000GE\u0001\u0000\u0000\u0000"+
+		"GF\u0001\u0000\u0000\u0000H\r\u0001\u0000\u0000\u0000IK\u0007\u0002\u0000"+
+		"\u0000JI\u0001\u0000\u0000\u0000KN\u0001\u0000\u0000\u0000LM\u0001\u0000"+
+		"\u0000\u0000LJ\u0001\u0000\u0000\u0000MO\u0001\u0000\u0000\u0000NL\u0001"+
+		"\u0000\u0000\u0000OQ\u0005\u0003\u0000\u0000PR\u0005\u0004\u0000\u0000"+
+		"QP\u0001\u0000\u0000\u0000QR\u0001\u0000\u0000\u0000R\u000f\u0001\u0000"+
+		"\u0000\u0000SU\u0005\u0006\u0000\u0000TV\b\u0003\u0000\u0000UT\u0001\u0000"+
+		"\u0000\u0000VW\u0001\u0000\u0000\u0000WU\u0001\u0000\u0000\u0000WX\u0001"+
+		"\u0000\u0000\u0000X\u0011\u0001\u0000\u0000\u0000\r\u0015\u001c \',28"+
+		">CGLQW";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

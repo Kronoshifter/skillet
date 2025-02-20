@@ -1,18 +1,32 @@
 package com.kronos.skilletapp.ui.viewmodel
 
+import android.R.attr.description
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.github.michaelbull.result.mapBoth
 import com.kronos.skilletapp.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.scraping.RecipeHtml
+import com.kronos.skilletapp.scraping.RecipeScrape
+import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.koin.core.logger.Logger
+import org.stringtemplate.v4.compiler.Bytecode.instructions
+import kotlin.collections.first
+import kotlin.collections.map
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 data class RecipeState(
   val name: String = "",
@@ -34,10 +48,13 @@ data class RecipeState(
 
 class AddEditRecipeViewModel(
   private val recipeRepository: RecipeRepository,
+  private val scraper: RecipeScraper,
+  private val recipeParser: IngredientParser,
   handle: SavedStateHandle,
 ) : ViewModel() {
   private val args = handle.toRoute<Route.AddEditRecipe>()
   private val recipeId = args.recipeId
+  private val recipeUrl = args.url
   private lateinit var createdId: String
 
   private val _uiState: MutableStateFlow<UiState<Nothing>> = MutableStateFlow(UiState.Loaded)
@@ -46,24 +63,11 @@ class AddEditRecipeViewModel(
   val uiState = _uiState.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
 
-//  val tharBeChanges: Boolean
-//    get() = _recipeState.value.let {
-//      it.name != originalRecipeState.name ||
-//      it.description != originalRecipeState.description ||
-//      it.notes != originalRecipeState.notes ||
-//      it.servings != originalRecipeState.servings ||
-//      it.prepTime != originalRecipeState.prepTime ||
-//      it.cookTime != originalRecipeState.cookTime ||
-//      it.source != originalRecipeState.source ||
-//      it.sourceName != originalRecipeState.sourceName ||
-//      it.ingredients != originalRecipeState.ingredients ||
-//      it.instructions != originalRecipeState.instructions ||
-//      it.equipment != originalRecipeState.equipment
-//    }
-
   init {
     recipeId?.let {
       loadRecipe(it)
+    } ?: recipeUrl?.let {
+      scrapeRecipe(it)
     }
   }
 
@@ -248,16 +252,16 @@ class AddEditRecipeViewModel(
       state.copy(
         tharBeChanges = state.let {
           it.name != originalRecipeState.name ||
-          it.description != originalRecipeState.description ||
-          it.notes != originalRecipeState.notes ||
-          it.servings != originalRecipeState.servings ||
-          it.prepTime != originalRecipeState.prepTime ||
-          it.cookTime != originalRecipeState.cookTime ||
-          it.source != originalRecipeState.source ||
-          it.sourceName != originalRecipeState.sourceName ||
-          it.ingredients != originalRecipeState.ingredients ||
-          it.instructions != originalRecipeState.instructions ||
-          it.equipment != originalRecipeState.equipment
+              it.description != originalRecipeState.description ||
+              it.notes != originalRecipeState.notes ||
+              it.servings != originalRecipeState.servings ||
+              it.prepTime != originalRecipeState.prepTime ||
+              it.cookTime != originalRecipeState.cookTime ||
+              it.source != originalRecipeState.source ||
+              it.sourceName != originalRecipeState.sourceName ||
+              it.ingredients != originalRecipeState.ingredients ||
+              it.instructions != originalRecipeState.instructions ||
+              it.equipment != originalRecipeState.equipment
         }
       )
     }
@@ -339,6 +343,40 @@ class AddEditRecipeViewModel(
     }
   }
 
+  fun scrapeRecipe(url: String) {
+    _uiState.update { UiState.Loading }
+    viewModelScope.launch {
+      _recipeState.update { state ->
+        scraper.scrapeRecipe(url).mapBoth(
+          success = {
+            RecipeState(
+              name = it.recipe.name,
+              description = it.recipe.description,
+//              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+              servings = """\d+""".toRegex().let { regex ->
+                regex.find(it.recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
+              },
+              prepTime = it.recipe.prepTime.parseMinutes(),
+              cookTime = it.recipe.prepTime.parseMinutes(),
+              source = url,
+              sourceName = it.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
+              ingredients = it.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
+              instructions = it.recipe.instructions.map { Instruction(text = it.text) }
+            )
+          },
+          failure = {
+            Log.e("Recipe Scraping", "Failed to scrape recipe: ${it.message}")
+            state.copy(
+              userMessage = "Recipe could not be imported, verify the link and try again, or enter the recipe manually",
+            )
+          }
+        )
+      }
+
+      _uiState.update { UiState.Loaded }
+    }
+  }
+
   private fun checkForInvalidForm(): String? = with(_recipeState.value) {
     return when {
       name.isBlank() -> "Name cannot be blank"
@@ -349,4 +387,21 @@ class AddEditRecipeViewModel(
       else -> null
     }
   }
+
+  private fun RecipeScrape.toRecipeState() = RecipeState(
+    name = recipe.name,
+    description = recipe.description,
+//              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+    servings = """\d+""".toRegex().let { regex ->
+      regex.find(recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
+    },
+    prepTime = recipe.prepTime.parseMinutes(),
+    cookTime = recipe.prepTime.parseMinutes(),
+    source = website?.url ?: "",
+    sourceName = website?.name ?: "",
+    ingredients = recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
+    instructions = recipe.instructions.map { Instruction(text = it.text) }
+  )
+
+  private fun String.parseMinutes() = Duration.parseIsoString(this).inWholeMinutes.toInt()
 }

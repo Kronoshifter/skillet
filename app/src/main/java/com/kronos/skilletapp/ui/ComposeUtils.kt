@@ -10,9 +10,11 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +32,9 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.RecipeSource
 import com.kronos.skilletapp.model.RecipeTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.compose.KoinApplication
 import org.koin.compose.KoinContext
@@ -188,3 +193,16 @@ fun KoinPreview(
     content = content
   )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+fun SheetState.dismiss(
+  scope: CoroutineScope,
+  onComplete: () -> Unit,
+) {
+  scope.launch { hide() }.invokeOnCompletion {
+    if (!isVisible) {
+      onComplete()
+    }
+  }
+}
+
