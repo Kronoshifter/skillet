@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.viewmodel
 
+import android.R.attr.description
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,6 +12,7 @@ import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.RecipeHtml
+import com.kronos.skilletapp.scraping.RecipeScrape
 import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
@@ -18,6 +20,7 @@ import com.kronos.skilletapp.utils.upsert
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.stringtemplate.v4.compiler.Bytecode.instructions
 import kotlin.collections.map
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -343,12 +346,17 @@ class AddEditRecipeViewModel(
       _recipeState.update { state ->
         scraper.scrapeRecipe(url).mapBoth(
           success = {
-            it.toRecipeState()
-              .copy(
-                source = url,
-                sourceName = url,
-              )
-              .also { originalRecipeState = it }
+            RecipeState(
+              name = it.recipe.name,
+              description = it.recipe.description,
+              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+              prepTime = it.recipe.prepTime.parseMinutes(),
+              cookTime = it.recipe.prepTime.parseMinutes(),
+              source = it.website?.url ?: url,
+              sourceName = it.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
+              ingredients = it.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
+              instructions = it.recipe.instructions.map { Instruction(text = it.text) }
+            )
           },
           failure = {
             state.copy(
@@ -373,16 +381,16 @@ class AddEditRecipeViewModel(
     }
   }
 
-  private fun RecipeHtml.toRecipeState() = RecipeState(
-    name = name,
-    description = description,
-    servings = """\d+""".toRegex().find(recipeYield)?.value?.toInt() ?: 0,
-    prepTime = prepTime.parseMinutes(),
-    cookTime = prepTime.parseMinutes(),
-    source = "", //TODO: add to RecipeHtml
-    sourceName = "", //TODO: add to RecipeHtml
-    ingredients = ingredients.map { recipeParser.parseIngredient(text = it) },
-    instructions = instructions.map { Instruction(text = it.text) }
+  private fun RecipeScrape.toRecipeState() = RecipeState(
+    name = recipe.name,
+    description = recipe.description,
+    servings = """\d+""".toRegex().find(recipe.recipeYield)?.value?.toInt() ?: 0,
+    prepTime = recipe.prepTime.parseMinutes(),
+    cookTime = recipe.prepTime.parseMinutes(),
+    source = website?.url ?: "",
+    sourceName = website?.name ?: "",
+    ingredients = recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
+    instructions = recipe.instructions.map { Instruction(text = it.text) }
   )
 
   private fun String.parseMinutes() = Duration.parseIsoString(this).inWholeMinutes.toInt()

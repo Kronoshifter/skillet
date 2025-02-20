@@ -29,15 +29,28 @@ data class InstructionHtml(
   val text: String,
 )
 
+@Serializable
+data class WebSiteHtml(
+  val url: String,
+  val name: String,
+  val description: String,
+)
+
+@Serializable
+data class RecipeScrape(
+  val website: WebSiteHtml?,
+  val recipe: RecipeHtml
+)
+
 class RecipeScraper {
 
-  suspend fun scrapeRecipe(url: String): Result<RecipeHtml, SkilletError> {
+  suspend fun scrapeRecipe(url: String): Result<RecipeScrape, SkilletError> {
     return scrapeJsonLd(url)
   }
 
-  private suspend fun scrapeJsonLd(url: String): Result<RecipeHtml, SkilletError> = extractJsonLd(url)
-    .andThen { extractRecipeJsonLd(it) }
-    .andThen { parseJsonLd(it) }
+  private suspend fun scrapeJsonLd(url: String): Result<RecipeScrape, SkilletError> = extractJsonLd(url)
+    .andThen { parseToJson(it) }
+    .andThen { parseToScrape(it) }
 
   private suspend fun extractJsonLd(recipeUrl: String): Result<String, SkilletError> = skrape(AsyncFetcher) {
     request {
@@ -59,13 +72,25 @@ class RecipeScraper {
     }
   }
 
-  private fun extractRecipeJsonLd(input: String): Result<JsonElement, SkilletError> {
+  private fun parseToJson(input: String): Result<JsonElement, SkilletError> {
     return runCatching {
       Json.parseToJsonElement(input)
     }.mapError {
       SkilletError("Error parsing JSON: ${it.message}")
     }.andThen { element ->
-      element.findRecipeJson().toResultOr { SkilletError("Could not find recipe Json") }
+      val recipeJson = element.findRecipeJson()
+      val websiteJson = element.findWebsiteJson() ?: JsonObject(emptyMap())
+
+      recipeJson.toResultOr {
+        SkilletError("Failed to find recipe JSON")
+      }.map {
+        JsonObject(
+          mapOf(
+            "recipe" to it,
+            "website" to websiteJson
+          )
+        )
+      }
     }
   }
 
@@ -81,16 +106,28 @@ class RecipeScraper {
     }
   }
 
+  private fun JsonElement.findWebsiteJson(): JsonElement? {
+    return if (this is JsonObject && "@type" in this && this.getValue("@type") isOrContains "WebSite" == true) {
+      this
+    } else if (this is JsonObject && "@type" !in this) {
+      this.firstNotNullOfOrNull { it.value.findWebsiteJson() }
+    } else if (this is JsonArray) {
+      this.firstNotNullOfOrNull { it.findWebsiteJson() }
+    } else {
+      null
+    }
+  }
+
   private infix fun JsonElement.isOrContains(s: String): Boolean = when (this) {
     is JsonPrimitive -> this.content == s
     is JsonArray -> this.any { it.jsonPrimitive.content == s }
     else -> false
   }
 
-  private fun parseJsonLd(element: JsonElement): Result<RecipeHtml, SkilletError> {
+  private fun parseToScrape(element: JsonElement): Result<RecipeScrape, SkilletError> {
     val json = Json { ignoreUnknownKeys = true }
     return runCatching {
-      json.decodeFromJsonElement<RecipeHtml>(element)
+      json.decodeFromJsonElement<RecipeScrape>(element)
     }.mapError {
       SkilletError("Failed to parse JSON-LD: ${it.message}")
     }
