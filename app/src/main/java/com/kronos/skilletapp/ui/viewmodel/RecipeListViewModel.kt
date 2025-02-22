@@ -1,19 +1,21 @@
 package com.kronos.skilletapp.ui.viewmodel
 
+import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 data class RecipeListState(
   val recipes: List<Recipe>,
   val isRefreshing: Boolean = false,
+  val sharedUrl: String = ""
 )
 
 class RecipeListViewModel(
@@ -28,7 +30,14 @@ class RecipeListViewModel(
     .map { UiState.LoadedWithData(it) }
     .catch<UiState<List<Recipe>>> { emit(UiState.Error(SkilletError("Error loading recipes"))) }
 
-  val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
+  private val _sharedUrl = handle.getStateFlow(NavController.KEY_DEEP_LINK_INTENT, Intent())
+    .map {
+      if (it.action != Intent.ACTION_SEND) return@map ""
+
+      it.getStringExtra(Intent.EXTRA_TEXT) ?: ""
+    }
+
+  val uiState = combine(_isLoading, _sharedUrl, _recipesAsync) { isLoading, sharedUrl, recipesAsync ->
     when {
       isLoading -> UiState.Loading
       else -> when (recipesAsync) {
@@ -37,6 +46,7 @@ class RecipeListViewModel(
         is UiState.LoadedWithData -> UiState.LoadedWithData(
           RecipeListState(
             recipes = recipesAsync.data,
+            sharedUrl = sharedUrl
           )
         )
 

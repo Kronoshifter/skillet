@@ -361,7 +361,8 @@ class AddEditRecipeViewModel(
               source = url,
               sourceName = it.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
               ingredients = it.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
-              instructions = it.recipe.instructions.map { Instruction(text = it.text) }
+              instructions = it.recipe.instructions.map { Instruction(text = it.text) },
+              tharBeChanges = true
             )
           },
           failure = {

@@ -134,68 +134,75 @@ fun RecipeListScreen(
         modifier = Modifier
           .fillMaxSize()
       )
-    }
 
-    SpeedDialOverlay(
-      visible = overlayVisible,
-      onClick = {
-        overlayVisible = false
-        speedDialState = speedDialState.toggle()
-      },
-    )
-
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
-
-    if (showImportRecipeBottomSheet) {
-      var url by remember { mutableStateOf("") }
-      var isValidUrl = isValidUrl(url)
-
-      ActionBottomSheet(
-        sheetState = sheetState,
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(8.dp),
-        onDismissRequest = { showImportRecipeBottomSheet = false },
-        title = { Text(text = "Import Recipe") },
-        action = {
-          TextButton(
-            onClick = {
-              onNewRecipeByUrl(url)
-              sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-            },
-            enabled = isValidUrl
-          ) {
-            Text(text = "Import")
-          }
+      SpeedDialOverlay(
+        visible = overlayVisible,
+        onClick = {
+          overlayVisible = false
+          speedDialState = speedDialState.toggle()
         },
-      ) {
-        val keyboard = LocalSoftwareKeyboardController.current
+      )
 
-        OutlinedTextField(
-          value = url,
-          onValueChange = { url = it },
-          label = { Text(text = "URL") },
-          modifier = Modifier.fillMaxWidth(),
-          keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
-          keyboardActions = KeyboardActions(
-            onDone = {
-              if (isValidUrl) {
+      LaunchedEffect(data.sharedUrl) {
+        showImportRecipeBottomSheet = data.sharedUrl.isNotBlank()
+      }
+
+      val sheetState = rememberModalBottomSheetState()
+      val scope = rememberCoroutineScope()
+
+      if (showImportRecipeBottomSheet) {
+        var url by remember { mutableStateOf(data.sharedUrl) }
+        var isValidUrl = isValidUrl(url)
+
+        ActionBottomSheet(
+          sheetState = sheetState,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+          onDismissRequest = { showImportRecipeBottomSheet = false },
+          title = { Text(text = "Import Recipe") },
+          action = {
+            TextButton(
+              onClick = {
                 onNewRecipeByUrl(url)
+                url = ""
+                //TODO: find a way to clear the shared content from the intent after it has been used
                 sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-              }
+              },
+              enabled = isValidUrl
+            ) {
+              Text(text = "Import")
+            }
+          },
+        ) {
+          val keyboard = LocalSoftwareKeyboardController.current
 
-              keyboard?.hide()
+          OutlinedTextField(
+            value = url,
+            onValueChange = { url = it },
+            label = { Text(text = "URL") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
+            keyboardActions = KeyboardActions(
+              onDone = {
+                if (isValidUrl) {
+                  onNewRecipeByUrl(url)
+                  url = ""
+                  sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
+                }
+
+                keyboard?.hide()
+              }
+            ),
+            singleLine = true,
+            isError = !isValidUrl && url.isNotBlank(),
+            supportingText = {
+              if (!isValidUrl && url.isNotBlank()) {
+                Text(text = "Invalid URL")
+              }
             }
-          ),
-          singleLine = true,
-          isError = !isValidUrl && url.isNotBlank(),
-          supportingText = {
-            if (!isValidUrl && url.isNotBlank()) {
-              Text(text = "Invalid URL")
-            }
-          }
-        )
+          )
+        }
       }
     }
   }

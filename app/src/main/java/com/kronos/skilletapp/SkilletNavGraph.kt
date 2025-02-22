@@ -1,5 +1,7 @@
 package com.kronos.skilletapp
 
+import android.R.attr.mimeType
+import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -8,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
@@ -30,7 +33,14 @@ fun SkilletNavGraph(
       slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) + fadeOut()
     },
   ) {
-    composable<Route.RecipeList> {
+    composable<Route.RecipeList>(
+      deepLinks = listOf(
+        navDeepLink {
+          action = Intent.ACTION_SEND
+          mimeType = "text/*"
+        }
+      )
+    ) {
       RecipeListScreen(
         onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
         onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },
