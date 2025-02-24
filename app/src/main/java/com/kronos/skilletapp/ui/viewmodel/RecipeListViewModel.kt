@@ -37,7 +37,7 @@ class RecipeListViewModel(
       it.getStringExtra(Intent.EXTRA_TEXT) ?: ""
     }
 
-  val uiState = combine(_isLoading, _sharedUrl, _recipesAsync) { isLoading, sharedUrl, recipesAsync ->
+  val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
     when {
       isLoading -> UiState.Loading
       else -> when (recipesAsync) {
@@ -46,7 +46,6 @@ class RecipeListViewModel(
         is UiState.LoadedWithData -> UiState.LoadedWithData(
           RecipeListState(
             recipes = recipesAsync.data,
-            sharedUrl = sharedUrl
           )
         )
 

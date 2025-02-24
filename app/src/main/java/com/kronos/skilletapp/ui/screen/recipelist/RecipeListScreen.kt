@@ -39,6 +39,7 @@ import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
+import com.kronos.skilletapp.utils.isNotNullOrBlank
 import com.leinardi.android.speeddial.compose.FabWithLabel
 import com.leinardi.android.speeddial.compose.SpeedDial
 import com.leinardi.android.speeddial.compose.SpeedDialOverlay
@@ -54,6 +55,7 @@ fun RecipeListScreen(
   onNewRecipe: () -> Unit,
   onNewRecipeByUrl: (url: String) -> Unit,
   onRecipeClick: (id: String) -> Unit,
+  sharedUrl: String? = null,
   vm: RecipeListViewModel = koinViewModel(),
 ) {
   var speedDialState by rememberSaveable { mutableStateOf(SpeedDialState.Collapsed) }
@@ -143,15 +145,15 @@ fun RecipeListScreen(
         },
       )
 
-      LaunchedEffect(data.sharedUrl) {
-        showImportRecipeBottomSheet = data.sharedUrl.isNotBlank()
+      LaunchedEffect(sharedUrl) {
+        showImportRecipeBottomSheet = sharedUrl.isNotNullOrBlank()
       }
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
 
       if (showImportRecipeBottomSheet) {
-        var url by remember { mutableStateOf(data.sharedUrl) }
+        var url by remember { mutableStateOf(sharedUrl ?: "") }
         var isValidUrl = isValidUrl(url)
 
         ActionBottomSheet(

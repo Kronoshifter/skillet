@@ -6,7 +6,7 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import kotlinx.serialization.Serializable
 
 sealed interface Route {
-  @Serializable data object RecipeList : Route
+  @Serializable data class RecipeList(val sharedUrl: String? = null) : Route
   @Serializable data class Recipe(val recipeId: String) : Route
   @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null, val url: String? = null) : Route
 
@@ -16,9 +16,13 @@ sealed interface Route {
 class SkilletNavigationActions(private val navController: NavHostController) {
 
   fun navigateToRecipeList() {
-    navController.navigate(Route.RecipeList) {
+    navController.navigate(Route.RecipeList()) {
+      restoreState = false
+      launchSingleTop = true
+
       popUpTo<Route.RecipeList> {
         inclusive = true
+        saveState = false
       }
     }
   }

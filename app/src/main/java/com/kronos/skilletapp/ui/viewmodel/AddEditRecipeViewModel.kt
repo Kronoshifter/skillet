@@ -357,7 +357,7 @@ class AddEditRecipeViewModel(
                 regex.find(it.recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
               },
               prepTime = it.recipe.prepTime.parseMinutes(),
-              cookTime = it.recipe.prepTime.parseMinutes(),
+              cookTime = it.recipe.cookTime.parseMinutes(),
               source = url,
               sourceName = it.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
               ingredients = it.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
