@@ -24,6 +24,7 @@ import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
+import com.kronos.skilletapp.utils.navDeepLinkRequest
 import com.kronos.skilletapp.utils.navTypeOf
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -45,10 +46,12 @@ fun SkilletNavGraph(
       if (intent.action != Intent.ACTION_SEND) return@collectLatest
 
       val sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT)
-      intent.action?.let { action ->
-        val request = NavDeepLinkRequest.Builder.fromUri("${baseUrl}/recipeList?sharedUrl=$sharedUrl".toUri()).setAction(action).setMimeType(mimeType = "text/*").build()
+      intent.action?.let { intentAction ->
         navController.navigate(
-          request = request,
+          request = navDeepLinkRequest("${baseUrl}/recipeList?sharedUrl=$sharedUrl".toUri()) {
+            action = intentAction
+            mimeType = "text/*"
+          },
           navOptions = navOptions { launchSingleTop = true }
         )
       }
