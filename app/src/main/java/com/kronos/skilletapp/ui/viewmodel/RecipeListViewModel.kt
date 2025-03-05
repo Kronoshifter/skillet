@@ -1,9 +1,12 @@
 package com.kronos.skilletapp.ui.viewmodel
 
 import android.content.Intent
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
+import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.navigation.NavController
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
@@ -54,6 +57,12 @@ class RecipeListViewModel(
     }
   }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
 
+  @OptIn(SavedStateHandleSaveableApi::class)
+  var showSharedUrl by handle.saveable {
+    mutableStateOf(true)
+  }
+
 }
 
 const val RECIPES_SORT_TYPE_KEY = "RECIPES_SORT_TYPE_KEY"
+const val RECIPES_SHARED_URL_KEY = "RECIPES_SHARED_URL_KEY"

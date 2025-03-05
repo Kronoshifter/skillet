@@ -146,14 +146,14 @@ fun RecipeListScreen(
       )
 
       LaunchedEffect(sharedUrl) {
-        showImportRecipeBottomSheet = sharedUrl.isNotNullOrBlank()
+        showImportRecipeBottomSheet = sharedUrl.isNotNullOrBlank() && vm.showSharedUrl
       }
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
+      var url by remember { mutableStateOf(sharedUrl?.takeIf { vm.showSharedUrl } ?: "") }
 
       if (showImportRecipeBottomSheet) {
-        var url by remember { mutableStateOf(sharedUrl ?: "") }
         var isValidUrl = isValidUrl(url)
 
         ActionBottomSheet(
@@ -161,14 +161,18 @@ fun RecipeListScreen(
           modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-          onDismissRequest = { showImportRecipeBottomSheet = false },
+          onDismissRequest = {
+            url = ""
+            vm.showSharedUrl = false
+            showImportRecipeBottomSheet = false
+          },
           title = { Text(text = "Import Recipe") },
           action = {
             TextButton(
               onClick = {
                 onNewRecipeByUrl(url)
                 url = ""
-                //TODO: find a way to clear the shared content from the intent after it has been used
+                vm.showSharedUrl = false
                 sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
               },
               enabled = isValidUrl
@@ -190,6 +194,7 @@ fun RecipeListScreen(
                 if (isValidUrl) {
                   onNewRecipeByUrl(url)
                   url = ""
+                  vm.showSharedUrl = false
                   sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
                 }
 

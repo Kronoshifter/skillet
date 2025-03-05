@@ -30,9 +30,12 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 import kotlin.reflect.typeOf
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private const val baseUrl = "skilletapp://skillet"
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun SkilletNavGraph(
   intentFlow: SharedFlow<Intent>,
@@ -48,7 +51,7 @@ fun SkilletNavGraph(
       val sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT)
       intent.action?.let { intentAction ->
         navController.navigate(
-          request = navDeepLinkRequest("${baseUrl}/recipeList?sharedUrl=$sharedUrl".toUri()) {
+          request = navDeepLinkRequest(uri = "${baseUrl}/recipeList?sharedUrl=$sharedUrl?urlId=${Uuid.random()}".toUri()) {
             action = intentAction
             mimeType = "text/*"
           },
@@ -78,7 +81,7 @@ fun SkilletNavGraph(
         onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
         onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },
         onRecipeClick = { navActions.navigateToRecipe(it) },
-        vm = koinViewModel(key = args.sharedUrl),
+        vm = koinViewModel(key = args.sharedUrl + args.urlId),
         sharedUrl = args.sharedUrl
       )
     }
@@ -92,7 +95,7 @@ fun SkilletNavGraph(
     ) {
       val args = it.toRoute<Route.Recipe>()
       RecipeScreen(
-        onBack = { navActions.navigateToRecipeList() },
+        onBack = { navController.navigateUp() },
         onEdit = { navActions.navigateToAddEditRecipe("Edit Recipe", args.recipeId) },
         onCook = { scale ->
           navActions.navigateToCooking(
