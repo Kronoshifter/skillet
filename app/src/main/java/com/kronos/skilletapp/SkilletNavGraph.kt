@@ -119,9 +119,7 @@ fun SkilletNavGraph(
         },
       )
     }
-    composable<Route.Cooking>(
-      typeMap = mapOf(typeOf<LinkedHashMap<String, String?>>() to navTypeOf<LinkedHashMap<String, String>>()),
-    ) { backStackEntry ->
+    composable<Route.Cooking> { backStackEntry ->
       val args = backStackEntry.toRoute<Route.Cooking>()
       CookingScreen(
         onBack = { navController.navigateUp() },
