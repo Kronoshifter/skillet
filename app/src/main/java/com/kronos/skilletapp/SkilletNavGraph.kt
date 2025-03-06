@@ -1,18 +1,12 @@
 package com.kronos.skilletapp
 
-import android.R.attr.mimeType
 import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
-import androidx.navigation.NavDeepLinkRequest
-import androidx.navigation.NavDeepLinkRequest.Builder.Companion.fromAction
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +20,7 @@ import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
 import com.kronos.skilletapp.utils.navDeepLinkRequest
 import com.kronos.skilletapp.utils.navTypeOf
+import com.kronos.skilletapp.utils.toJson
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
@@ -48,10 +43,16 @@ fun SkilletNavGraph(
     intentFlow.collectLatest { intent ->
       if (intent.action != Intent.ACTION_SEND) return@collectLatest
 
-      val sharedUrl = intent.getStringExtra(Intent.EXTRA_TEXT)
+      val sharedRecipe = intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+        SharedRecipe(
+          url = it,
+          id = Uuid.random().toString()
+        )
+      }
+
       intent.action?.let { intentAction ->
         navController.navigate(
-          request = navDeepLinkRequest(uri = "${baseUrl}/recipeList?sharedUrl=$sharedUrl?urlId=${Uuid.random()}".toUri()) {
+          request = navDeepLinkRequest(uri = "${baseUrl}/recipeList?sharedRecipe=${sharedRecipe?.toJson()}".toUri()) {
             action = intentAction
             mimeType = "text/*"
           },
@@ -69,8 +70,12 @@ fun SkilletNavGraph(
     },
   ) {
     composable<Route.RecipeList>(
+      typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)),
       deepLinks = listOf(
-        navDeepLink<Route.RecipeList>(basePath = "${baseUrl}/recipeList") {
+        navDeepLink<Route.RecipeList>(
+          basePath = "${baseUrl}/recipeList",
+          typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
+        ) {
           action = Intent.ACTION_SEND
           mimeType = "text/*"
         }
@@ -81,8 +86,7 @@ fun SkilletNavGraph(
         onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
         onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },
         onRecipeClick = { navActions.navigateToRecipe(it) },
-        vm = koinViewModel(key = args.sharedUrl + args.urlId),
-        sharedUrl = args.sharedUrl
+        vm = koinViewModel(key = args.sharedRecipe.toString()),
       )
     }
     composable<Route.Recipe>(

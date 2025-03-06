@@ -15,6 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +34,8 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.RecipeSource
 import com.kronos.skilletapp.model.RecipeTime
+import com.kronos.skilletapp.utils.fromJson
+import com.kronos.skilletapp.utils.toJson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.launch
@@ -206,3 +210,7 @@ fun SheetState.dismiss(
   }
 }
 
+inline fun <reified T> saverOf(): Saver<T, *> = listSaver(
+  save = { listOf(it?.toJson()) },
+  restore = { it.first()?.fromJson<T>() }
+)

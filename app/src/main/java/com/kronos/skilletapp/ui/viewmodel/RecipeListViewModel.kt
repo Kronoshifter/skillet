@@ -8,17 +8,21 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.navigation.NavController
+import androidx.navigation.toRoute
+import com.kronos.skilletapp.Route
+import com.kronos.skilletapp.SharedRecipe
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.ui.saverOf
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
+import com.kronos.skilletapp.utils.navTypeOf
 import kotlinx.coroutines.flow.*
+import kotlin.reflect.typeOf
 
 data class RecipeListState(
   val recipes: List<Recipe>,
-  val isRefreshing: Boolean = false,
-  val sharedUrl: String = ""
 )
 
 class RecipeListViewModel(
@@ -27,18 +31,23 @@ class RecipeListViewModel(
 ) : ViewModel() {
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
+  private val args = handle.toRoute<Route.RecipeList>(typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)))
+
+  @OptIn(SavedStateHandleSaveableApi::class)
+  var sharedRecipe by handle.saveable(stateSaver = saverOf<SharedRecipe?>()) {
+    mutableStateOf<SharedRecipe?>(args.sharedRecipe)
+  }
+
+  @OptIn(SavedStateHandleSaveableApi::class)
+  var showSharedUrl by handle.saveable {
+    mutableStateOf(true)
+  }
+
   private val _isLoading = MutableStateFlow(false)
   private val _recipesAsync = recipeRepository.observeRecipes()
     .distinctUntilChanged()
     .map { UiState.LoadedWithData(it) }
     .catch<UiState<List<Recipe>>> { emit(UiState.Error(SkilletError("Error loading recipes"))) }
-
-  private val _sharedUrl = handle.getStateFlow(NavController.KEY_DEEP_LINK_INTENT, Intent())
-    .map {
-      if (it.action != Intent.ACTION_SEND) return@map ""
-
-      it.getStringExtra(Intent.EXTRA_TEXT) ?: ""
-    }
 
   val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
     when {
@@ -56,13 +65,6 @@ class RecipeListViewModel(
       }
     }
   }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
-
-  @OptIn(SavedStateHandleSaveableApi::class)
-  var showSharedUrl by handle.saveable {
-    mutableStateOf(true)
-  }
-
 }
 
 const val RECIPES_SORT_TYPE_KEY = "RECIPES_SORT_TYPE_KEY"
-const val RECIPES_SHARED_URL_KEY = "RECIPES_SHARED_URL_KEY"

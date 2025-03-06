@@ -4,12 +4,16 @@ import androidx.navigation.NavHostController
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.MeasurementUnit
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+@Serializable
+data class SharedRecipe(val url: String, val id: String)
 
 sealed interface Route {
-  @Serializable data class RecipeList(val sharedUrl: String? = null, val urlId: String? = null) : Route
+  @Serializable data class RecipeList(val sharedRecipe: SharedRecipe? = null) : Route
   @Serializable data class Recipe(val recipeId: String) : Route
   @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null, val url: String? = null) : Route
-
   @Serializable data class Cooking(val recipeId: String, val scale: Float) : Route
 }
 

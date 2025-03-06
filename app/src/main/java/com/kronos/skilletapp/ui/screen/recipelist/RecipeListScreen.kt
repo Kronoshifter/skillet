@@ -55,13 +55,12 @@ fun RecipeListScreen(
   onNewRecipe: () -> Unit,
   onNewRecipeByUrl: (url: String) -> Unit,
   onRecipeClick: (id: String) -> Unit,
-  sharedUrl: String? = null,
   vm: RecipeListViewModel = koinViewModel(),
 ) {
   var speedDialState by rememberSaveable { mutableStateOf(SpeedDialState.Collapsed) }
   var overlayVisible by rememberSaveable { mutableStateOf(speedDialState.isExpanded()) }
 
-  var showImportRecipeBottomSheet by remember { mutableStateOf(false) }
+  var showImportRecipeBottomSheet by rememberSaveable { mutableStateOf(false) }
 
   Scaffold(
     topBar = {
@@ -145,13 +144,13 @@ fun RecipeListScreen(
         },
       )
 
-      LaunchedEffect(sharedUrl) {
-        showImportRecipeBottomSheet = sharedUrl.isNotNullOrBlank() && vm.showSharedUrl
+      LaunchedEffect(vm.sharedRecipe) {
+        showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl
       }
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
-      var url by remember { mutableStateOf(sharedUrl?.takeIf { vm.showSharedUrl } ?: "") }
+      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "") }
 
       if (showImportRecipeBottomSheet) {
         var isValidUrl = isValidUrl(url)
