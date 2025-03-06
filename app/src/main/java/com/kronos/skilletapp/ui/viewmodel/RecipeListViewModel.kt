@@ -19,6 +19,8 @@ import com.kronos.skilletapp.ui.saverOf
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
 import com.kronos.skilletapp.utils.navTypeOf
 import kotlinx.coroutines.flow.*
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
 
 data class RecipeListState(
@@ -35,7 +37,11 @@ class RecipeListViewModel(
 
   @OptIn(SavedStateHandleSaveableApi::class)
   var sharedRecipe by handle.saveable(stateSaver = saverOf<SharedRecipe?>()) {
-    mutableStateOf<SharedRecipe?>(args.sharedRecipe)
+    mutableStateOf<SharedRecipe?>(args.sharedRecipe?.let {
+      it.copy(
+        url = URLDecoder.decode(it.url, StandardCharsets.UTF_8.toString())
+      )
+    })
   }
 
   @OptIn(SavedStateHandleSaveableApi::class)

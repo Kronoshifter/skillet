@@ -1,6 +1,7 @@
 package com.kronos.skilletapp
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,12 +19,15 @@ import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
+import com.kronos.skilletapp.utils.fromJson
 import com.kronos.skilletapp.utils.navDeepLinkRequest
 import com.kronos.skilletapp.utils.navTypeOf
 import com.kronos.skilletapp.utils.toJson
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -45,14 +49,17 @@ fun SkilletNavGraph(
 
       val sharedRecipe = intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
         SharedRecipe(
-          url = it,
+          url = URLEncoder.encode(it, StandardCharsets.UTF_8.toString()),
           id = Uuid.random().toString()
         )
       }
 
       intent.action?.let { intentAction ->
+        val json = sharedRecipe?.toJson()
+        val uri = "${baseUrl}/recipeList?sharedRecipe=${json}".toUri()
+
         navController.navigate(
-          request = navDeepLinkRequest(uri = "${baseUrl}/recipeList?sharedRecipe=${sharedRecipe?.toJson()}".toUri()) {
+          request = navDeepLinkRequest(uri = uri) {
             action = intentAction
             mimeType = "text/*"
           },
