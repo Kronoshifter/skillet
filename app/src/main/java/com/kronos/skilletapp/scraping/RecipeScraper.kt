@@ -78,8 +78,8 @@ class RecipeScraper {
     }.mapError {
       SkilletError("Error parsing JSON: ${it.message}")
     }.andThen { element ->
-      val recipeJson = element.findRecipeJson()
-      val websiteJson = element.findWebsiteJson()
+      val recipeJson = element.findJson("Recipe")
+      val websiteJson = element.findJson("WebSite")
 
       recipeJson.toResultOr {
         SkilletError("Failed to find recipe JSON")
@@ -92,29 +92,16 @@ class RecipeScraper {
     }
   }
 
-  private fun JsonElement.findRecipeJson(): JsonElement? {
-    return if (this is JsonObject && "@type" in this && this.getValue("@type") isOrContains "Recipe" == true) {
+  private fun JsonElement.findJson(key: String): JsonElement? =
+    if (this is JsonObject && "@type" in this && this.getValue("@type") isOrContains key) {
       this
-    } else if (this is JsonObject && "@type" !in this) {
-      this.firstNotNullOfOrNull { it.value.findRecipeJson() }
+    } else if (this is JsonObject && key !in this) {
+      this.firstNotNullOfOrNull { it.value.findJson(key) }
     } else if (this is JsonArray) {
-      this.firstNotNullOfOrNull { it.findRecipeJson() }
+      this.firstNotNullOfOrNull { it.findJson(key) }
     } else {
       null
     }
-  }
-
-  private fun JsonElement.findWebsiteJson(): JsonElement? {
-    return if (this is JsonObject && "@type" in this && this.getValue("@type") isOrContains "WebSite" == true) {
-      this
-    } else if (this is JsonObject && "@type" !in this) {
-      this.firstNotNullOfOrNull { it.value.findWebsiteJson() }
-    } else if (this is JsonArray) {
-      this.firstNotNullOfOrNull { it.findWebsiteJson() }
-    } else {
-      null
-    }
-  }
 
   private infix fun JsonElement.isOrContains(s: String): Boolean = when (this) {
     is JsonPrimitive -> this.content == s

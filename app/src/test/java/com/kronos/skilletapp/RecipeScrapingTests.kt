@@ -16,7 +16,7 @@ class RecipeScrapingTests : FunSpec({
       val extracted = scraper.scrapeRecipe(pancakesUrl).unwrap()
 
       extracted shouldNotBe null
-      extracted.name shouldBe "Good Old-Fashioned Pancakes"
+      extracted.recipe.name shouldBe "Good Old-Fashioned Pancakes"
     }
 
 
@@ -24,7 +24,7 @@ class RecipeScrapingTests : FunSpec({
       val json = scraper.scrapeRecipe(garlicShellsUrl).unwrap()
 
       json shouldNotBe null
-      json.name shouldBe "Creamy Garlic Shells"
+      json.recipe.name shouldBe "Creamy Garlic Shells"
     }
   }
 })

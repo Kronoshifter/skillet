@@ -1,28 +1,74 @@
 package com.kronos.skilletapp
 
+import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
+import androidx.navigation.navOptions
 import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
+import com.kronos.skilletapp.utils.fromJson
+import com.kronos.skilletapp.utils.navDeepLinkRequest
 import com.kronos.skilletapp.utils.navTypeOf
+import com.kronos.skilletapp.utils.toJson
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import org.koin.androidx.compose.koinViewModel
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+private const val baseUrl = "skilletapp://skillet"
+
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun SkilletNavGraph(
+  intentFlow: SharedFlow<Intent>,
   modifier: Modifier = Modifier,
   navController: NavHostController = rememberNavController(),
-  startDestination: Route = Route.RecipeList,
+  startDestination: Route = Route.RecipeList(),
   navActions: SkilletNavigationActions = remember(navController) { SkilletNavigationActions(navController) },
 ) {
+  LaunchedEffect(intentFlow) {
+    intentFlow.collectLatest { intent ->
+      if (intent.action != Intent.ACTION_SEND) return@collectLatest
+
+      val sharedRecipe = intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+        SharedRecipe(
+          url = URLEncoder.encode(it, StandardCharsets.UTF_8.toString()),
+          id = Uuid.random().toString()
+        )
+      }
+
+      intent.action?.let { intentAction ->
+        val json = sharedRecipe?.toJson()
+        val uri = "${baseUrl}/recipeList?sharedRecipe=${json}".toUri()
+
+        navController.navigate(
+          request = navDeepLinkRequest(uri = uri) {
+            action = intentAction
+            mimeType = "text/*"
+          },
+          navOptions = navOptions { launchSingleTop = true }
+        )
+      }
+    }
+  }
+
   NavHost(
     navController = navController,
     startDestination = startDestination,
@@ -30,11 +76,24 @@ fun SkilletNavGraph(
       slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) + fadeOut()
     },
   ) {
-    composable<Route.RecipeList> {
+    composable<Route.RecipeList>(
+      typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)),
+      deepLinks = listOf(
+        navDeepLink<Route.RecipeList>(
+          basePath = "${baseUrl}/recipeList",
+          typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
+        ) {
+          action = Intent.ACTION_SEND
+          mimeType = "text/*"
+        }
+      )
+    ) {
+      val args = it.toRoute<Route.RecipeList>()
       RecipeListScreen(
         onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
         onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },
-        onRecipeClick = { navActions.navigateToRecipe(it) }
+        onRecipeClick = { navActions.navigateToRecipe(it) },
+        vm = koinViewModel(key = args.sharedRecipe.toString()),
       )
     }
     composable<Route.Recipe>(
@@ -47,7 +106,7 @@ fun SkilletNavGraph(
     ) {
       val args = it.toRoute<Route.Recipe>()
       RecipeScreen(
-        onBack = { navController.popBackStack(route = Route.RecipeList, inclusive = false, saveState = true) },
+        onBack = { navController.navigateUp() },
         onEdit = { navActions.navigateToAddEditRecipe("Edit Recipe", args.recipeId) },
         onCook = { scale ->
           navActions.navigateToCooking(
@@ -61,18 +120,16 @@ fun SkilletNavGraph(
       val args = backStackEntry.toRoute<Route.AddEditRecipe>()
       AddEditRecipeScreen(
         title = args.title,
-        onBack = { navController.popBackStack() },
+        onBack = { navController.navigateUp() },
         onRecipeUpdate = { recipeId ->
           navActions.navigateToRecipe(recipeId)
         },
       )
     }
-    composable<Route.Cooking>(
-      typeMap = mapOf(typeOf<LinkedHashMap<String, String?>>() to navTypeOf<LinkedHashMap<String, String>>()),
-    ) { backStackEntry ->
+    composable<Route.Cooking> { backStackEntry ->
       val args = backStackEntry.toRoute<Route.Cooking>()
       CookingScreen(
-        onBack = { navController.popBackStack() },
+        onBack = { navController.navigateUp() },
       )
     }
   }

@@ -39,6 +39,7 @@ import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
+import com.kronos.skilletapp.utils.isNotNullOrBlank
 import com.leinardi.android.speeddial.compose.FabWithLabel
 import com.leinardi.android.speeddial.compose.SpeedDial
 import com.leinardi.android.speeddial.compose.SpeedDialOverlay
@@ -47,6 +48,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -59,7 +62,7 @@ fun RecipeListScreen(
   var speedDialState by rememberSaveable { mutableStateOf(SpeedDialState.Collapsed) }
   var overlayVisible by rememberSaveable { mutableStateOf(speedDialState.isExpanded()) }
 
-  var showImportRecipeBottomSheet by remember { mutableStateOf(false) }
+  var showImportRecipeBottomSheet by rememberSaveable { mutableStateOf(false) }
 
   Scaffold(
     topBar = {
@@ -134,68 +137,80 @@ fun RecipeListScreen(
         modifier = Modifier
           .fillMaxSize()
       )
-    }
 
-    SpeedDialOverlay(
-      visible = overlayVisible,
-      onClick = {
-        overlayVisible = false
-        speedDialState = speedDialState.toggle()
-      },
-    )
-
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
-
-    if (showImportRecipeBottomSheet) {
-      var url by remember { mutableStateOf("") }
-      var isValidUrl = isValidUrl(url)
-
-      ActionBottomSheet(
-        sheetState = sheetState,
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(8.dp),
-        onDismissRequest = { showImportRecipeBottomSheet = false },
-        title = { Text(text = "Import Recipe") },
-        action = {
-          TextButton(
-            onClick = {
-              onNewRecipeByUrl(url)
-              sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-            },
-            enabled = isValidUrl
-          ) {
-            Text(text = "Import")
-          }
+      SpeedDialOverlay(
+        visible = overlayVisible,
+        onClick = {
+          overlayVisible = false
+          speedDialState = speedDialState.toggle()
         },
-      ) {
-        val keyboard = LocalSoftwareKeyboardController.current
+      )
 
-        OutlinedTextField(
-          value = url,
-          onValueChange = { url = it },
-          label = { Text(text = "URL") },
-          modifier = Modifier.fillMaxWidth(),
-          keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
-          keyboardActions = KeyboardActions(
-            onDone = {
-              if (isValidUrl) {
+      LaunchedEffect(vm.sharedRecipe) {
+        showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl
+      }
+
+      val sheetState = rememberModalBottomSheetState()
+      val scope = rememberCoroutineScope()
+      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "") }
+
+      if (showImportRecipeBottomSheet) {
+        var isValidUrl = isValidUrl(url)
+
+        ActionBottomSheet(
+          sheetState = sheetState,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+          onDismissRequest = {
+            url = ""
+            vm.showSharedUrl = false
+            showImportRecipeBottomSheet = false
+          },
+          title = { Text(text = "Import Recipe") },
+          action = {
+            TextButton(
+              onClick = {
                 onNewRecipeByUrl(url)
+                url = ""
+                vm.showSharedUrl = false
                 sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-              }
+              },
+              enabled = isValidUrl
+            ) {
+              Text(text = "Import")
+            }
+          },
+        ) {
+          val keyboard = LocalSoftwareKeyboardController.current
 
-              keyboard?.hide()
+          OutlinedTextField(
+            value = url,
+            onValueChange = { url = it },
+            label = { Text(text = "URL") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
+            keyboardActions = KeyboardActions(
+              onDone = {
+                if (isValidUrl) {
+                  onNewRecipeByUrl(url)
+                  url = ""
+                  vm.showSharedUrl = false
+                  sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
+                }
+
+                keyboard?.hide()
+              }
+            ),
+            singleLine = true,
+            isError = !isValidUrl && url.isNotBlank(),
+            supportingText = {
+              if (!isValidUrl && url.isNotBlank()) {
+                Text(text = "Invalid URL")
+              }
             }
-          ),
-          singleLine = true,
-          isError = !isValidUrl && url.isNotBlank(),
-          supportingText = {
-            if (!isValidUrl && url.isNotBlank()) {
-              Text(text = "Invalid URL")
-            }
-          }
-        )
+          )
+        }
       }
     }
   }
