@@ -8,8 +8,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.Icon
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -17,7 +20,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -42,21 +47,27 @@ class MainActivity : ComponentActivity() {
           val navController = rememberNavController()
           val navActions = remember(navController) { SkilletNavigationActions(navController) }
 
-          Scaffold(
-            bottomBar = {
+          Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.White
+          ) {
+            SkilletNavGraph(
+              intentFlow = intentFlow,
+              //              modifier = Modifier.fillMaxSize().padding(padding),
+              navController = navController,
+              navActions = navActions
+            )
+            Box(
+              modifier = Modifier.fillMaxSize().systemBarsPadding(),
+              contentAlignment = Alignment.BottomCenter
+            ) {
               BottomNavigationBar(
                 navController = navController,
                 navActions = navActions
               )
             }
-          ) { padding ->
-            SkilletNavGraph(
-              intentFlow = intentFlow,
-              modifier = Modifier.fillMaxSize().padding(padding),
-              navController = navController,
-              navActions = navActions
-            )
           }
+
         }
       }
     }
@@ -74,7 +85,9 @@ fun BottomNavigationBar(
   navController: NavHostController = rememberNavController(),
   navActions: SkilletNavigationActions = remember(navController) { SkilletNavigationActions(navController) }
 ) {
-  NavigationBar {
+  NavigationBar(
+//    containerColor = MaterialTheme.colorScheme.primary
+  ) {
     val screens = listOf(
       BottomNavItems.RecipeList
     )
