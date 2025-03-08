@@ -1,11 +1,10 @@
 package com.kronos.skilletapp
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
-import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.MeasurementUnit
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 @Serializable
 data class SharedRecipe(val url: String, val id: String)
@@ -44,4 +43,31 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   fun navigateToCooking(recipeId: String, scale: Float) {
     navController.navigate(Route.Cooking(recipeId, scale))
   }
+
+  fun navigateViaBottomNav(route: Route) {
+    navController.navigate(route) {
+      launchSingleTop = true
+      restoreState = true
+
+      popUpTo(route = route) {
+        saveState = true
+      }
+    }
+
+//    navController.popBackStack(route = route, inclusive = false)
+  }
+}
+
+data class BottomNavItem(
+  val label: String,
+  val icon: ImageVector,
+  val route: Route
+)
+
+sealed class BottomNavItems<T : Route>(
+  val label: String,
+  val icon: ImageVector,
+  val route: T
+) {
+  data object RecipeList : BottomNavItems<Route.RecipeList>(label = "Recipes", icon = Icons.AutoMirrored.Filled.List, route = Route.RecipeList())
 }

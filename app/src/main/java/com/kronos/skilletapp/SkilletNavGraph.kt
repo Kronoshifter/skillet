@@ -3,6 +3,7 @@ package com.kronos.skilletapp
 import android.content.Intent
 import android.util.Log
 import androidx.compose.animation.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -58,6 +59,7 @@ fun SkilletNavGraph(
         val json = sharedRecipe?.toJson()
         val uri = "${baseUrl}/recipeList?sharedRecipe=${json}".toUri()
 
+        //TODO: encapsulate in SkilletNavigationActions
         navController.navigate(
           request = navDeepLinkRequest(uri = uri) {
             action = intentAction
@@ -71,6 +73,7 @@ fun SkilletNavGraph(
 
   NavHost(
     navController = navController,
+    modifier = modifier,
     startDestination = startDestination,
     popExitTransition = {
       slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) + fadeOut()
