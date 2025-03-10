@@ -58,16 +58,18 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   }
 }
 
-data class BottomNavItem(
-  val label: String,
-  val icon: ImageVector,
-  val route: Route
-)
-
 sealed class BottomNavItems<T : Route>(
   val label: String,
   val icon: ImageVector,
   val route: T
 ) {
   data object RecipeList : BottomNavItems<Route.RecipeList>(label = "Recipes", icon = Icons.AutoMirrored.Filled.List, route = Route.RecipeList())
+
+  companion object {
+    val values by lazy {
+      listOf(
+        RecipeList
+      )
+    }
+  }
 }
