@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
@@ -139,13 +140,15 @@ fun RecipeListScreen(
         )
       )
 
-      SpeedDialOverlay(
-        visible = overlayVisible,
-        onClick = {
-          overlayVisible = false
-          speedDialState = speedDialState.toggle()
-        },
-      )
+      DisableRipple {
+        SpeedDialOverlay(
+          visible = overlayVisible,
+          onClick = {
+            overlayVisible = false
+            speedDialState = speedDialState.toggle()
+          },
+        )
+      }
 
       LaunchedEffect(vm.sharedRecipe) {
         showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl
