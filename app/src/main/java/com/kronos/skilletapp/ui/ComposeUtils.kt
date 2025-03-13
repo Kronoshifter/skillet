@@ -104,27 +104,6 @@ fun LoadingContent(
   }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun RefreshingContent(
-  refreshing: Boolean,
-  onRefresh: () -> Unit,
-  modifier: Modifier = Modifier,
-  content: @Composable () -> Unit,
-) {
-  val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = onRefresh)
-
-  Box(
-    modifier = Modifier
-      .pullRefresh(refreshState)
-      .then(modifier)
-  ) {
-    content()
-    PullRefreshIndicator(refreshing = refreshing, state = refreshState, modifier = Modifier.align(Alignment.TopCenter))
-  }
-
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisableRipple(
