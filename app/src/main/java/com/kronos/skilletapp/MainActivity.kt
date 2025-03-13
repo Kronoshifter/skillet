@@ -78,17 +78,18 @@ fun BottomNavigationBar(
     var selectedScreen by remember { mutableStateOf<BottomNavItems<*>>(BottomNavItems.RecipeList) }
 
     screens.forEach { screen ->
+      val isSelected = screen == selectedScreen
       NavigationBarItem(
         icon = {
           Icon(
-            imageVector = screen.icon,
+            imageVector = screen.icon(isSelected),
             contentDescription = null
           )
         },
         label = {
           Text(text = screen.label)
         },
-        selected = screen == selectedScreen,
+        selected = isSelected,
         onClick = {
           selectedScreen = screen
           navActions.navigateViaBottomNav(screen.route)

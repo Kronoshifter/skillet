@@ -1,12 +1,16 @@
 package com.kronos.skilletapp
 
+import android.R.id.selectedIcon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -61,18 +65,27 @@ class SkilletNavigationActions(private val navController: NavHostController) {
 
 sealed class BottomNavItems<T : Route>(
   val label: String,
-  val icon: ImageVector,
-  val route: T
+  val route: T,
+  private val icon: ImageVector,
+  private val selectedIcon: ImageVector,
 ) {
+  fun icon(isSelected: Boolean): ImageVector = if (isSelected) {
+    selectedIcon
+  } else {
+    icon
+  }
+
   data object RecipeList : BottomNavItems<Route.RecipeList>(
     label = "Recipes",
-    icon = Icons.AutoMirrored.Filled.ListAlt,
+    icon = Icons.AutoMirrored.Outlined.ListAlt,
+    selectedIcon = Icons.AutoMirrored.Filled.ListAlt,
     route = Route.RecipeList()
   )
 
   data object Collections : BottomNavItems<Route.AddEditRecipe>(
     label = "Collections",
-    icon = Icons.Default.Dashboard,
+    icon = Icons.Outlined.Dashboard,
+    selectedIcon = Icons.Filled.Dashboard,
     route = Route.AddEditRecipe("Add Recipe")
   )
 
