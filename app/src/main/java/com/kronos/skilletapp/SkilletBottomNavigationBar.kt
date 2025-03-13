@@ -1,5 +1,12 @@
 package com.kronos.skilletapp
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -12,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
@@ -71,8 +79,8 @@ fun SkilletBottomNavigationBar(
     NavigationBar(
       containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) {
-      val screens = BottomNavItems.values
-      var selectedScreen by remember { mutableStateOf<BottomNavItems<*>>(BottomNavItems.RecipeList) }
+      val screens = SkilletBottomNavigationBarItems.values
+      var selectedScreen by remember { mutableStateOf<SkilletBottomNavigationBarItems<*>>(SkilletBottomNavigationBarItems.RecipeList) }
 
       val navBackStackEntry by navController.currentBackStackEntryAsState()
       val currentDestination = navBackStackEntry?.destination
@@ -97,6 +105,44 @@ fun SkilletBottomNavigationBar(
           },
         )
       }
+    }
+  }
+}
+
+internal sealed class SkilletBottomNavigationBarItems<T : Route>(
+  val label: String,
+  val route: T,
+  val icon: ImageVector,
+  private val selectedIcon: ImageVector,
+) {
+  @Composable
+  fun Icon(isSelected: Boolean) {
+    AnimatedContent(
+      targetState = isSelected,
+      transitionSpec = {
+        fadeIn() togetherWith fadeOut()
+      }
+    ) {
+      if (it) {
+        androidx.compose.material3.Icon(imageVector = selectedIcon, contentDescription = null)
+      } else {
+        androidx.compose.material3.Icon(imageVector = icon, contentDescription = null)
+      }
+    }
+  }
+
+  data object RecipeList : SkilletBottomNavigationBarItems<Route.RecipeList>(
+    label = "Recipes",
+    route = Route.RecipeList(),
+    icon = Icons.AutoMirrored.Outlined.ListAlt,
+    selectedIcon = Icons.AutoMirrored.Filled.ListAlt
+  )
+
+  companion object {
+    val values by lazy {
+      listOf(
+        RecipeList,
+      )
     }
   }
 }
