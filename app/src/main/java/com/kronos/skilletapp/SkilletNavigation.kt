@@ -1,17 +1,20 @@
 package com.kronos.skilletapp
 
-import android.R.id.selectedIcon
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -63,13 +66,23 @@ class SkilletNavigationActions(private val navController: NavHostController) {
 sealed class BottomNavItems<T : Route>(
   val label: String,
   val route: T,
-  private val icon: ImageVector,
+  val icon: ImageVector,
   private val selectedIcon: ImageVector,
 ) {
-  fun icon(isSelected: Boolean): ImageVector = if (isSelected) {
-    selectedIcon
-  } else {
-    icon
+  @Composable
+  fun Icon(isSelected: Boolean) {
+    AnimatedContent(
+      targetState = isSelected,
+      transitionSpec = {
+        fadeIn() togetherWith fadeOut()
+      }
+    ) {
+      if (it) {
+        Icon(imageVector = selectedIcon, contentDescription = null)
+      } else {
+        Icon(imageVector = icon, contentDescription = null)
+      }
+    }
   }
 
   data object RecipeList : BottomNavItems<Route.RecipeList>(

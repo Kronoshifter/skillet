@@ -8,21 +8,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.koin.compose.KoinContext
@@ -90,10 +85,7 @@ fun BottomNavigationBar(
       val isSelected = screen == selectedScreen
       NavigationBarItem(
         icon = {
-          Icon(
-            imageVector = screen.icon(isSelected),
-            contentDescription = null
-          )
+          screen.Icon(isSelected)
         },
         label = {
           Text(text = screen.label)
