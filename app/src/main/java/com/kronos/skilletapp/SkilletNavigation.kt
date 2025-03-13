@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import kotlinx.serialization.Serializable
+import java.util.Collections
 
 @Serializable
 data class SharedRecipe(val url: String, val id: String)
@@ -92,18 +93,10 @@ sealed class BottomNavItems<T : Route>(
     selectedIcon = Icons.AutoMirrored.Filled.ListAlt
   )
 
-  data object Collections : BottomNavItems<Route.AddEditRecipe>(
-    label = "Collections",
-    route = Route.AddEditRecipe("Add Recipe"),
-    icon = Icons.Outlined.Dashboard,
-    selectedIcon = Icons.Filled.Dashboard
-  )
-
   companion object {
     val values by lazy {
       listOf(
         RecipeList,
-        Collections
       )
     }
   }

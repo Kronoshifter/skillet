@@ -78,7 +78,7 @@ fun BottomNavigationBar(
     val currentDestination = navBackStackEntry?.destination
 
     screens.find { currentDestination?.route?.contains(it.route::class.qualifiedName.toString()) == true }?.let {
-      selectedScreen = it
+      selectedScreen = it.takeUnless { selectedScreen == it } ?: selectedScreen
     }
 
     screens.forEach { screen ->
@@ -95,7 +95,6 @@ fun BottomNavigationBar(
           selectedScreen = screen
           navActions.navigateViaBottomNav(screen.route)
         },
-        colors = NavigationBarItemDefaults.colors()
       )
     }
   }

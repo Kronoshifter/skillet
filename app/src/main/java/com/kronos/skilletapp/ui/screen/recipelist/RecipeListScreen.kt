@@ -60,7 +60,6 @@ fun RecipeListScreen(
 
   Scaffold(
     topBar = {
-      //TODO: figure out how to have top app bar always be collapsed
       TopAppBar(
         title = { Text(text = "Recipes") },
         actions = {
