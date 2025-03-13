@@ -35,6 +35,8 @@ import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
+import com.kronos.skilletapp.ui.icon.SkilletIcons
+import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -80,7 +82,7 @@ fun RecipeScreen(
     },
     floatingActionButton = {
       FloatingActionButton(onClick = { onCook(uiState.scale) }) {
-        Icon(painter = painterResource(id = R.drawable.skillet_filled_24px), contentDescription = "Cook")
+        Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook")
       }
     }
   ) { paddingValues ->
