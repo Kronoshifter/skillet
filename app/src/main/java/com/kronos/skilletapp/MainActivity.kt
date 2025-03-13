@@ -5,40 +5,22 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.Icon
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.koin.compose.KoinContext
@@ -86,19 +68,16 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BottomNavigationBar(
-  navController: NavHostController = rememberNavController(),
-  navActions: SkilletNavigationActions = remember(navController) { SkilletNavigationActions(navController) }
+  navController: NavHostController,
+  navActions: SkilletNavigationActions,
 ) {
   NavigationBar(
-//    containerColor = MaterialTheme.colorScheme.primary
+    containerColor = MaterialTheme.colorScheme.surfaceContainer
   ) {
     val screens = BottomNavItems.values
-
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = backStackEntry?.destination
+    var selectedScreen by remember { mutableStateOf<BottomNavItems<*>>(BottomNavItems.RecipeList) }
 
     screens.forEach { screen ->
-      val isSelected = currentDestination?.hierarchy?.any { it.route == screen.route::class.qualifiedName } == true
       NavigationBarItem(
         icon = {
           Icon(
@@ -109,8 +88,9 @@ fun BottomNavigationBar(
         label = {
           Text(text = screen.label)
         },
-        selected = isSelected,
+        selected = screen == selectedScreen,
         onClick = {
+          selectedScreen = screen
           navActions.navigateViaBottomNav(screen.route)
         },
         colors = NavigationBarItemDefaults.colors()

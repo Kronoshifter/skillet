@@ -2,7 +2,10 @@ package com.kronos.skilletapp
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import kotlinx.serialization.Serializable
 
@@ -49,12 +52,10 @@ class SkilletNavigationActions(private val navController: NavHostController) {
       launchSingleTop = true
       restoreState = true
 
-      popUpTo(route = route) {
+      popUpTo(navController.graph.findStartDestination().id) {
         saveState = true
       }
     }
-
-//    navController.popBackStack(route = route, inclusive = false)
   }
 }
 
@@ -63,12 +64,23 @@ sealed class BottomNavItems<T : Route>(
   val icon: ImageVector,
   val route: T
 ) {
-  data object RecipeList : BottomNavItems<Route.RecipeList>(label = "Recipes", icon = Icons.AutoMirrored.Filled.List, route = Route.RecipeList())
+  data object RecipeList : BottomNavItems<Route.RecipeList>(
+    label = "Recipes",
+    icon = Icons.AutoMirrored.Filled.ListAlt,
+    route = Route.RecipeList()
+  )
+
+  data object Collections : BottomNavItems<Route.AddEditRecipe>(
+    label = "Collections",
+    icon = Icons.Default.Dashboard,
+    route = Route.AddEditRecipe("Add Recipe")
+  )
 
   companion object {
     val values by lazy {
       listOf(
-        RecipeList
+        RecipeList,
+        Collections
       )
     }
   }
