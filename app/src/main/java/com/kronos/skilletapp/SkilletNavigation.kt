@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -26,15 +27,7 @@ sealed interface Route {
 class SkilletNavigationActions(private val navController: NavHostController) {
 
   fun navigateToRecipeList() {
-    navController.navigate(Route.RecipeList()) {
-      restoreState = false
-      launchSingleTop = true
-
-      popUpTo<Route.RecipeList> {
-        inclusive = true
-        saveState = false
-      }
-    }
+    navController.navigate(Route.RecipeList())
   }
 
   fun navigateToRecipe(recipeId: String) {
@@ -44,11 +37,15 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   }
 
   fun navigateToAddEditRecipe(title: String, recipeId: String? = null, url: String? = null) {
-    navController.navigate(Route.AddEditRecipe(title, recipeId, url))
+    navController.navigate(Route.AddEditRecipe(title, recipeId, url)) {
+      restoreState = true
+    }
   }
 
   fun navigateToCooking(recipeId: String, scale: Float) {
-    navController.navigate(Route.Cooking(recipeId, scale))
+    navController.navigate(Route.Cooking(recipeId, scale)) {
+      restoreState = true
+    }
   }
 
   fun navigateViaBottomNav(route: Route) {
@@ -77,16 +74,16 @@ sealed class BottomNavItems<T : Route>(
 
   data object RecipeList : BottomNavItems<Route.RecipeList>(
     label = "Recipes",
+    route = Route.RecipeList(),
     icon = Icons.AutoMirrored.Outlined.ListAlt,
-    selectedIcon = Icons.AutoMirrored.Filled.ListAlt,
-    route = Route.RecipeList()
+    selectedIcon = Icons.AutoMirrored.Filled.ListAlt
   )
 
   data object Collections : BottomNavItems<Route.AddEditRecipe>(
     label = "Collections",
+    route = Route.AddEditRecipe("Add Recipe"),
     icon = Icons.Outlined.Dashboard,
-    selectedIcon = Icons.Filled.Dashboard,
-    route = Route.AddEditRecipe("Add Recipe")
+    selectedIcon = Icons.Filled.Dashboard
   )
 
   companion object {

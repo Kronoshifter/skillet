@@ -12,6 +12,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,6 +22,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.koin.compose.KoinContext
@@ -76,6 +78,13 @@ fun BottomNavigationBar(
   ) {
     val screens = BottomNavItems.values
     var selectedScreen by remember { mutableStateOf<BottomNavItems<*>>(BottomNavItems.RecipeList) }
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    screens.find { currentDestination?.route?.contains(it.route::class.qualifiedName.toString()) == true }?.let {
+      selectedScreen = it
+    }
 
     screens.forEach { screen ->
       val isSelected = screen == selectedScreen
