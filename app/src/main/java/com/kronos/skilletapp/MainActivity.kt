@@ -8,15 +8,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -38,7 +35,10 @@ class MainActivity : ComponentActivity() {
 
           Scaffold(
             bottomBar = {
-              BottomNavigationBar(navController = navController, navActions = navActions)
+              SkilletBottomNavigationBar(
+                navController = navController,
+                navActions = navActions
+              )
             },
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(TopAppBarDefaults.windowInsets)
           ) { padding ->
@@ -60,42 +60,5 @@ class MainActivity : ComponentActivity() {
     super.onNewIntent(intent)
 
     intentFlow.tryEmit(intent)
-  }
-}
-
-@Composable
-fun BottomNavigationBar(
-  navController: NavHostController,
-  navActions: SkilletNavigationActions,
-) {
-  NavigationBar(
-    containerColor = MaterialTheme.colorScheme.surfaceContainer
-  ) {
-    val screens = BottomNavItems.values
-    var selectedScreen by remember { mutableStateOf<BottomNavItems<*>>(BottomNavItems.RecipeList) }
-
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-
-    screens.find { currentDestination?.route?.contains(it.route::class.qualifiedName.toString()) == true }?.let {
-      selectedScreen = it.takeUnless { selectedScreen == it } ?: selectedScreen
-    }
-
-    screens.forEach { screen ->
-      val isSelected = screen == selectedScreen
-      NavigationBarItem(
-        icon = {
-          screen.Icon(isSelected)
-        },
-        label = {
-          Text(text = screen.label)
-        },
-        selected = isSelected,
-        onClick = {
-          selectedScreen = screen
-          navActions.navigateViaBottomNav(screen.route)
-        },
-      )
-    }
   }
 }
