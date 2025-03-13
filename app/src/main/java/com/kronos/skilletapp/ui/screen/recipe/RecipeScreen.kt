@@ -29,7 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.R
-import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
@@ -38,7 +37,6 @@ import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
-import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlin.collections.set
@@ -82,7 +80,7 @@ fun RecipeScreen(
     },
     floatingActionButton = {
       FloatingActionButton(onClick = { onCook(uiState.scale) }) {
-        Icon(painter = painterResource(id = R.drawable.skillet_24px), contentDescription = "Cook")
+        Icon(painter = painterResource(id = R.drawable.skillet_filled_24px), contentDescription = "Cook")
       }
     }
   ) { paddingValues ->
