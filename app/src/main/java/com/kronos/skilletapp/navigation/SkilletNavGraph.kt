@@ -96,14 +96,8 @@ fun SkilletNavGraph(
         vm = koinViewModel(key = args.sharedRecipe.toString()),
       )
     }
-    composable<Route.Recipe>(
-      enterTransition = {
-        scaleIn() + fadeIn()
-      },
-      exitTransition = {
-        scaleOut() + fadeOut()
-      }
-    ) {
+
+    composable<Route.Recipe> {
       val args = it.toRoute<Route.Recipe>()
       RecipeScreen(
         onBack = { navController.navigateUp() },
@@ -116,6 +110,7 @@ fun SkilletNavGraph(
         }
       )
     }
+
     composable<Route.AddEditRecipe> { backStackEntry ->
       val args = backStackEntry.toRoute<Route.AddEditRecipe>()
       AddEditRecipeScreen(
@@ -126,6 +121,7 @@ fun SkilletNavGraph(
         },
       )
     }
+
     composable<Route.Cooking> { backStackEntry ->
       val args = backStackEntry.toRoute<Route.Cooking>()
       CookingScreen(

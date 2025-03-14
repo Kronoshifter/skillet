@@ -5,12 +5,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -39,16 +41,7 @@ class MainActivity : ComponentActivity() {
           val navController = rememberNavController()
           val navActions = remember(navController) { SkilletNavigationActions(navController) }
 
-          Scaffold(
-            bottomBar = {
-              //TODO: try moving this into the individual screen scaffolds
-              SkilletBottomNavigationBar(
-                navController = navController,
-                navActions = navActions,
-              )
-            },
-            contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(TopAppBarDefaults.windowInsets)
-          ) { padding ->
+          Surface {
             CompositionLocalProvider(
               LocalNavigationActions provides navActions,
               LocalNavController provides navController
@@ -57,7 +50,8 @@ class MainActivity : ComponentActivity() {
                 intentFlow = intentFlow,
                 modifier = Modifier
                   .fillMaxSize()
-                  .padding(padding),
+                //                  .padding(padding),
+                ,
                 navController = navController,
                 navActions = navActions
               )

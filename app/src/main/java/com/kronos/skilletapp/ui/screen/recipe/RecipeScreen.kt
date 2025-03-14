@@ -120,11 +120,10 @@ private fun RecipeContent(
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
   val pagerState = rememberPagerState { RecipeContentTab.entries.size }
 
-  Surface(
+  Box(
     modifier = Modifier
       .fillMaxSize()
       .then(modifier),
-    color = MaterialTheme.colorScheme.background
   ) {
 
     Column(modifier = Modifier.fillMaxSize()) {

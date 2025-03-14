@@ -34,6 +34,7 @@ import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
+import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.utils.isNotNullOrBlank
@@ -73,6 +74,9 @@ fun RecipeListScreen(
           }
         }
       )
+    },
+    bottomBar = {
+      SkilletBottomNavigationBar()
     },
     floatingActionButton = {
       SpeedDial(

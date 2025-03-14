@@ -239,9 +239,8 @@ fun AddEditRecipeContent(
   var tab by remember { mutableStateOf(AddEditRecipeContentTab.Info) }
   val pagerState = rememberPagerState { AddEditRecipeContentTab.entries.size }
 
-  Surface(
+  Box(
     modifier = modifier,
-    color = MaterialTheme.colorScheme.background
   ) {
     Column(
       modifier = Modifier
