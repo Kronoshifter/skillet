@@ -7,6 +7,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -20,8 +21,12 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.kronos.skilletapp.ui.icon.SkilletIcons
+import com.kronos.skilletapp.ui.icon.filled.Skillet
+import kotlin.collections.find
 
 enum class BottomNavigationBarVisibility {
   Hidden,
@@ -72,20 +77,20 @@ val LocalSkilletBottomNavigationBarState = compositionLocalOf<SkilletBottomNavig
 @Composable
 fun SkilletBottomNavigationBar(
   state: SkilletBottomNavigationBarState = rememberBottomNavigationBarState(),
-  navController: NavHostController,
-  navActions: SkilletNavigationActions,
+  navController: NavHostController = LocalNavController.current,
+  navActions: SkilletNavigationActions = LocalNavigationActions.current,
+  screens: List<SkilletBottomNavigationBarItems<*>> = SkilletBottomNavigationBarItems.values,
 ) {
   if (state.isVisible) {
     NavigationBar(
       containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) {
-      val screens = SkilletBottomNavigationBarItems.values
       var selectedScreen by remember { mutableStateOf<SkilletBottomNavigationBarItems<*>>(SkilletBottomNavigationBarItems.RecipeList) }
 
       val navBackStackEntry by navController.currentBackStackEntryAsState()
       val currentDestination = navBackStackEntry?.destination
 
-      screens.find { currentDestination?.route?.contains(it.route::class.qualifiedName.toString()) == true }?.let {
+      screens.find { currentDestination?.hasRoute(it.route::class) == true }?.let {
         selectedScreen = it.takeUnless { selectedScreen == it } ?: selectedScreen
       }
 
@@ -93,7 +98,7 @@ fun SkilletBottomNavigationBar(
         val isSelected = screen == selectedScreen
         NavigationBarItem(
           icon = {
-            screen.Icon(isSelected)
+            screen.SelectableIcon(isSelected)
           },
           label = {
             Text(text = screen.label)
@@ -109,14 +114,14 @@ fun SkilletBottomNavigationBar(
   }
 }
 
-internal sealed class SkilletBottomNavigationBarItems<T : Route>(
+sealed class SkilletBottomNavigationBarItems<T : Route>(
   val label: String,
   val route: T,
-  val icon: ImageVector,
+  private val icon: ImageVector,
   private val selectedIcon: ImageVector,
 ) {
   @Composable
-  fun Icon(isSelected: Boolean) {
+  fun SelectableIcon(isSelected: Boolean) {
     AnimatedContent(
       targetState = isSelected,
       transitionSpec = {
@@ -124,9 +129,9 @@ internal sealed class SkilletBottomNavigationBarItems<T : Route>(
       }
     ) {
       if (it) {
-        androidx.compose.material3.Icon(imageVector = selectedIcon, contentDescription = null)
+        Icon(imageVector = selectedIcon, contentDescription = null)
       } else {
-        androidx.compose.material3.Icon(imageVector = icon, contentDescription = null)
+        Icon(imageVector = icon, contentDescription = null)
       }
     }
   }

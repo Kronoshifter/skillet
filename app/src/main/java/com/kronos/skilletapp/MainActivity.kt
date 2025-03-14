@@ -8,10 +8,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
@@ -35,21 +37,27 @@ class MainActivity : ComponentActivity() {
 
           Scaffold(
             bottomBar = {
+              //TODO: try moving this into the individual screen scaffolds
               SkilletBottomNavigationBar(
                 navController = navController,
-                navActions = navActions
+                navActions = navActions,
               )
             },
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(TopAppBarDefaults.windowInsets)
           ) { padding ->
-            SkilletNavGraph(
-              intentFlow = intentFlow,
-              modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-              navController = navController,
-              navActions = navActions
-            )
+            CompositionLocalProvider(
+              LocalNavigationActions provides navActions,
+              LocalNavController provides navController
+            ) {
+              SkilletNavGraph(
+                intentFlow = intentFlow,
+                modifier = Modifier
+                  .fillMaxSize()
+                  .padding(padding),
+                navController = navController,
+                navActions = navActions
+              )
+            }
           }
         }
       }
