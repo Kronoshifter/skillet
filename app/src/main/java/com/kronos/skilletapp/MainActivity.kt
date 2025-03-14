@@ -49,9 +49,7 @@ class MainActivity : ComponentActivity() {
               SkilletNavGraph(
                 intentFlow = intentFlow,
                 modifier = Modifier
-                  .fillMaxSize()
-                //                  .padding(padding),
-                ,
+                  .fillMaxSize(),
                 navController = navController,
                 navActions = navActions
               )
