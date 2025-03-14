@@ -1,4 +1,4 @@
-package com.kronos.skilletapp
+package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -24,8 +24,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.kronos.skilletapp.ui.icon.SkilletIcons
-import com.kronos.skilletapp.ui.icon.filled.Skillet
+import com.kronos.skilletapp.navigation.LocalNavController
+import com.kronos.skilletapp.navigation.LocalNavigationActions
+import com.kronos.skilletapp.navigation.Route
+import com.kronos.skilletapp.navigation.SkilletNavigationActions
 import kotlin.collections.find
 
 enum class BottomNavigationBarVisibility {

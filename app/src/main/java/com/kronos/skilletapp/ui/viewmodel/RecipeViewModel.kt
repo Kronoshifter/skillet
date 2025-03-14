@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.kronos.skilletapp.Route
+import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState

@@ -1,9 +1,7 @@
-package com.kronos.skilletapp
+package com.kronos.skilletapp.navigation
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.*
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -20,7 +18,6 @@ import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
-import com.kronos.skilletapp.utils.fromJson
 import com.kronos.skilletapp.utils.navDeepLinkRequest
 import com.kronos.skilletapp.utils.navTypeOf
 import com.kronos.skilletapp.utils.toJson

@@ -1,4 +1,4 @@
-package com.kronos.skilletapp
+package com.kronos.skilletapp.navigation
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.navigation.NavGraph.Companion.findStartDestination

@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
@@ -17,6 +16,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.kronos.skilletapp.navigation.LocalNavController
+import com.kronos.skilletapp.navigation.LocalNavigationActions
+import com.kronos.skilletapp.navigation.SkilletNavGraph
+import com.kronos.skilletapp.navigation.SkilletNavigationActions
+import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.koin.compose.KoinContext
