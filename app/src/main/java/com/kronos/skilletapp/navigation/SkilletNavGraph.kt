@@ -72,9 +72,6 @@ fun SkilletNavGraph(
     navController = navController,
     modifier = modifier,
     startDestination = startDestination,
-    popExitTransition = {
-      slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) + fadeOut()
-    },
   ) {
     composable<Route.RecipeList>(
       typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)),

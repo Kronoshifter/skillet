@@ -35,6 +35,7 @@ import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
+import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
 import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -79,6 +80,9 @@ fun RecipeScreen(
           }
         }
       )
+    },
+    bottomBar = {
+      SkilletBottomNavigationBar()
     },
     floatingActionButton = {
       FloatingActionButton(onClick = { onCook(uiState.scale) }) {

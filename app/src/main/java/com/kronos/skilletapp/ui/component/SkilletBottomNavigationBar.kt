@@ -92,12 +92,9 @@ fun SkilletBottomNavigationBar(
       val navBackStackEntry by navController.currentBackStackEntryAsState()
       val currentDestination = navBackStackEntry?.destination
 
-      screens.find { currentDestination?.hasRoute(it.route::class) == true }?.let {
-        selectedScreen = it.takeUnless { selectedScreen == it } ?: selectedScreen
-      }
-
       screens.forEach { screen ->
-        val isSelected = screen == selectedScreen
+//        val isSelected = screen == selectedScreen
+        val isSelected = currentDestination?.hasRoute(screen.route::class) == true
         NavigationBarItem(
           icon = {
             screen.SelectableIcon(isSelected)
@@ -107,7 +104,7 @@ fun SkilletBottomNavigationBar(
           },
           selected = isSelected,
           onClick = {
-            selectedScreen = screen
+//            selectedScreen = screen
             navActions.navigateViaBottomNav(screen.route)
           },
         )
