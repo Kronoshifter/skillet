@@ -138,8 +138,8 @@ fun RecipeListScreen(
         gridPadding = PaddingValues(
           start = 8.dp,
           end = 8.dp,
-          top = padding.calculateTopPadding(),
-          bottom = padding.calculateBottomPadding()
+          top = padding.calculateTopPadding() + 8.dp,
+          bottom = padding.calculateBottomPadding() + FabSpacing + FabHeight + FabSpacing
         )
       )
 
@@ -297,6 +297,9 @@ fun RecipeCard(
     }
   }
 }
+
+private val FabSpacing = 16.dp
+private val FabHeight = 56.dp
 
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////

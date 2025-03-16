@@ -84,9 +84,7 @@ fun SkilletBottomNavigationBar(
   screens: List<SkilletBottomNavigationBarItems<*>> = SkilletBottomNavigationBarItems.values,
 ) {
   if (state.isVisible) {
-    NavigationBar(
-      containerColor = MaterialTheme.colorScheme.surfaceContainer
-    ) {
+    NavigationBar {
       var selectedScreen by remember { mutableStateOf<SkilletBottomNavigationBarItems<*>>(SkilletBottomNavigationBarItems.RecipeList) }
 
       val navBackStackEntry by navController.currentBackStackEntryAsState()
