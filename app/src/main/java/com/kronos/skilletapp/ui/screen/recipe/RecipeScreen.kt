@@ -1,11 +1,21 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +28,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -61,6 +72,9 @@ fun RecipeScreen(
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
 
+  val pagerState = rememberPagerState { RecipeContentTab.entries.size }
+  val transition = updateTransition(pagerState.isScrollInProgress, label = "Fab transition")
+
   Scaffold(
     topBar = {
       TopAppBar(
@@ -85,8 +99,25 @@ fun RecipeScreen(
       SkilletBottomNavigationBar()
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = { onCook(uiState.scale) }) {
-        Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook")
+      Box(
+        contentAlignment = Alignment.Center
+      ) {
+        transition.AnimatedVisibility(
+          visible = { isScrollInProgress -> !isScrollInProgress },
+          enter = scaleIn(
+            animationSpec = spring(stiffness = Spring.StiffnessMedium)
+          ),
+          exit = scaleOut(
+            animationSpec = spring(stiffness = Spring.StiffnessMedium)
+          ),
+          modifier = Modifier
+            .align(Alignment.Center)
+            .clip(FloatingActionButtonDefaults.shape)
+        ) {
+          FloatingActionButton(onClick = { onCook(uiState.scale) }) {
+            Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook")
+          }
+        }
       }
     }
   ) { paddingValues ->
@@ -103,6 +134,7 @@ fun RecipeScreen(
         selectedUnits = uiState.selectedUnits,
         onScalingChanged = vm::setScaling,
         onUnitSelect = vm::selectUnit,
+        pagerState = pagerState,
         modifier = Modifier
           .fillMaxSize()
       )
@@ -119,10 +151,10 @@ private fun RecipeContent(
   selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
   onScalingChanged: (scale: Float, servings: Int) -> Unit,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size},
   modifier: Modifier = Modifier,
 ) {
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
-  val pagerState = rememberPagerState { RecipeContentTab.entries.size }
 
   Box(
     modifier = Modifier
