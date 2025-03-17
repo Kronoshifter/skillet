@@ -1,9 +1,5 @@
 package com.kronos.skilletapp.ui.screen.recipelist
 
-import android.R.attr.label
-import android.R.attr.onClick
-import android.R.attr.singleLine
-import android.webkit.URLUtil
 import android.webkit.URLUtil.isValidUrl
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
@@ -34,9 +30,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.ui.DisableRipple
+import com.kronos.skilletapp.ui.FabHeight
+import com.kronos.skilletapp.ui.FabPadding
+import com.kronos.skilletapp.ui.FabSpacing
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
+import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.utils.isNotNullOrBlank
@@ -44,12 +45,9 @@ import com.leinardi.android.speeddial.compose.FabWithLabel
 import com.leinardi.android.speeddial.compose.SpeedDial
 import com.leinardi.android.speeddial.compose.SpeedDialOverlay
 import com.leinardi.android.speeddial.compose.SpeedDialState
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -79,6 +77,9 @@ fun RecipeListScreen(
           }
         }
       )
+    },
+    bottomBar = {
+      SkilletBottomNavigationBar()
     },
     floatingActionButton = {
       SpeedDial(
@@ -122,29 +123,38 @@ fun RecipeListScreen(
       }
     },
     floatingActionButtonPosition = FabPosition.End,
-  ) { paddingValues ->
+  ) { padding ->
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
     LoadingContent(
       state = uiState,
       modifier = Modifier
         .fillMaxSize()
-        .padding(paddingValues)
+//        .padding(padding)
     ) { data ->
       RecipeListContent(
         recipes = data.recipes,
         onRecipeClick = onRecipeClick,
         modifier = Modifier
-          .fillMaxSize()
+          .fillMaxSize(),
+//          .padding(padding)
+        gridPadding = PaddingValues(
+          start = 8.dp,
+          end = 8.dp,
+          top = padding.calculateTopPadding() + 8.dp,
+          bottom = padding.calculateBottomPadding() + FabPadding
+        )
       )
 
-      SpeedDialOverlay(
-        visible = overlayVisible,
-        onClick = {
-          overlayVisible = false
-          speedDialState = speedDialState.toggle()
-        },
-      )
+      DisableRipple {
+        SpeedDialOverlay(
+          visible = overlayVisible,
+          onClick = {
+            overlayVisible = false
+            speedDialState = speedDialState.toggle()
+          },
+        )
+      }
 
       LaunchedEffect(vm.sharedRecipe) {
         showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl
@@ -221,6 +231,7 @@ private fun RecipeListContent(
   recipes: List<Recipe>,
   onRecipeClick: (id: String) -> Unit,
   modifier: Modifier = Modifier,
+  gridPadding: PaddingValues = PaddingValues(8.dp),
 ) {
   if (recipes.isEmpty()) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -233,7 +244,7 @@ private fun RecipeListContent(
     columns = GridCells.Fixed(2),
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    contentPadding = PaddingValues(8.dp),
+    contentPadding = gridPadding,
     modifier = modifier
   ) {
     items(recipes) { recipe ->
@@ -326,7 +337,8 @@ fun RecipeListPreview() {
         recipes = recipes,
         onRecipeClick = { },
         modifier = Modifier
-          .fillMaxSize()
+          .fillMaxSize(),
+        gridPadding = PaddingValues(8.dp)
       )
     }
   }

@@ -1,7 +1,6 @@
-package com.kronos.skilletapp
+package com.kronos.skilletapp.navigation
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,7 +18,6 @@ import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
-import com.kronos.skilletapp.utils.fromJson
 import com.kronos.skilletapp.utils.navDeepLinkRequest
 import com.kronos.skilletapp.utils.navTypeOf
 import com.kronos.skilletapp.utils.toJson
@@ -58,6 +56,7 @@ fun SkilletNavGraph(
         val json = sharedRecipe?.toJson()
         val uri = "${baseUrl}/recipeList?sharedRecipe=${json}".toUri()
 
+        //TODO: encapsulate in SkilletNavigationActions
         navController.navigate(
           request = navDeepLinkRequest(uri = uri) {
             action = intentAction
@@ -71,10 +70,8 @@ fun SkilletNavGraph(
 
   NavHost(
     navController = navController,
+    modifier = modifier,
     startDestination = startDestination,
-    popExitTransition = {
-      slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) + fadeOut()
-    },
   ) {
     composable<Route.RecipeList>(
       typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)),
@@ -96,14 +93,8 @@ fun SkilletNavGraph(
         vm = koinViewModel(key = args.sharedRecipe.toString()),
       )
     }
-    composable<Route.Recipe>(
-      enterTransition = {
-        scaleIn() + fadeIn()
-      },
-      exitTransition = {
-        scaleOut() + fadeOut()
-      }
-    ) {
+
+    composable<Route.Recipe> {
       val args = it.toRoute<Route.Recipe>()
       RecipeScreen(
         onBack = { navController.navigateUp() },
@@ -116,6 +107,7 @@ fun SkilletNavGraph(
         }
       )
     }
+
     composable<Route.AddEditRecipe> { backStackEntry ->
       val args = backStackEntry.toRoute<Route.AddEditRecipe>()
       AddEditRecipeScreen(
@@ -126,6 +118,7 @@ fun SkilletNavGraph(
         },
       )
     }
+
     composable<Route.Cooking> { backStackEntry ->
       val args = backStackEntry.toRoute<Route.Cooking>()
       CookingScreen(

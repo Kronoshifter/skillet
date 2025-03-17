@@ -104,9 +104,8 @@ fun CookingContent(
   var tab: CookingContentTab by remember { mutableStateOf(CookingContentTab.Overview) }
   val pagerState = rememberPagerState { recipe.instructions.size + 2 }
 
-  Surface(
+  Box(
     modifier = modifier,
-    color = MaterialTheme.colorScheme.background
   ) {
     Column(modifier = Modifier.fillMaxSize()) {
       PrimaryScrollableTabRow(

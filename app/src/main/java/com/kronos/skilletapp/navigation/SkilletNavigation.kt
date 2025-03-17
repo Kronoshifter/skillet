@@ -1,11 +1,9 @@
-package com.kronos.skilletapp
+package com.kronos.skilletapp.navigation
 
+import androidx.compose.runtime.compositionLocalOf
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.MeasurementUnit
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 @Serializable
 data class SharedRecipe(val url: String, val id: String)
@@ -20,15 +18,7 @@ sealed interface Route {
 class SkilletNavigationActions(private val navController: NavHostController) {
 
   fun navigateToRecipeList() {
-    navController.navigate(Route.RecipeList()) {
-      restoreState = false
-      launchSingleTop = true
-
-      popUpTo<Route.RecipeList> {
-        inclusive = true
-        saveState = false
-      }
-    }
+    navController.navigate(Route.RecipeList())
   }
 
   fun navigateToRecipe(recipeId: String) {
@@ -38,10 +28,28 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   }
 
   fun navigateToAddEditRecipe(title: String, recipeId: String? = null, url: String? = null) {
-    navController.navigate(Route.AddEditRecipe(title, recipeId, url))
+    navController.navigate(Route.AddEditRecipe(title, recipeId, url)) {
+      restoreState = true
+    }
   }
 
   fun navigateToCooking(recipeId: String, scale: Float) {
-    navController.navigate(Route.Cooking(recipeId, scale))
+    navController.navigate(Route.Cooking(recipeId, scale)) {
+      restoreState = true
+    }
+  }
+
+  fun navigateViaBottomNav(route: Route) {
+    navController.navigate(route) {
+      launchSingleTop = true
+      restoreState = true
+
+      popUpTo(navController.graph.findStartDestination().id) {
+        saveState = true
+      }
+    }
   }
 }
+
+val LocalNavigationActions = compositionLocalOf<SkilletNavigationActions> { error("No SkilletNavigationActions provided") }
+val LocalNavController = compositionLocalOf<NavHostController> { error("No NavController provided") }

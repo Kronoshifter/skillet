@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.room.Room
 import com.kronos.skilletapp.appModule
 import com.kronos.skilletapp.data.RecipeRepository
@@ -102,27 +103,6 @@ fun LoadingContent(
       }
     }
   }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun RefreshingContent(
-  refreshing: Boolean,
-  onRefresh: () -> Unit,
-  modifier: Modifier = Modifier,
-  content: @Composable () -> Unit,
-) {
-  val refreshState = rememberPullRefreshState(refreshing = refreshing, onRefresh = onRefresh)
-
-  Box(
-    modifier = Modifier
-      .pullRefresh(refreshState)
-      .then(modifier)
-  ) {
-    content()
-    PullRefreshIndicator(refreshing = refreshing, state = refreshState, modifier = Modifier.align(Alignment.TopCenter))
-  }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -214,3 +194,7 @@ inline fun <reified T> saverOf(): Saver<T, *> = listSaver(
   save = { listOf(it?.toJson()) },
   restore = { it.first()?.fromJson<T>() }
 )
+
+val FabSpacing = 16.dp
+val FabHeight = 56.dp
+val FabPadding = FabSpacing + FabHeight + FabSpacing

@@ -1,11 +1,19 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,9 +26,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -28,17 +36,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kronos.skilletapp.R
-import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.ui.FabPadding
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
+import com.kronos.skilletapp.ui.icon.SkilletIcons
+import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
-import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlin.collections.set
@@ -59,6 +67,24 @@ fun RecipeScreen(
 ) {
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
+
+  val pagerState = rememberPagerState { RecipeContentTab.entries.size }
+  val fabTransitionState = remember { MutableTransitionState(false).apply { targetState = true } }
+  val fabTransition = rememberTransition(fabTransitionState, "Fab transition")
+
+  LaunchedEffect(pagerState.isScrollInProgress, fabTransitionState.targetState == fabTransitionState.currentState) {
+    fabTransitionState.targetState = !pagerState.isScrollInProgress
+  }
+
+  val ingredientListState = rememberLazyListState()
+  val instructionsListState = rememberLazyListState()
+
+  val isFabExpanded by remember {
+    derivedStateOf {
+      (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal && (!ingredientListState.canScrollBackward || !ingredientListState.canScrollForward)) ||
+      (pagerState.currentPage == RecipeContentTab.Instructions.ordinal && (!instructionsListState.canScrollBackward || !instructionsListState.canScrollForward))
+    }
+  }
 
   Scaffold(
     topBar = {
@@ -81,8 +107,19 @@ fun RecipeScreen(
       )
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = { onCook(uiState.scale) }) {
-        Icon(painter = painterResource(id = R.drawable.skillet_24px), contentDescription = "Cook")
+      fabTransition.AnimatedVisibility(
+        visible = { isVisible -> isVisible },
+        enter = scaleIn(),
+        exit = scaleOut(),
+        modifier = Modifier
+          .clip(if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape else FloatingActionButtonDefaults.shape)
+      ) {
+        ExtendedFloatingActionButton(
+          text = { Text("Cook") },
+          icon = { Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook") },
+          onClick = { onCook(uiState.scale) },
+          expanded = isFabExpanded
+        )
       }
     }
   ) { paddingValues ->
@@ -99,6 +136,9 @@ fun RecipeScreen(
         selectedUnits = uiState.selectedUnits,
         onScalingChanged = vm::setScaling,
         onUnitSelect = vm::selectUnit,
+        pagerState = pagerState,
+        ingredientListState = ingredientListState,
+        instructionsListState = instructionsListState,
         modifier = Modifier
           .fillMaxSize()
       )
@@ -115,16 +155,17 @@ private fun RecipeContent(
   selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
   onScalingChanged: (scale: Float, servings: Int) -> Unit,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size },
+  ingredientListState: LazyListState = rememberLazyListState(),
+  instructionsListState: LazyListState = rememberLazyListState(),
   modifier: Modifier = Modifier,
 ) {
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
-  val pagerState = rememberPagerState { RecipeContentTab.entries.size }
 
-  Surface(
+  Box(
     modifier = Modifier
       .fillMaxSize()
       .then(modifier),
-    color = MaterialTheme.colorScheme.background
   ) {
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -191,14 +232,18 @@ private fun RecipeContent(
               ingredients = recipe.ingredients,
               scale = scale,
               selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect
+              onUnitSelect = onUnitSelect,
+              listState = ingredientListState,
+              listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp + FabPadding)
             )
 
             RecipeContentTab.Instructions -> InstructionsList(
               instructions = recipe.instructions,
               scale = scale,
               selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect
+              onUnitSelect = onUnitSelect,
+              listState = instructionsListState,
+              listPadding = PaddingValues(top = 8.dp, bottom = 8.dp + FabPadding)
             )
           }
         }
@@ -308,6 +353,8 @@ private fun IngredientsList(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  listState: LazyListState = rememberLazyListState(),
+  listPadding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
 ) {
   if (ingredients.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -319,8 +366,9 @@ private fun IngredientsList(
   //TODO: sort ingredients so that quantity-based ingredients come first
 
   LazyColumn(
+    state = listState,
     modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+    contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
@@ -345,6 +393,8 @@ private fun InstructionsList(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  listState: LazyListState = rememberLazyListState(),
+  listPadding: PaddingValues = PaddingValues(vertical = 8.dp)
 ) {
   if (instructions.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -354,8 +404,9 @@ private fun InstructionsList(
   }
 
   LazyColumn(
+    state = listState,
     modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(vertical = 8.dp),
+    contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {

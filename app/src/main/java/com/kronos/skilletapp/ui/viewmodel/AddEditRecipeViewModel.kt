@@ -1,32 +1,26 @@
 package com.kronos.skilletapp.ui.viewmodel
 
-import android.R.attr.description
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.github.michaelbull.result.mapBoth
-import com.kronos.skilletapp.Route
+import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.parser.IngredientParser
-import com.kronos.skilletapp.scraping.RecipeHtml
 import com.kronos.skilletapp.scraping.RecipeScrape
 import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.koin.core.logger.Logger
-import org.stringtemplate.v4.compiler.Bytecode.instructions
 import kotlin.collections.first
 import kotlin.collections.map
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 data class RecipeState(
   val name: String = "",
