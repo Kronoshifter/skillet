@@ -2,16 +2,16 @@ package com.kronos.skilletapp.ui.screen.recipe
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -37,10 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.model.*
-import com.kronos.skilletapp.navigation.LocalNavController
-import com.kronos.skilletapp.ui.FabHeight
 import com.kronos.skilletapp.ui.FabPadding
-import com.kronos.skilletapp.ui.FabSpacing
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
@@ -72,11 +69,21 @@ fun RecipeScreen(
   val uiState by vm.uiState.collectAsStateWithLifecycle()
 
   val pagerState = rememberPagerState { RecipeContentTab.entries.size }
-  val fabState = remember { MutableTransitionState(false).apply { targetState = true } }
-  val fabTransition = rememberTransition(fabState, "Fab transition")
+  val fabTransitionState = remember { MutableTransitionState(false).apply { targetState = true } }
+  val fabTransition = rememberTransition(fabTransitionState, "Fab transition")
 
-  LaunchedEffect(pagerState.isScrollInProgress && fabState.targetState == fabState.currentState) {
-    fabState.targetState = !pagerState.isScrollInProgress
+  LaunchedEffect(pagerState.isScrollInProgress, fabTransitionState.targetState == fabTransitionState.currentState) {
+    fabTransitionState.targetState = !pagerState.isScrollInProgress
+  }
+
+  val ingredientListState = rememberLazyListState()
+  val instructionsListState = rememberLazyListState()
+
+  val isFabExpanded by remember {
+    derivedStateOf {
+      (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal && (!ingredientListState.canScrollBackward || !ingredientListState.canScrollForward)) ||
+      (pagerState.currentPage == RecipeContentTab.Instructions.ordinal && (!instructionsListState.canScrollBackward || !instructionsListState.canScrollForward))
+    }
   }
 
   Scaffold(
@@ -105,11 +112,14 @@ fun RecipeScreen(
         enter = scaleIn(),
         exit = scaleOut(),
         modifier = Modifier
-          .clip(FloatingActionButtonDefaults.shape)
+          .clip(if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape else FloatingActionButtonDefaults.shape)
       ) {
-        FloatingActionButton(onClick = { onCook(uiState.scale) }) {
-          Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook")
-        }
+        ExtendedFloatingActionButton(
+          text = { Text("Cook") },
+          icon = { Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook") },
+          onClick = { onCook(uiState.scale) },
+          expanded = isFabExpanded
+        )
       }
     }
   ) { paddingValues ->
@@ -127,6 +137,8 @@ fun RecipeScreen(
         onScalingChanged = vm::setScaling,
         onUnitSelect = vm::selectUnit,
         pagerState = pagerState,
+        ingredientListState = ingredientListState,
+        instructionsListState = instructionsListState,
         modifier = Modifier
           .fillMaxSize()
       )
@@ -144,6 +156,8 @@ private fun RecipeContent(
   onScalingChanged: (scale: Float, servings: Int) -> Unit,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size },
+  ingredientListState: LazyListState = rememberLazyListState(),
+  instructionsListState: LazyListState = rememberLazyListState(),
   modifier: Modifier = Modifier,
 ) {
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
@@ -219,6 +233,7 @@ private fun RecipeContent(
               scale = scale,
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect,
+              listState = ingredientListState,
               listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp + FabPadding)
             )
 
@@ -227,6 +242,7 @@ private fun RecipeContent(
               scale = scale,
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect,
+              listState = instructionsListState,
               listPadding = PaddingValues(top = 8.dp, bottom = 8.dp + FabPadding)
             )
           }
@@ -337,6 +353,7 @@ private fun IngredientsList(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  listState: LazyListState = rememberLazyListState(),
   listPadding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
 ) {
   if (ingredients.isEmpty()) {
@@ -349,6 +366,7 @@ private fun IngredientsList(
   //TODO: sort ingredients so that quantity-based ingredients come first
 
   LazyColumn(
+    state = listState,
     modifier = Modifier.fillMaxSize(),
     contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -375,6 +393,7 @@ private fun InstructionsList(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  listState: LazyListState = rememberLazyListState(),
   listPadding: PaddingValues = PaddingValues(vertical = 8.dp)
 ) {
   if (instructions.isEmpty()) {
@@ -385,6 +404,7 @@ private fun InstructionsList(
   }
 
   LazyColumn(
+    state = listState,
     modifier = Modifier.fillMaxSize(),
     contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
