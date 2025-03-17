@@ -1,14 +1,12 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -39,14 +36,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kronos.skilletapp.R
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.navigation.LocalNavController
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
-import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
 import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -73,7 +69,12 @@ fun RecipeScreen(
   val uiState by vm.uiState.collectAsStateWithLifecycle()
 
   val pagerState = rememberPagerState { RecipeContentTab.entries.size }
-  val transition = updateTransition(pagerState.isScrollInProgress, label = "Fab transition")
+  val fabState = remember { MutableTransitionState(false).apply { targetState = true } }
+  val fabTransition = rememberTransition(fabState, "Fab transition")
+
+  LaunchedEffect(pagerState.isScrollInProgress && fabState.targetState == fabState.currentState) {
+    fabState.targetState = !pagerState.isScrollInProgress
+  }
 
   Scaffold(
     topBar = {
@@ -95,18 +96,11 @@ fun RecipeScreen(
         }
       )
     },
-    bottomBar = {
-      SkilletBottomNavigationBar()
-    },
     floatingActionButton = {
-      transition.AnimatedVisibility(
-        visible = { isScrollInProgress -> !isScrollInProgress },
-        enter = scaleIn(
-          animationSpec = spring(stiffness = Spring.StiffnessMedium)
-        ),
-        exit = scaleOut(
-          animationSpec = spring(stiffness = Spring.StiffnessMedium)
-        ),
+      fabTransition.AnimatedVisibility(
+        visible = { isVisible -> isVisible },
+        enter = scaleIn(),
+        exit = scaleOut(),
         modifier = Modifier
           .clip(FloatingActionButtonDefaults.shape)
       ) {
