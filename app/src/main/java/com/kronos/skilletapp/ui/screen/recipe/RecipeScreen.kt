@@ -99,24 +99,19 @@ fun RecipeScreen(
       SkilletBottomNavigationBar()
     },
     floatingActionButton = {
-      Box(
-        contentAlignment = Alignment.Center
+      transition.AnimatedVisibility(
+        visible = { isScrollInProgress -> !isScrollInProgress },
+        enter = scaleIn(
+          animationSpec = spring(stiffness = Spring.StiffnessMedium)
+        ),
+        exit = scaleOut(
+          animationSpec = spring(stiffness = Spring.StiffnessMedium)
+        ),
+        modifier = Modifier
+          .clip(FloatingActionButtonDefaults.shape)
       ) {
-        transition.AnimatedVisibility(
-          visible = { isScrollInProgress -> !isScrollInProgress },
-          enter = scaleIn(
-            animationSpec = spring(stiffness = Spring.StiffnessMedium)
-          ),
-          exit = scaleOut(
-            animationSpec = spring(stiffness = Spring.StiffnessMedium)
-          ),
-          modifier = Modifier
-            .align(Alignment.Center)
-            .clip(FloatingActionButtonDefaults.shape)
-        ) {
-          FloatingActionButton(onClick = { onCook(uiState.scale) }) {
-            Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook")
-          }
+        FloatingActionButton(onClick = { onCook(uiState.scale) }) {
+          Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook")
         }
       }
     }
@@ -151,7 +146,7 @@ private fun RecipeContent(
   selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
   onScalingChanged: (scale: Float, servings: Int) -> Unit,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
-  pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size},
+  pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size },
   modifier: Modifier = Modifier,
 ) {
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
