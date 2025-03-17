@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.room.Room
 import com.kronos.skilletapp.appModule
 import com.kronos.skilletapp.data.RecipeRepository
@@ -193,3 +194,7 @@ inline fun <reified T> saverOf(): Saver<T, *> = listSaver(
   save = { listOf(it?.toJson()) },
   restore = { it.first()?.fromJson<T>() }
 )
+
+val FabSpacing = 16.dp
+val FabHeight = 56.dp
+val FabPadding = FabSpacing + FabHeight + FabSpacing

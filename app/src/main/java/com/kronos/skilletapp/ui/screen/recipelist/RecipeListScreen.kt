@@ -31,6 +31,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.DisableRipple
+import com.kronos.skilletapp.ui.FabHeight
+import com.kronos.skilletapp.ui.FabPadding
+import com.kronos.skilletapp.ui.FabSpacing
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
@@ -139,7 +142,7 @@ fun RecipeListScreen(
           start = 8.dp,
           end = 8.dp,
           top = padding.calculateTopPadding() + 8.dp,
-          bottom = padding.calculateBottomPadding() + FabSpacing + FabHeight + FabSpacing
+          bottom = padding.calculateBottomPadding() + FabPadding
         )
       )
 
@@ -297,9 +300,6 @@ fun RecipeCard(
     }
   }
 }
-
-private val FabSpacing = 16.dp
-private val FabHeight = 56.dp
 
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////

@@ -38,6 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.navigation.LocalNavController
+import com.kronos.skilletapp.ui.FabHeight
+import com.kronos.skilletapp.ui.FabPadding
+import com.kronos.skilletapp.ui.FabSpacing
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
@@ -215,14 +218,16 @@ private fun RecipeContent(
               ingredients = recipe.ingredients,
               scale = scale,
               selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect
+              onUnitSelect = onUnitSelect,
+              listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp + FabPadding)
             )
 
             RecipeContentTab.Instructions -> InstructionsList(
               instructions = recipe.instructions,
               scale = scale,
               selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect
+              onUnitSelect = onUnitSelect,
+              listPadding = PaddingValues(top = 8.dp, bottom = 8.dp + FabPadding)
             )
           }
         }
@@ -332,6 +337,7 @@ private fun IngredientsList(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  listPadding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
 ) {
   if (ingredients.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -344,7 +350,7 @@ private fun IngredientsList(
 
   LazyColumn(
     modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+    contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
@@ -369,6 +375,7 @@ private fun InstructionsList(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  listPadding: PaddingValues = PaddingValues(vertical = 8.dp)
 ) {
   if (instructions.isEmpty()) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -379,7 +386,7 @@ private fun InstructionsList(
 
   LazyColumn(
     modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(vertical = 8.dp),
+    contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
