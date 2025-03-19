@@ -81,8 +81,8 @@ fun RecipeScreen(
 
   val isFabExpanded by remember {
     derivedStateOf {
-      (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal && (!ingredientListState.canScrollBackward || !ingredientListState.canScrollForward)) ||
-      (pagerState.currentPage == RecipeContentTab.Instructions.ordinal && (!instructionsListState.canScrollBackward || !instructionsListState.canScrollForward))
+      (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal && (ingredientListState.firstVisibleItemIndex == 0 || !ingredientListState.canScrollForward)) ||
+      (pagerState.currentPage == RecipeContentTab.Instructions.ordinal && (instructionsListState.firstVisibleItemIndex == 0 || !instructionsListState.canScrollForward))
     }
   }
 

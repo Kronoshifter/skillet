@@ -22,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.kronos.skilletapp.navigation.LocalNavController
@@ -92,7 +93,7 @@ fun SkilletBottomNavigationBar(
 
       screens.forEach { screen ->
 //        val isSelected = screen == selectedScreen
-        val isSelected = currentDestination?.hasRoute(screen.route::class) == true
+        val isSelected = currentDestination?.hierarchy?.any { it.hasRoute(screen.route::class) } == true
         NavigationBarItem(
           icon = {
             screen.SelectableIcon(isSelected)
