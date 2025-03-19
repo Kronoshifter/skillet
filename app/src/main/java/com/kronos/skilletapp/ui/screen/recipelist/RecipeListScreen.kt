@@ -30,15 +30,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
-import com.kronos.skilletapp.ui.DisableRipple
-import com.kronos.skilletapp.ui.FabHeight
-import com.kronos.skilletapp.ui.FabPadding
-import com.kronos.skilletapp.ui.FabSpacing
-import com.kronos.skilletapp.ui.KoinPreview
-import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.*
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
-import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.utils.isNotNullOrBlank
 import com.leinardi.android.speeddial.compose.FabWithLabel
@@ -130,14 +124,12 @@ fun RecipeListScreen(
       state = uiState,
       modifier = Modifier
         .fillMaxSize()
-//        .padding(padding)
     ) { data ->
       RecipeListContent(
         recipes = data.recipes,
         onRecipeClick = onRecipeClick,
         modifier = Modifier
           .fillMaxSize(),
-//          .padding(padding)
         gridPadding = PaddingValues(
           start = 8.dp,
           end = 8.dp,
