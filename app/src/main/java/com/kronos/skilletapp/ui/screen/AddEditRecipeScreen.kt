@@ -34,6 +34,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
@@ -503,7 +505,12 @@ private fun RecipeInfoContent(
       )
 
       image?.let {
-        
+        AsyncImage(
+          model = it,
+          contentDescription = null,
+          imageLoader = koinInject(),
+          contentScale = ContentScale.Crop,
+        )
       } ?: Row(
         modifier = Modifier
           .fillMaxWidth()
@@ -753,7 +760,7 @@ private fun RecipeInfoContent(
 }
 
 @Composable
-fun SquareIconButton(
+private fun SquareIconButton(
   onClick: () -> Unit,
   icon: @Composable () -> Unit,
   text: @Composable () -> Unit,

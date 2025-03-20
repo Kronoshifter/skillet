@@ -2,6 +2,8 @@ package com.kronos.skilletapp
 
 import android.app.Application
 import androidx.room.Room
+import coil3.ImageLoader
+import coil3.request.crossfade
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.database.RecipeDatabase
@@ -49,6 +51,11 @@ val appModule = module {
 
   singleOf(::IngredientParser)
   factoryOf(::RecipeScraper)
+  single<ImageLoader>(createdAtStart = true) {
+    ImageLoader.Builder(androidContext())
+      .crossfade(true)
+      .build()
+  }
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)
