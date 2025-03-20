@@ -5,6 +5,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,10 +26,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -38,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -298,6 +304,7 @@ fun AddEditRecipeContent(
               name = name,
               source = source,
               sourceName = sourceName,
+              image = null,
               description = description,
               servings = servings,
               prepTime = prepTime,
@@ -344,6 +351,7 @@ private fun RecipeInfoContent(
   name: String,
   source: String,
   sourceName: String,
+  image: String?,
   description: String,
   servings: Int,
   prepTime: Int,
@@ -376,7 +384,9 @@ private fun RecipeInfoContent(
       value = name,
       onValueChange = onNameChanged,
       placeholder = { Text(text = "The name of your recipe") },
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier
+        .widthIn(max = 488.dp)
+        .fillMaxWidth(),
       singleLine = true,
       keyboardOptions = KeyboardOptions(
         capitalization = KeyboardCapitalization.Words,
@@ -410,7 +420,7 @@ private fun RecipeInfoContent(
         )
       }
 
-      if (source.isNotBlank()) {
+      if (source.isNotBlank() && source != sourceName) {
         Text(
           text = source,
           style = MaterialTheme.typography.bodySmall,
@@ -483,6 +493,59 @@ private fun RecipeInfoContent(
 
     HorizontalDivider()
 
+    Column(
+      verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+      Text(
+        text = "Image",
+        style = MaterialTheme.typography.titleLarge
+      )
+
+      image?.let {
+        
+      } ?: Row(
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        SquareIconButton(
+          modifier = Modifier.height(IntrinsicSize.Max),
+          onClick = { /*TODO*/ },
+          icon = {
+            Icon(
+              imageVector = Icons.Filled.ImageSearch,
+              contentDescription = "Choose from gallery",
+            )
+          },
+          text = {
+            Text(
+              text = "Choose from gallery",
+              textAlign = TextAlign.Center
+            )
+          },
+        )
+
+        SquareIconButton(
+          modifier = Modifier.height(IntrinsicSize.Max),
+          onClick = { /*TODO*/ },
+          icon = {
+            Icon(
+              imageVector = Icons.Filled.PhotoCamera,
+              contentDescription = "Take a photo",
+            )
+          },
+          text = {
+            Text(
+              text = "Take a photo",
+              textAlign = TextAlign.Center
+            )
+          },
+        )
+      }
+    }
+
+    HorizontalDivider()
+
 //    Text(
 //      text = "Description",
 //      style = MaterialTheme.typography.titleLarge
@@ -521,7 +584,8 @@ private fun RecipeInfoContent(
         onClick = {
           showServingsPicker = true
           servingsSelect = servings
-        }) {
+        }
+      ) {
         Text(
           text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings" },
           style = MaterialTheme.typography.titleMedium
@@ -671,7 +735,9 @@ private fun RecipeInfoContent(
     OutlinedTextField(
       value = notes,
       onValueChange = onNotesChanged,
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier
+        .widthIn(max = 488.dp)
+        .fillMaxWidth(),
       placeholder = { Text("Any additional notes about the recipe") },
       minLines = 3,
       keyboardOptions = KeyboardOptions(
@@ -680,6 +746,41 @@ private fun RecipeInfoContent(
       ),
       keyboardActions = KeyboardActions(onDone = { keyboard?.hide() })
     )
+  }
+}
+
+@Composable
+fun SquareIconButton(
+  onClick: () -> Unit,
+  icon: @Composable () -> Unit,
+  text: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+  shape: Shape = MaterialTheme.shapes.medium,
+  contentColor: Color = MaterialTheme.colorScheme.primary,
+) {
+  Box(
+    modifier = modifier
+      .widthIn(min = 64.dp, max = 256.dp)
+      .aspectRatio(ratio = 1f, matchHeightConstraintsFirst = true)
+      .clip(shape)
+      .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = shape)
+      .padding(16.dp)
+      .clickable(
+        onClick = onClick,
+        indication = LocalIndication.current,
+        interactionSource = null
+      ),
+    contentAlignment = Alignment.Center
+  ) {
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+      CompositionLocalProvider(LocalContentColor provides contentColor) {
+        icon()
+        Spacer(modifier = Modifier.height(8.dp))
+        text()
+      }
+    }
   }
 }
 
@@ -1565,6 +1666,30 @@ fun InstructionsTabPreview() {
           onUserMessage = {}
         )
       }
+    }
+  }
+}
+
+@Preview
+@Composable
+private fun SquareIconButtonPreview() {
+  SkilletAppTheme {
+    Surface {
+      SquareIconButton(
+        onClick = {},
+        icon = {
+          Icon(
+            imageVector = Icons.Filled.ImageSearch,
+            contentDescription = "Choose from gallery",
+          )
+        },
+        text = {
+          Text(
+            text = "Choose from gallery",
+            textAlign = TextAlign.Center
+          )
+        },
+      )
     }
   }
 }

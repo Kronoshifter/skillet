@@ -35,6 +35,8 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.RecipeSource
 import com.kronos.skilletapp.model.RecipeTime
+import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.fromJson
 import com.kronos.skilletapp.utils.toJson
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +46,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.compose.KoinApplication
 import org.koin.compose.KoinContext
 import org.koin.core.module.dsl.createdAtStart
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatformTools
@@ -167,6 +170,9 @@ fun KoinPreview(
 
       recipe
     }
+
+    singleOf(::IngredientParser)
+    factoryOf(::RecipeScraper)
   }
 
   KoinApplication(
