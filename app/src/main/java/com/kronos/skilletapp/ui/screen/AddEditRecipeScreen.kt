@@ -9,6 +9,7 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -504,8 +505,10 @@ private fun RecipeInfoContent(
       image?.let {
         
       } ?: Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically
       ) {
         SquareIconButton(
@@ -764,7 +767,6 @@ fun SquareIconButton(
       .aspectRatio(ratio = 1f, matchHeightConstraintsFirst = true)
       .clip(shape)
       .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = shape)
-      .padding(16.dp)
       .clickable(
         onClick = onClick,
         indication = LocalIndication.current,
@@ -774,6 +776,7 @@ fun SquareIconButton(
   ) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier.padding(16.dp)
     ) {
       CompositionLocalProvider(LocalContentColor provides contentColor) {
         icon()
