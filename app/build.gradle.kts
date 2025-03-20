@@ -65,6 +65,7 @@ dependencies {
   val nav_version = "2.8.0-beta05"
   val koin_version = "4.0.0"
   val room_version = "2.6.1"
+  val coil_version = "3.1.0"
 
   implementation("androidx.core:core-ktx:1.13.1")
   implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
@@ -94,6 +95,11 @@ dependencies {
   implementation("androidx.room:room-runtime:$room_version")
   ksp("androidx.room:room-compiler:$room_version")
   implementation("androidx.room:room-ktx:$room_version")
+
+  // Coil
+  implementation("io.coil-kt.coil3:coil-compose:$coil_version")
+  implementation("io.coil-kt.coil3:coil-network-okhttp:$coil_version")
+  implementation("io.coil-kt.coil3:coil-compose:$coil_version")
 
   testImplementation("junit:junit:4.13.2")
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
