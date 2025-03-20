@@ -9,7 +9,7 @@ plugins {
 
 android {
   namespace = "com.kronos.skilletapp"
-  compileSdk = 34
+  compileSdk = 35
 
   defaultConfig {
     applicationId = "com.kronos.skilletapp"
@@ -67,7 +67,7 @@ dependencies {
   val room_version = "2.6.1"
   val coil_version = "3.1.0"
 
-  implementation("androidx.core:core-ktx:1.13.1")
+  implementation("androidx.core:core-ktx:1.15.0")
   implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
   implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
   implementation("androidx.activity:activity-compose:1.9.0")
@@ -97,9 +97,8 @@ dependencies {
   implementation("androidx.room:room-ktx:$room_version")
 
   // Coil
-  implementation("io.coil-kt.coil3:coil-compose:$coil_version")
+  implementation("io.coil-kt.coil3:coil-compose-core:$coil_version")
   implementation("io.coil-kt.coil3:coil-network-okhttp:$coil_version")
-  implementation("io.coil-kt.coil3:coil-compose:$coil_version")
 
   testImplementation("junit:junit:4.13.2")
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
