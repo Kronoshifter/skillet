@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.*
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.border
@@ -544,15 +545,19 @@ private fun RecipeInfoContent(
             contentScale = ContentScale.FillWidth,
             modifier = Modifier
               .clip(MaterialTheme.shapes.medium)
+              .clickable { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
           )
+          //TODO: add image editing controls
         } ?: Row(
           horizontalArrangement = Arrangement.SpaceBetween,
           verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier
+          modifier = Modifier.fillMaxWidth()
 //          .height(IntrinsicSize.Min),
         ) {
+          //TODO: make these buttons shrink into corner as icon buttons (along with other image controls) when image is present; see Modifier.sharedBounds()
+          //TODO: fix buttons going out of bounds of the column, it's something to do with the height and aspect ratio
           SquareIconButton(
-            modifier = Modifier.fillMaxHeight(),
+            modifier = Modifier.fillMaxHeight(0.95f),
             onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
             icon = {
               Icon(
@@ -571,7 +576,7 @@ private fun RecipeInfoContent(
           Spacer(modifier = Modifier.widthIn(min = 8.dp))
 
           SquareIconButton(
-            modifier = Modifier.fillMaxHeight(),
+            modifier = Modifier.fillMaxHeight(0.95f),
             onClick = { /*TODO*/ },
             icon = {
               Icon(
