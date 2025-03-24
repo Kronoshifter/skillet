@@ -35,15 +35,19 @@ class SkilletApp : Application() {
 val appModule = module {
 //  single { IngredientAiParser(androidContext()) }
 
-  single<RecipeDatabase>(createdAtStart = true) {
+  single {
     Room.databaseBuilder(
       context = androidContext(),
       klass = RecipeDatabase::class.java,
       name = "recipes.db"
     ).build()
+  } withOptions {
+    createdAtStart()
   }
 
-  single<RecipeDao>(createdAtStart = true) { (get<RecipeDatabase>().recipeDao()) }
+  single { get<RecipeDatabase>().recipeDao() } withOptions {
+    createdAtStart()
+  }
 
   singleOf(::RecipeRepository) {
     createdAtStart()
@@ -51,10 +55,12 @@ val appModule = module {
 
   singleOf(::IngredientParser)
   factoryOf(::RecipeScraper)
-  single<ImageLoader>(createdAtStart = true) {
+  single<ImageLoader> {
     ImageLoader.Builder(androidContext())
       .crossfade(true)
       .build()
+  } withOptions {
+    createdAtStart()
   }
 
   viewModelOf(::RecipeListViewModel)
