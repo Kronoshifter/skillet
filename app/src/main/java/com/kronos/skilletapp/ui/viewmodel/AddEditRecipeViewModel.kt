@@ -281,6 +281,7 @@ class AddEditRecipeViewModel(
         cookTime = cookTime,
         source = source,
         sourceName = sourceName,
+        image = image,
         ingredients = ingredients,
         instructions = instructions,
         equipment = equipment
@@ -309,6 +310,7 @@ class AddEditRecipeViewModel(
           cookTime = cookTime,
           source = source,
           sourceName = sourceName,
+          image = image,
           ingredients = ingredients,
           instructions = instructions,
           equipment = equipment
@@ -335,6 +337,7 @@ class AddEditRecipeViewModel(
             cookTime = recipe.time.cooking,
             source = recipe.source.source,
             sourceName = recipe.source.name,
+            image = recipe.cover,
             ingredients = recipe.ingredients,
             instructions = recipe.instructions,
             equipment = recipe.equipment
