@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.component
 
+import android.R.attr.onClick
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
@@ -89,6 +90,7 @@ fun ItemPill(
   onClick: () -> Unit = {},
   color: Color = MaterialTheme.colorScheme.primary,
   borderColor: Color = MaterialTheme.colorScheme.primary,
+  leadingContentColor: Color = contentColorFor(color),
   leadingContent: @Composable RowScope.() -> Unit,
   trailingIcon: @Composable (() -> Unit)? = null,
   content: @Composable () -> Unit
@@ -103,7 +105,7 @@ fun ItemPill(
       .border(width = 2.dp, color = borderColor, shape = CircleShape)
       .clickable(enabled = enabled, onClick = onClick),
   ) {
-    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+    CompositionLocalProvider(LocalContentColor provides leadingContentColor) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
