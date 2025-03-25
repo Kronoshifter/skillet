@@ -2,6 +2,7 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -52,11 +53,16 @@ fun IngredientRow(
     selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
   }
 
+  val transition = updateTransition(checked, label = "Checked")
+
   val bgColor by animateColorAsState(
     targetValue = if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
     animationSpec = if (checked) tween(durationMillis = 220, delayMillis = 120) else tween(durationMillis = 90),
     label = "Background Color"
   )
+
+  val detailBackgroundColor = MaterialTheme.colorScheme.primaryContainer
+  val detailContentColor = contentColorFor(detailBackgroundColor)
 
   ItemRow(
     modifier = Modifier
@@ -66,10 +72,9 @@ fun IngredientRow(
       .clip(MaterialTheme.shapes.medium)
       .then(modifier),
     showDetail = measurement.quantity > 0 || checked,
+    detailBackgroundColor = detailBackgroundColor,
     detail = {
-      AnimatedContent(
-        targetState = checked,
-        label = "Detail Box",
+      transition.AnimatedContent(
         transitionSpec = {
           fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 120)) togetherWith
           fadeOut(animationSpec = tween(durationMillis = 90))
@@ -79,7 +84,7 @@ fun IngredientRow(
           Icon(
             imageVector = Icons.Default.Check,
             contentDescription = "Checked",
-            tint = MaterialTheme.colorScheme.onPrimary,
+            tint = detailContentColor,
           )
         } else {
           val quantity = measurement.displayQuantity
@@ -91,7 +96,7 @@ fun IngredientRow(
           ) {
             Text(
               text = quantity,
-              color = MaterialTheme.colorScheme.onPrimary,
+              color = detailContentColor,
               fontSize = 18.sp,
               modifier = Modifier
                 .applyUnless(measurement.unit is MeasurementUnit.None) {
@@ -102,7 +107,7 @@ fun IngredientRow(
             if (measurement.unit !is MeasurementUnit.None) {
               Text(
                 text = measurement.unit.abbreviation,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = detailContentColor,
                 fontSize = 12.sp
               )
             }
@@ -204,12 +209,14 @@ fun IngredientPill(
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
-  val borderColor =
-    selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
+  val bgColor = MaterialTheme.colorScheme.primaryContainer
+  val contentColor = contentColorFor(bgColor)
+  val borderColor = selectedUnit?.let { contentColor } ?: bgColor
 
   ItemPill(
     enabled = measurements.isNotEmpty(),
     onClick = { showBottomSheet = true },
+    color = bgColor,
     borderColor = borderColor,
     leadingContent = {
       if (ingredient.measurement.quantity > 0) {
@@ -241,7 +248,6 @@ fun IngredientPill(
         ) {
           Text(
             text = quantity,
-            color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp,
             modifier = Modifier
               .padding(8.dp)

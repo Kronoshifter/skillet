@@ -29,6 +29,8 @@ import com.kronos.skilletapp.utils.modifier.applyIf
 fun ItemRow(
   modifier: Modifier = Modifier,
   showDetail: Boolean,
+  detailBackgroundColor : Color = MaterialTheme.colorScheme.primaryContainer,
+  detailContentColor: Color = contentColorFor(detailBackgroundColor),
   detail: @Composable BoxScope.() -> Unit,
   decoration: Boolean = false,
   enabled: Boolean = true,
@@ -58,17 +60,21 @@ fun ItemRow(
       }
     ) { showRowDetail ->
       if (showRowDetail) {
-        Box(
-          modifier = Modifier
-            .sizeIn(minWidth = boxSize, minHeight = boxSize)
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primary)
-            .applyIf(decoration) {
-              border(2.dp, MaterialTheme.colorScheme.onSecondaryContainer, MaterialTheme.shapes.medium)
-            },
-          contentAlignment = Alignment.Center,
-          content = detail
-        )
+        CompositionLocalProvider(
+          LocalContentColor provides detailContentColor
+        ) {
+          Box(
+            modifier = Modifier
+              .sizeIn(minWidth = boxSize, minHeight = boxSize)
+              .clip(MaterialTheme.shapes.medium)
+              .background(detailBackgroundColor, MaterialTheme.shapes.medium)
+              .applyIf(decoration) {
+                border(2.dp, detailContentColor, MaterialTheme.shapes.medium)
+              },
+            contentAlignment = Alignment.Center,
+            content = detail
+          )
+        }
       } else {
         Spacer(modifier = Modifier.size(boxSize))
       }
