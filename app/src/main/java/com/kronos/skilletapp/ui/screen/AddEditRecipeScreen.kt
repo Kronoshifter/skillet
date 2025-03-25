@@ -9,23 +9,16 @@ import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.*
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -42,11 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -359,6 +348,7 @@ fun AddEditRecipeContent(
   }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @ExperimentalMaterial3Api
 @Composable
 private fun RecipeInfoContent(
@@ -508,139 +498,160 @@ private fun RecipeInfoContent(
 
     HorizontalDivider()
 
-    Column(
-      verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      val context = LocalContext.current
-      val pickPhoto = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-        if (uri != null) {
-          val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-          context.contentResolver.takePersistableUriPermission(uri, flag)
-          onImageChanged(uri.toString())
-        } else {
-          Log.d("PhotoPicker", "No media selected")
-        }
-      }
-
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+    SharedTransitionLayout {
+      Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
       ) {
-        Text(
-          text = "Image",
-          style = MaterialTheme.typography.titleLarge,
-        )
+        val context = LocalContext.current
+        val pickPhoto = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+          if (uri != null) {
+            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(uri, flag)
+            onImageChanged(uri.toString())
+          } else {
+            Log.d("PhotoPicker", "No media selected")
+          }
+        }
 
-        // ImageControls()
-        AnimatedVisibility(
-          visible = image != null,
-          enter = fadeIn(),
-          exit = fadeOut(),
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween,
+          modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
         ) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.End),
+          Text(
+            text = "Image",
+            style = MaterialTheme.typography.titleLarge,
+          )
+
+          // ImageControls()
+          AnimatedVisibility(
+            visible = image != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
           ) {
-            IconButton(
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.End,
+            ) {
+              IconButton(
+                onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
+              ) {
+                Icon(
+                  imageVector = Icons.Filled.ImageSearch,
+                  contentDescription = "Choose new image from gallery",
+                  tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-gallery"),
+                      animatedVisibilityScope = this@AnimatedVisibility
+                    )
+                )
+              }
+
+              IconButton(
+                onClick = { /*TODO*/ },
+              ) {
+                Icon(
+                  imageVector = Icons.Filled.PhotoCamera,
+                  contentDescription = "Take a new photo",
+                  tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-camera"),
+                      animatedVisibilityScope = this@AnimatedVisibility
+                    )
+                )
+              }
+
+              IconButton(
+                onClick = { onImageChanged(null) },
+              ) {
+                Icon(
+                  imageVector = Icons.Filled.Delete,
+                  contentDescription = "Delete Image",
+                  tint = MaterialTheme.colorScheme.error
+                )
+              }
+            }
+          }
+        }
+
+        AnimatedContent(
+          targetState = image,
+          transitionSpec = {
+            fadeIn() togetherWith fadeOut()
+          },
+          modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 256.dp)
+            .aspectRatio(ratio = 2f)
+        ) { imageUri ->
+          imageUri?.let {
+            AsyncImage(
+              model = it,
+              contentDescription = "Recipe Image",
+              imageLoader = koinInject(),
+              contentScale = ContentScale.FillWidth,
+              modifier = Modifier
+                .clip(MaterialTheme.shapes.medium)
+                .clickable { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
+            )
+          } ?: Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            SquareIconButton(
+              modifier = Modifier.fillMaxHeight(0.95f),
               onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
-            ) {
-              Icon(
-                imageVector = Icons.Filled.ImageSearch,
-                contentDescription = "Choose new image from gallery",
-                tint = MaterialTheme.colorScheme.primary
-              )
-            }
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.ImageSearch,
+                  contentDescription = "Choose from gallery",
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-gallery"),
+                      animatedVisibilityScope = this@AnimatedContent
+                    )
+                )
+              },
+              text = {
+                Text(
+                  text = "Choose from gallery",
+                  textAlign = TextAlign.Center
+                )
+              },
+            )
 
-            IconButton(
+            Spacer(modifier = Modifier.widthIn(min = 8.dp))
+
+            SquareIconButton(
+              modifier = Modifier.fillMaxHeight(0.95f),
               onClick = { /*TODO*/ },
-            ) {
-              Icon(
-                imageVector = Icons.Filled.PhotoCamera,
-                contentDescription = "Take a new photo",
-                tint = MaterialTheme.colorScheme.primary
-              )
-            }
-
-            IconButton(
-              onClick = { onImageChanged(null) },
-            ) {
-              Icon(
-                imageVector = Icons.Filled.Delete,
-                contentDescription = "Delete Image",
-                tint = MaterialTheme.colorScheme.error
-              )
-            }
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.PhotoCamera,
+                  contentDescription = "Take a photo",
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-camera"),
+                      animatedVisibilityScope = this@AnimatedContent
+                    )
+                )
+              },
+              text = {
+                Text(
+                  text = "Take a photo",
+                  textAlign = TextAlign.Center
+                )
+              },
+            )
           }
         }
       }
 
-      AnimatedContent(
-        targetState = image,
-        transitionSpec = {
-          fadeIn() togetherWith fadeOut()
-        },
-        modifier = Modifier
-          .fillMaxWidth()
-          .heightIn(max = 256.dp)
-          .aspectRatio(ratio = 2f)
-      ) { imageUri ->
-        imageUri?.let {
-          AsyncImage(
-            model = it,
-            contentDescription = "Recipe Image",
-            imageLoader = koinInject(),
-            contentScale = ContentScale.FillWidth,
-            modifier = Modifier
-              .clip(MaterialTheme.shapes.medium)
-              .clickable { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
-          )
-          //TODO: add image editing controls
-        } ?: Row(
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.fillMaxWidth()
-//          .height(IntrinsicSize.Min),
-        ) {
-          //TODO: make these buttons shrink into corner as icon buttons (along with other image controls) when image is present; see Modifier.sharedBounds()
-          //TODO: fix buttons going out of bounds of the column, it's something to do with the height and aspect ratio
-          SquareIconButton(
-            modifier = Modifier.fillMaxHeight(0.95f),
-            onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
-            icon = {
-              Icon(
-                imageVector = Icons.Filled.ImageSearch,
-                contentDescription = "Choose from gallery",
-              )
-            },
-            text = {
-              Text(
-                text = "Choose from gallery",
-                textAlign = TextAlign.Center
-              )
-            },
-          )
-
-          Spacer(modifier = Modifier.widthIn(min = 8.dp))
-
-          SquareIconButton(
-            modifier = Modifier.fillMaxHeight(0.95f),
-            onClick = { /*TODO*/ },
-            icon = {
-              Icon(
-                imageVector = Icons.Filled.PhotoCamera,
-                contentDescription = "Take a photo",
-              )
-            },
-            text = {
-              Text(
-                text = "Take a photo",
-                textAlign = TextAlign.Center
-              )
-            },
-          )
-        }
-      }
 
     }
 
