@@ -78,39 +78,50 @@ fun RecipeListScreen(
     floatingActionButton = {
       SpeedDial(
         state = speedDialState,
+        reverseAnimationOnClose = true,
         onFabClick = {
           overlayVisible = !it
           speedDialState = speedDialState.toggle()
         },
         fabClosedContent = {
-          Icon(imageVector = Icons.Default.Add, contentDescription = "Open Speed Dial")
+          Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options")
         },
         fabOpenedContent = {
-          Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+          Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options")
         },
       ) {
         item {
-          FabWithLabel(
+          Button(
             onClick = {
               onNewRecipe()
               overlayVisible = false
               speedDialState = speedDialState.toggle()
             },
-            labelContent = { Text(text = "Create new recipe") }
+            colors = ButtonDefaults.buttonColors(
+              containerColor = MaterialTheme.colorScheme.primaryContainer,
+              contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ),
           ) {
+            Text(text = "Create new recipe")
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(imageVector = Icons.Default.Add, contentDescription = "Create new recipe")
           }
         }
 
         item {
-          FabWithLabel(
+          Button(
             onClick = {
               showImportRecipeBottomSheet = true
               overlayVisible = false
               speedDialState = speedDialState.toggle()
             },
-            labelContent = { Text(text = "Import from URL") }
+            colors = ButtonDefaults.buttonColors(
+              containerColor = MaterialTheme.colorScheme.primaryContainer,
+              contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ),
           ) {
+            Text(text = "Import from URL")
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(imageVector = Icons.Default.Link, contentDescription = "Import from URL")
           }
         }
