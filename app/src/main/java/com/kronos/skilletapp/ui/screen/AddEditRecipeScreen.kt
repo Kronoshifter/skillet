@@ -3,6 +3,7 @@ package com.kronos.skilletapp.ui.screen
 import android.content.Intent
 import android.util.Log
 import android.view.HapticFeedbackConstants
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
@@ -91,6 +92,14 @@ fun AddEditRecipeScreen(
   var showDiscardChangesDialog by remember { mutableStateOf(false) }
 
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+
+  BackHandler {
+    if (recipeState.tharBeChanges) {
+      showDiscardChangesDialog = true
+    } else {
+      onBack()
+    }
+  }
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
