@@ -511,11 +511,6 @@ private fun RecipeInfoContent(
     Column(
       verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-      Text(
-        text = "Image",
-        style = MaterialTheme.typography.titleLarge
-      )
-
       val context = LocalContext.current
       val pickPhoto = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -524,6 +519,59 @@ private fun RecipeInfoContent(
           onImageChanged(uri.toString())
         } else {
           Log.d("PhotoPicker", "No media selected")
+        }
+      }
+
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+      ) {
+        Text(
+          text = "Image",
+          style = MaterialTheme.typography.titleLarge,
+        )
+
+        // ImageControls()
+        AnimatedVisibility(
+          visible = image != null,
+          enter = fadeIn(),
+          exit = fadeOut(),
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.End),
+          ) {
+            IconButton(
+              onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
+            ) {
+              Icon(
+                imageVector = Icons.Filled.ImageSearch,
+                contentDescription = "Choose new image from gallery",
+                tint = MaterialTheme.colorScheme.primary
+              )
+            }
+
+            IconButton(
+              onClick = { /*TODO*/ },
+            ) {
+              Icon(
+                imageVector = Icons.Filled.PhotoCamera,
+                contentDescription = "Take a new photo",
+                tint = MaterialTheme.colorScheme.primary
+              )
+            }
+
+            IconButton(
+              onClick = { onImageChanged(null) },
+            ) {
+              Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "Delete Image",
+                tint = MaterialTheme.colorScheme.error
+              )
+            }
+          }
         }
       }
 
@@ -815,7 +863,7 @@ private fun SquareIconButton(
       .widthIn(min = 64.dp, max = 256.dp)
       .aspectRatio(ratio = 1f, matchHeightConstraintsFirst = true)
       .clip(shape)
-      .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = shape)
+      .border(width = 2.dp, color = contentColor, shape = shape)
       .clickable(
         onClick = onClick,
         indication = LocalIndication.current,
@@ -1503,7 +1551,7 @@ fun InstructionComponent(
 
 @Composable
 private fun IngredientQuantity(ingredient: Ingredient) {
-  val measurement = ingredient.measurement.normalize { it !is MeasurementUnit.FluidOunce}
+  val measurement = ingredient.measurement.normalize { it !is MeasurementUnit.FluidOunce }
 
   val quantity = measurement.displayQuantity.let {
     if (ingredient.measurement.unit !is MeasurementUnit.None) {
