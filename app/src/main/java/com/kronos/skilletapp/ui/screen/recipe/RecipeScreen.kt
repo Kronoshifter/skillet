@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.rememberTransition
@@ -67,6 +68,8 @@ fun RecipeScreen(
 ) {
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
+
+  BackHandler(enabled = true, onBack = onBack)
 
   val pagerState = rememberPagerState { RecipeContentTab.entries.size }
   val fabTransitionState = remember { MutableTransitionState(false).apply { targetState = true } }
