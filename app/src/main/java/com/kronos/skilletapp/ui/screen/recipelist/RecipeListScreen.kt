@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.screen.recipelist
 
+import android.content.res.Configuration
 import android.webkit.URLUtil.isValidUrl
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
@@ -7,6 +8,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -20,19 +24,23 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.*
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
+import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.utils.isNotNullOrBlank
 import com.leinardi.android.speeddial.compose.FabWithLabel
@@ -243,14 +251,18 @@ private fun RecipeListContent(
     return
   }
 
-  LazyVerticalGrid(
-    columns = GridCells.Fixed(2),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
+  LazyVerticalStaggeredGrid(
+    columns = StaggeredGridCells.Fixed(2),
+//    verticalArrangement = Arrangement.spacedBy(8.dp),
+    verticalItemSpacing = 8.dp,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     contentPadding = gridPadding,
     modifier = modifier
   ) {
-    items(recipes) { recipe ->
+    items(
+      items = recipes,
+      key = { it.id },
+    ) { recipe ->
       RecipeCard(
         recipe = recipe,
         onClick = { onRecipeClick(recipe.id) },
@@ -270,12 +282,23 @@ fun RecipeCard(
     onClick = onClick,
     modifier = modifier
   ) {
+    // TODO: only show this if the recipe doesn't have an image
     Box(modifier = Modifier.fillMaxSize()) {
-      Text(
+      recipe.cover?.let { imageUri ->
+        AsyncImage(
+          model = imageUri,
+          contentDescription = recipe.name,
+          imageLoader = koinInject(),
+          contentScale = ContentScale.Crop,
+          modifier = Modifier
+            .fillMaxSize()
+            .align(Alignment.Center)
+        )
+      } ?: Text(
         text = recipe.name.first().uppercase(),
         style = MaterialTheme.typography.titleLarge,
         fontSize = 192.sp,
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
           .align(Alignment.Center)
       )
@@ -287,13 +310,14 @@ fun RecipeCard(
           .height(IntrinsicSize.Max)
           .fillMaxWidth()
           .clip(CardDefaults.shape)
-          .background(MaterialTheme.colorScheme.primary)
+          .background(MaterialTheme.colorScheme.primary, shape = CardDefaults.shape)
           .align(Alignment.BottomCenter)
       ) {
         Text(
           text = recipe.name,
           style = MaterialTheme.typography.titleSmall,
           color = MaterialTheme.colorScheme.onPrimary,
+          textAlign = TextAlign.Center,
           overflow = TextOverflow.Ellipsis,
           maxLines = 2,
           modifier = Modifier
@@ -314,16 +338,16 @@ fun RecipeCard(
 @Composable
 fun RecipeCardPreview() {
   KoinPreview {
+    SkilletAppTheme {
+      val recipe = koinInject<Recipe>()
 
-    val repository = koinInject<RecipeRepository>()
-    val recipe = runBlocking { repository.fetchRecipe("test") }
-
-    RecipeCard(
-      recipe = recipe,
-      onClick = { },
-      modifier = Modifier
-        .aspectRatio(1f)
-    )
+      RecipeCard(
+        recipe = recipe,
+        onClick = { },
+        modifier = Modifier
+          .aspectRatio(1f)
+      )
+    }
   }
 }
 
@@ -331,18 +355,18 @@ fun RecipeCardPreview() {
 @Composable
 fun RecipeListPreview() {
   KoinPreview {
+    val recipes = List(10) { koinInject<Recipe>().copy(name = "Recipe $it", id = "test-$it") }
 
-    val repository = koinInject<RecipeRepository>()
-    val recipes = runBlocking { repository.fetchRecipes() }
-
-    Surface {
-      RecipeListContent(
-        recipes = recipes,
-        onRecipeClick = { },
-        modifier = Modifier
-          .fillMaxSize(),
-        gridPadding = PaddingValues(8.dp)
-      )
+    SkilletAppTheme {
+      Surface {
+        RecipeListContent(
+          recipes = recipes,
+          onRecipeClick = { },
+          modifier = Modifier
+            .fillMaxSize(),
+          gridPadding = PaddingValues(8.dp)
+        )
+      }
     }
   }
 }
