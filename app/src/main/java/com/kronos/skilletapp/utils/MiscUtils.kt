@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.utils
 
+import androidx.core.util.Predicate
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -25,3 +26,5 @@ inline fun <T> T.mutateIf(condition: Boolean, block: T.() -> T): T = if (conditi
 }
 
 inline fun <T> T.mutateUnless(condition: Boolean, block: T.() -> T): T = mutateIf(!condition, block)
+
+inline fun <T> T.takeOrElse(predicate: (T) -> Boolean, default: T.() -> T): T = takeIf(predicate) ?: default()
