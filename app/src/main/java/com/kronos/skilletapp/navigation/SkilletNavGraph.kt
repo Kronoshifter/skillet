@@ -1,7 +1,6 @@
 package com.kronos.skilletapp.navigation
 
 import android.content.Intent
-import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -14,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
+import com.kronos.skilletapp.navigation.Route.Companion.BASE_URL
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
@@ -29,8 +29,6 @@ import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
-private const val baseUrl = "skilletapp://skillet"
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
@@ -54,7 +52,7 @@ fun SkilletNavGraph(
 
       intent.action?.let { intentAction ->
         val json = sharedRecipe?.toJson()
-        val uri = "${baseUrl}/recipeList?sharedRecipe=${json}".toUri()
+        val uri = buildUri(Route.RecipeList::class, json)
 
         //TODO: encapsulate in SkilletNavigationActions
         navController.navigate(
@@ -77,7 +75,7 @@ fun SkilletNavGraph(
       typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)),
       deepLinks = listOf(
         navDeepLink<Route.RecipeList>(
-          basePath = "${baseUrl}/recipeList",
+          basePath = Route.basePath(Route.RecipeList::class),
           typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
         ) {
           action = Intent.ACTION_SEND
