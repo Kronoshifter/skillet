@@ -1,12 +1,10 @@
 package com.kronos.skilletapp.navigation
 
 import android.net.Uri
-import android.util.Log.d
 import androidx.compose.runtime.compositionLocalOf
 import androidx.core.net.toUri
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import com.kronos.skilletapp.navigation.toRouteString
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
@@ -56,8 +54,8 @@ fun KClass<out Route>.toRouteString(): String {
   }
 }
 
-fun buildUri(route: KClass<out Route>, vararg args: Any?): Uri {
-  var result = route.toRouteString()
+fun KClass<out Route>.buildUri(vararg args: Any?): Uri {
+  var result = toRouteString()
 
   args.forEachIndexed { index, arg ->
     result = result.replace("{$index}", arg.toString())

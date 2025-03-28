@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,7 +12,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
-import com.kronos.skilletapp.navigation.Route.Companion.BASE_URL
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
@@ -52,7 +50,7 @@ fun SkilletNavGraph(
 
       intent.action?.let { intentAction ->
         val json = sharedRecipe?.toJson()
-        val uri = buildUri(Route.RecipeList::class, json)
+        val uri = Route.RecipeList::class.buildUri(json)
 
         //TODO: encapsulate in SkilletNavigationActions
         navController.navigate(
