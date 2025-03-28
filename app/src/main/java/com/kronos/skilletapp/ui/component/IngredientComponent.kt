@@ -32,6 +32,7 @@ import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
+import com.kronos.skilletapp.utils.fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
 import com.kronos.skilletapp.utils.toFraction
@@ -156,7 +157,7 @@ fun IngredientListItem(
   val measurements = MeasurementUnit.values
     .filter { it.type == ingredient.measurement.unit.type }
     .map { ingredient.measurement.convert(it).scale(scale) }
-    .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+    .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -207,7 +208,7 @@ fun IngredientPill(
   val measurements = MeasurementUnit.values
     .filter { it.type == ingredient.measurement.unit.type }
     .map { ingredient.measurement.convert(it).scale(scale) }
-    .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+    .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   val bgColor = MaterialTheme.colorScheme.primaryContainer
   val contentColor = contentColorFor(bgColor)

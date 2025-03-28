@@ -27,17 +27,11 @@ fun Double.roundToNearestFraction(): Double {
   }
 }
 
-fun Double.toFraction(): Fraction {
-  val numerator = (this * 1000).toInt()
-  val denominator = 1000
-  return Fraction(numerator, denominator).reduce()
-}
+val Double.fraction
+  get() = this.toFloat().fraction
 
-fun Float.toFraction(): Fraction {
-  val numerator = (this * 1000).toInt()
-  val denominator = 1000
-  return Fraction(numerator, denominator).reduce()
-}
+val Float.fraction
+  get() = Fraction((this * 1000).toInt(), 1000).reduce()
 
 fun Double.roundToSignificantFigures(places: Int) = toBigDecimal().round(MathContext(places, RoundingMode.HALF_UP)).toDouble()
 

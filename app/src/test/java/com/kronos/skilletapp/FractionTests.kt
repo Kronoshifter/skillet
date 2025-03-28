@@ -56,28 +56,28 @@ class FractionTests : FunSpec({
 
   context("From Double") {
     test("0.5f") {
-      val f = 0.5f.toFraction()
+      val f = 0.5f.fraction
       f.numerator shouldBe 1
       f.denominator shouldBe 2
       f.decimal shouldBe (0.5f plusOrMinus 0.001f)
     }
 
     test("0.75f") {
-      val f = 0.75f.toFraction()
+      val f = 0.75f.fraction
       f.numerator shouldBe 3
       f.denominator shouldBe 4
       f.decimal shouldBe (0.75f plusOrMinus 0.001f)
     }
 
     test("2.5f") {
-      val f = 2.5f.toFraction()
+      val f = 2.5f.fraction
       f.numerator shouldBe 5
       f.denominator shouldBe 2
       f.decimal shouldBe (2.5f plusOrMinus 0.001f)
     }
 
     test("0.333f") {
-      val f = 0.333f.toFraction()
+      val f = 0.333f.fraction
       f.numerator shouldBe 333
       f.denominator shouldBe 1000
       f.decimal shouldBe (0.333f plusOrMinus 0.001f)
@@ -124,7 +124,7 @@ class FractionTests : FunSpec({
       }
 
       test("0.333f") {
-        val f = 0.333f.toFraction().roundToThird()
+        val f = 0.333f.fraction.roundToThird()
         f.numerator shouldBe 1
         f.denominator shouldBe 3
         f.decimal shouldBe (0.333f plusOrMinus 0.001f)
@@ -147,7 +147,7 @@ class FractionTests : FunSpec({
       }
 
       test("0.6542368f") {
-        val f = 0.6542368f.toFraction().roundToNearestFraction()
+        val f = 0.6542368f.fraction.roundToNearestFraction()
         f.numerator shouldBe 2
         f.denominator shouldBe 3
         f.decimal shouldBe (0.666f plusOrMinus 0.001f)

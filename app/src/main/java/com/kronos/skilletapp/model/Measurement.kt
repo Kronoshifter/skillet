@@ -64,7 +64,7 @@ data class Measurement(
   override fun toString(): String {
     return when (unit.system) {
       MeasurementSystem.Metric -> "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
-      else -> "${quantity.toFraction().roundToNearestFraction().reduce()} ${unit.name}"
+      else -> "${quantity.fraction.roundToNearestFraction().reduce()} ${unit.name}"
     }
   }
 
@@ -112,7 +112,7 @@ data class Measurement(
   val displayQuantity
     get() = when (unit.system) {
       MeasurementSystem.Metric -> quantity.toString().take(4).removeSuffix(".")
-      else -> quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
+      else -> quantity.fraction.roundToNearestFraction().reduce().toDisplayString()
     }
 }
 

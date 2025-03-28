@@ -52,7 +52,7 @@ import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
-import com.kronos.skilletapp.utils.toFraction
+import com.kronos.skilletapp.utils.fraction
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlin.collections.set
@@ -345,8 +345,8 @@ private fun ScalingControls(
         ) {
           Text(
             text = buildAnnotatedString {
-              append(option.toFraction().toDisplayString())
-              if (option.toFraction().denominator != 1) {
+              append(option.fraction.toDisplayString())
+              if (option.fraction.denominator != 1) {
                 append(" ")
               }
               append("x")
