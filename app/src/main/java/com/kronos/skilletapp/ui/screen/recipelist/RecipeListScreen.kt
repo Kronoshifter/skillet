@@ -284,9 +284,11 @@ fun RecipeCard(
   ) {
     val labelBackgroundColor = MaterialTheme.colorScheme.primary
 
-    Box(modifier = Modifier
-      .sizeIn(minWidth = 128.dp, minHeight = 128.dp)
-      .fillMaxSize()) {
+    Box(
+      modifier = Modifier
+        .sizeIn(minWidth = 128.dp, minHeight = 128.dp)
+        .fillMaxSize()
+    ) {
       recipe.cover?.let { imageUri ->
         AsyncImage(
           model = imageUri,
@@ -297,10 +299,12 @@ fun RecipeCard(
             .fillMaxSize()
             .align(Alignment.Center)
         )
-      } ?: Canvas(modifier = Modifier
-        .height(192.dp)
-        .fillMaxWidth()) {
-        drawIntoCanvas {
+      } ?: Canvas(
+        modifier = Modifier
+          .height(192.dp)
+          .fillMaxWidth()
+      ) {
+        drawIntoCanvas { canvas ->
           val paint = Paint().apply {
             textSize = 192.sp.toPx()
             typeface = Typeface.DEFAULT
@@ -308,10 +312,10 @@ fun RecipeCard(
             color = labelBackgroundColor.copy(alpha = 0.5f).toArgb()
           }
 
-          val x = center.x
-          val y = (size.height * 3f / 4f) + 8.dp.toPx()
+          val x = (size.width * 1f / 4f) + 8.dp.toPx()
+          val y = (size.height * 3f / 4f) + 4.dp.toPx()
 
-          it.nativeCanvas.drawText(recipe.name.first().uppercase(), x, y, paint)
+          canvas.nativeCanvas.drawText(recipe.name.first().uppercase(), x, y, paint)
         }
       }
 
