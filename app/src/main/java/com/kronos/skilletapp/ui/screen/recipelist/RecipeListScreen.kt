@@ -308,10 +308,11 @@ fun RecipeCard(
           val paint = Paint().apply {
             textSize = 192.sp.toPx()
             typeface = Typeface.DEFAULT
+            textAlign = Paint.Align.CENTER
             color = labelBackgroundColor.copy(alpha = 0.5f).toArgb()
           }
 
-          val x = 8.dp.toPx()
+          val x = center.x
           val y = (size.height * 3f / 4f) + 4.dp.toPx()
 
           canvas.nativeCanvas.drawText(recipe.name.first().uppercase(), x, y, paint)
