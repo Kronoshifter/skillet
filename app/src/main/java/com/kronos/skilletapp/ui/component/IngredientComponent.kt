@@ -35,7 +35,6 @@ import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
-import com.kronos.skilletapp.utils.toFraction
 import kotlinx.coroutines.launch
 
 @Composable

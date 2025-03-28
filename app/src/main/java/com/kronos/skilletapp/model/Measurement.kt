@@ -4,8 +4,8 @@ import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
 import com.kronos.skilletapp.model.IngredientType.*
+import com.kronos.skilletapp.utils.fraction
 import com.kronos.skilletapp.utils.roundToNearestFraction
-import com.kronos.skilletapp.utils.toFraction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
