@@ -31,11 +31,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.FabPadding
@@ -48,6 +52,7 @@ import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
+import com.kronos.skilletapp.utils.toFraction
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlin.collections.set
@@ -85,7 +90,7 @@ fun RecipeScreen(
   val isFabExpanded by remember {
     derivedStateOf {
       (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal && (ingredientListState.firstVisibleItemIndex == 0 || !ingredientListState.canScrollForward)) ||
-      (pagerState.currentPage == RecipeContentTab.Instructions.ordinal && (instructionsListState.firstVisibleItemIndex == 0 || !instructionsListState.canScrollForward))
+          (pagerState.currentPage == RecipeContentTab.Instructions.ordinal && (instructionsListState.firstVisibleItemIndex == 0 || !instructionsListState.canScrollForward))
     }
   }
 
@@ -190,6 +195,7 @@ private fun RecipeContent(
         servings = servings,
         baseServings = recipe.servings,
         onScalingChanged = onScalingChanged,
+        scaleOptions = listOf(0.5f, 1f, 2f),
       )
 
       HorizontalDivider(modifier = Modifier.fillMaxWidth())
@@ -262,10 +268,8 @@ private fun ScalingControls(
   servings: Int,
   baseServings: Int,
   onScalingChanged: (scale: Float, servings: Int) -> Unit,
-  maxScale: Int = 3,
+  scaleOptions: List<Float> = listOf(1f, 2f, 3f),
 ) {
-  val scaleOptions = 1..maxScale
-
   Row(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
@@ -324,11 +328,11 @@ private fun ScalingControls(
         .weight(1f)
     ) {
       scaleOptions.forEach { option ->
-        val selected = scale == option.toFloat()
+        val selected = scale == option
         SegmentedButton(
           selected = selected,
           onClick = {
-            val newScale = option.toFloat()
+            val newScale = option
             val newServings = (baseServings * newScale).roundToInt()
             onScalingChanged(newScale, newServings)
           },
@@ -340,7 +344,14 @@ private fun ScalingControls(
           icon = {} // this is silly, why isn't this nullable?
         ) {
           Text(
-            text = "${option}x",
+            text = buildAnnotatedString {
+              append(option.toFraction().toDisplayString())
+              if (option.toFraction().denominator != 1) {
+                append(" ")
+              }
+              append("x")
+            },
+            fontSize = 16.sp,
             color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
           )
         }
