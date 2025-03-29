@@ -43,6 +43,7 @@ fun IngredientRow(
   modifier: Modifier = Modifier,
   scale: Float = 1f,
   selectedUnit: MeasurementUnit? = null,
+  showSelection: Boolean = true,
   enabled: Boolean = true,
   checked: Boolean = false,
   onClick: () -> Unit = {},
@@ -116,7 +117,7 @@ fun IngredientRow(
       }
 
     },
-    decoration = selectedUnit != null,
+    decoration = selectedUnit != null && showSelection,
     enabled = enabled,
     onClick = onClick,
     onLongClick = onLongClick,

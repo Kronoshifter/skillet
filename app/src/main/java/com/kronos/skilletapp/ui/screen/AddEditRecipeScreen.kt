@@ -602,7 +602,7 @@ private fun RecipeInfoContent(
               model = it,
               contentDescription = "Recipe Image",
               imageLoader = koinInject(),
-              contentScale = ContentScale.FillWidth,
+              contentScale = ContentScale.Crop,
               modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)
                 .clickable { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
@@ -912,7 +912,7 @@ private fun IngredientsContent(
   onRemoveIngredient: (Ingredient) -> Unit,
   onMoveIngredient: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
-  parser: IngredientParser = koinInject()
+  parser: IngredientParser = koinInject() //TODO: move this into the viewmodel
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
   val view = LocalView.current
@@ -968,6 +968,8 @@ private fun IngredientsContent(
               if (!isEditing) {
                 IngredientRow(
                   ingredient = ingredient,
+                  selectedUnit = ingredient.measurement.unit,
+                  showSelection = false,
                   onClick = {
                     editing = true
                   },
