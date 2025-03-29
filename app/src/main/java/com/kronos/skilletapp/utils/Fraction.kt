@@ -85,8 +85,31 @@ data class Fraction(val numerator: Int, val denominator: Int) {
       3 -> "\u00BE"
       else -> simpleFractionString(numerator, denominator)
     }
+    5 -> when(numerator) {
+      1 -> "\u2155"
+      2 -> "\u2156"
+      3 -> "\u2157"
+      4 -> "\u2158"
+      else -> simpleFractionString(numerator, denominator)
+    }
+    6 -> when(numerator) {
+      1 -> "\u2159"
+      5 -> "\u215A"
+      else -> simpleFractionString(numerator, denominator)
+    }
+    8 -> when(numerator) {
+      1 -> "\u215B"
+      3 -> "\u215C"
+      5 -> "\u215D"
+      7 -> "\u215E"
+      else -> simpleFractionString(numerator, denominator)
+    }
     else -> simpleFractionString(numerator, denominator)
   }
 
-  private fun simpleFractionString(numerator: Int, denominator: Int) = "$numerator/$denominator"
+  private fun simpleFractionString(numerator: Int, denominator: Int) = "$numerator$FRAC$denominator"
+
+  companion object {
+    private const val FRAC = "\u2044"
+  }
 }
