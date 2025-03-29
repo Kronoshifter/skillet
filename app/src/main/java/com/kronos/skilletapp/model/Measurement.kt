@@ -1,11 +1,10 @@
 package com.kronos.skilletapp.model
 
 import com.github.michaelbull.result.*
-import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
 import com.kronos.skilletapp.model.IngredientType.*
 import com.kronos.skilletapp.utils.fraction
-import com.kronos.skilletapp.utils.roundToNearestFraction
+import com.kronos.skilletapp.utils.nearestEighth
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -89,9 +88,6 @@ data class Measurement(
 
   fun convert(to: MeasurementUnit, converter: (Float) -> Float) = Measurement(converter(quantity), unit = to)
 
-
-  fun scaleAndNormalize(factor: Float) = scale(factor).normalize()
-
   fun normalize(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
     while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
@@ -104,7 +100,7 @@ data class Measurement(
     return normalized
   }
 
-  fun roundToEighth() = copy(quantity = quantity.roundToEighth())
+  fun roundToEighth() = copy(quantity = quantity.nearestEighth)
   fun round() = copy(quantity = quantity.roundToInt().toFloat())
 
   fun scaleAndRound(factor: Float) = scale(factor).roundToEighth()

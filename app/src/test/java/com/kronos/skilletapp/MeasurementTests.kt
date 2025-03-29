@@ -304,19 +304,19 @@ class MeasurementTests : FunSpec({
 
     context("Imperial") {
       test("Teaspoon to Tablespoon") {
-        val scaled = teaspoon.scaleAndNormalize(3f).roundToEighth()
+        val scaled = teaspoon.scale(3f).normalize().roundToEighth()
         scaled.quantity shouldBe (1f plusOrMinus 0.001f)
         scaled.unit shouldBe MeasurementUnit.Tablespoon
       }
 
       test("Tablespoon to Teaspoon") {
-        val scaled = tablespoon.scaleAndNormalize(0.333f).roundToEighth()
+        val scaled = tablespoon.scale(0.333f).normalize().roundToEighth()
         scaled.quantity shouldBe (1f plusOrMinus 0.001f)
         scaled.unit shouldBe MeasurementUnit.Teaspoon
       }
 
       test("Tablespoon to Cup") {
-        val scaled = tablespoon.scaleAndNormalize(24f).roundToEighth()
+        val scaled = tablespoon.scale(24f).normalize().roundToEighth()
         scaled.quantity shouldBe (1.5f plusOrMinus 0.001f)
         scaled.unit shouldBe MeasurementUnit.Cup
       }

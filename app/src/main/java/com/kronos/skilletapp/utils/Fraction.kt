@@ -34,7 +34,7 @@ data class Fraction(val numerator: Int, val denominator: Int) {
   operator fun div(other: Int): Fraction = Fraction(numerator, denominator * other)
 
   operator fun compareTo(other: Fraction): Int = decimal.compareTo(other.decimal)
-  operator fun compareTo(other: Int): Int = decimal.compareTo(other.toDouble())
+  operator fun compareTo(other: Int): Int = decimal.compareTo(other.toFloat())
 
   override fun toString(): String = when {
     numerator == 0 -> "0"
@@ -55,23 +55,31 @@ data class Fraction(val numerator: Int, val denominator: Int) {
     return Fraction(numerator / gcd, denominator / gcd)
   }
 
-  fun roundToEighth(): Fraction {
-    return Fraction(((numerator * 8).toFloat() / denominator).roundToInt(), 8)
-  }
+  fun roundToNth(n: Int): Fraction = Fraction(((numerator * n).toFloat() / denominator).roundToInt(), n)
 
-  fun roundToThird(): Fraction {
-    return Fraction(((numerator * 3).toFloat() / denominator).roundToInt(), 3)
-  }
+  val nearestEighth: Fraction
+    get() = roundToNth(8)
 
-  fun roundToNearestFraction(): Fraction {
-    val eighthDiff = abs(decimal - decimal.roundToEighth())
-    val thirdDiff = abs(decimal - decimal.roundToThird())
-    return if (eighthDiff < thirdDiff) {
-      roundToEighth()
-    } else {
-      roundToThird()
+  val nearestThird: Fraction
+    get() = roundToNth(3)
+
+  fun roundToNearestFraction(): Fraction = nearest
+
+  fun roundToNearestOf(vararg nums: Int): Fraction {
+    val diffs = nums.associateWith { abs(decimal - decimal.roundToNth(it)) }
+    val (n, _) = diffs.minWith { a, b ->
+      val diff = a.value - b.value
+      when (diff) {
+        in 0.001f..Float.POSITIVE_INFINITY -> 1
+        in Float.NEGATIVE_INFINITY..<0f -> -1
+        else -> 0
+      }
     }
+    return roundToNth(n)
   }
+
+  val nearest: Fraction
+    get() = roundToNearestOf(3, 8)
 
   private fun unicodeFractionString(numerator: Int, denominator: Int) = when(denominator) {
     2 -> if (numerator == 1) "\u00BD" else simpleFractionString(numerator, denominator)
