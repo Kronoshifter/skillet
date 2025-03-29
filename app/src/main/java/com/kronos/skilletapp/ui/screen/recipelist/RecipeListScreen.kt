@@ -1,11 +1,13 @@
 package com.kronos.skilletapp.ui.screen.recipelist
 
 import android.R.attr.y
+import android.content.Intent
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.webkit.URLUtil.isValidUrl
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -26,8 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,8 +40,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.LocalPlatformContext
+import coil3.compose.rememberAsyncImagePainter
+import coil3.compose.rememberConstraintsSizeResolver
+import coil3.request.ImageRequest
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.*
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
@@ -290,13 +300,20 @@ fun RecipeCard(
         .fillMaxSize()
     ) {
       recipe.cover?.let { imageUri ->
-        AsyncImage(
-          model = imageUri,
-          contentDescription = recipe.name,
+        val painter = rememberAsyncImagePainter(
+          model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUri)
+            .build(),
           imageLoader = koinInject(),
+        )
+
+        Image(
+          painter = painter,
+          contentDescription = recipe.name,
           contentScale = ContentScale.Crop,
           modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 1.dp)
             .align(Alignment.Center)
         )
       } ?: Canvas(
