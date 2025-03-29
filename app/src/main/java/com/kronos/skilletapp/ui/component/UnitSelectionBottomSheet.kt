@@ -16,17 +16,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Measurement
+import com.kronos.skilletapp.model.MeasurementType
 import com.kronos.skilletapp.model.MeasurementUnit
 import com.kronos.skilletapp.utils.modifier.applyIf
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun UnitSelectionBottomSheet(
+fun <T : MeasurementType> UnitSelectionBottomSheet(
   onDismissRequest: () -> Unit,
-  onUnitSelect: (MeasurementUnit) -> Unit,
+  onUnitSelect: (MeasurementUnit<T, *>) -> Unit,
   ingredient: Ingredient,
-  measurements: List<Measurement>,
-  selectedUnit: MeasurementUnit?,
+  measurements: List<Measurement<T, *>>,
+  selectedUnit: MeasurementUnit<T, *>?,
   sheetState: SheetState = rememberModalBottomSheetState(),
 ) {
   ModalBottomSheet(

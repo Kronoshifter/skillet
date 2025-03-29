@@ -4,13 +4,15 @@ import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
 import com.kronos.skilletapp.model.IngredientType.*
+import com.kronos.skilletapp.utils.isInstanceOf
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.serialization.Serializable
+import kotlin.reflect.KClass
 
 @Serializable
-data class Measurement(
+data class Measurement<T : MeasurementType, S : MeasurementSystem>(
   val quantity: Float,
-  val unit: MeasurementUnit,
+  val unit: MeasurementUnit<T, S>,
 ) {
   operator fun times(factor: Float) = scale(factor)
   operator fun times(factor: Double) = scale(factor.toFloat())
@@ -22,12 +24,12 @@ data class Measurement(
 
   operator fun unaryMinus() = copy(quantity = -quantity)
 
-  operator fun plus(other: Measurement) = when (unit) {
+  operator fun plus(other: Measurement<T, S>) = when (unit) {
     other.unit -> copy(quantity = quantity + other.quantity)
     else -> copy(quantity = quantity + other.convert(unit).quantity)
   }
 
-  operator fun minus(other: Measurement) = when (unit) {
+  operator fun minus(other: Measurement<T, S>) = when (unit) {
     other.unit -> copy(quantity = quantity - other.quantity)
     else -> copy(quantity = quantity - other.convert(unit).quantity)
   }
@@ -36,7 +38,7 @@ data class Measurement(
   operator fun dec() = copy(quantity = quantity - 1)
 
   //  operator fun compareTo(other: Measurement) = (amount * unit.factor).compareTo(other.amount * other.unit.factor)
-  operator fun compareTo(other: Measurement): Int {
+  operator fun compareTo(other: Measurement<T, S>): Int {
     val result = this - other
     return when {
       result.quantity in -0.001..0.001 -> 0
@@ -47,7 +49,7 @@ data class Measurement(
 
   override fun equals(other: Any?): Boolean {
     return other?.let {
-      (it as? Measurement)?.let { that ->
+      (it as? Measurement<T, S>)?.let { that ->
         (this - that).quantity in -0.001..0.001
       } ?: false
     } ?: false
@@ -60,38 +62,45 @@ data class Measurement(
   }
 
   override fun toString(): String {
-    return when (unit.system) {
-      MeasurementSystem.Metric -> "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
-      else -> "${quantity.toFraction().roundToNearestFraction().reduce()} ${unit.name}"
+    return if (unit.isInstanceOf<MeasurementUnit<*, MeasurementSystem.Metric>>()) {
+      "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
+    } else {
+      "${quantity.toFraction().roundToNearestFraction().reduce()} ${unit.name}"
     }
   }
 
   fun scale(factor: Float) = copy(quantity = quantity * factor)
 
-  private fun convert(to: MeasurementUnit.Mass) = convert(to) {
-    check(unit is MeasurementUnit.Mass)
-    it * unit.factor / to.factor
-  }
+//  private fun <To> convert(to: MeasurementUnit.Mass) = convert(to) {
+//    check(unit is MeasurementUnit.Mass)
+//    it * unit.factor / to.factor
+//  }
+//
+//  private fun convert(to: MeasurementUnit.Volume) = convert(to) {
+//    check(unit is MeasurementUnit.Volume)
+//    it * unit.factor / to.factor
+//  }
 
-  private fun convert(to: MeasurementUnit.Volume) = convert(to) {
-    check(unit is MeasurementUnit.Volume)
-    it * unit.factor / to.factor
-  }
+//  private inline fun <reified To : MeasurementUnit<*, *>> convert(to: To) = convert(to) {
+//    check(unit is To)
+//    it * unit.factor / to.factor
+//  }
 
-  fun convert(to: MeasurementUnit) = when (unit) {
-    is MeasurementUnit.Mass -> convert(to as MeasurementUnit.Mass)
-    is MeasurementUnit.Volume -> convert(to as MeasurementUnit.Volume)
-    is MeasurementUnit.Custom -> copy(unit = to)
-    MeasurementUnit.None -> this
-  }
+//  fun convert(to: MeasurementUnit<*, *>) = when (unit) {
+//    is MeasurementUnit.Mass -> convert<MeasurementUnit.Mass>(to)
+//    is MeasurementUnit.Volume -> convert(to as MeasurementUnit.Volume)
+//    is MeasurementUnit.Custom -> copy(unit = to)
+//    MeasurementUnit.None -> this
+//  }
 
-  fun convert(to: MeasurementUnit, converter: (Float) -> Float) = Measurement(converter(quantity), unit = to)
+  fun convert(to: MeasurementUnit<*, *>, converter: (Float) -> Float = { it }): Measurement<T, *> = this
 
+//  fun convert(to: MeasurementUnit, converter: (Float) -> Float) = Measurement(converter(quantity), unit = to)
 
   fun scaleAndNormalize(factor: Float) = scale(factor).normalize()
 
-  fun normalize(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
-    var normalized = copy()
+  fun normalize(filter: ((MeasurementUnit<T, *>) -> Boolean)? = null): Measurement<T, *> {
+    var normalized: Measurement<T, *> = copy()
     while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
       if (normalized.quantity <= normalized.unit.normalizationLow) {
         normalized = normalized.convert(normalized.unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" })
@@ -108,21 +117,24 @@ data class Measurement(
   fun scaleAndRound(factor: Float) = scale(factor).roundToEighth()
 
   val displayQuantity
-    get() = when (unit.system) {
-      MeasurementSystem.Metric -> quantity.toString().take(4).removeSuffix(".")
-      else -> quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
+    get() = if (unit.isInstanceOf<MeasurementUnit<*, MeasurementSystem.Metric>>()) {
+      quantity.toString().take(4).removeSuffix(".")
+    } else {
+      quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
     }
 }
 
-fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }.filter { filter?.invoke(it) ?: true }
+fun <T : MeasurementType, S : MeasurementSystem> MeasurementUnit<T, S>.next(filter: ((MeasurementUnit<T, S>) -> Boolean)? = null): Result<MeasurementUnit<T, S>, Unit> {
+  val filtered = MeasurementUnit.values.filterIsInstance<MeasurementUnit<T, S>>().filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr { }
 }
 
-fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it.type == this.type }.filter { it.system == this.system }.filter { filter?.invoke(it) ?: true }
+fun <T : MeasurementType, S : MeasurementSystem> MeasurementUnit<T, S>.previous(filter: ((MeasurementUnit<T, S>) -> Boolean)? = null): Result<MeasurementUnit<T, S>, Unit> {
+  val filtered = MeasurementUnit.values.filterIsInstance<MeasurementUnit<T, S>>().filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr { }
 }
+
+fun <T : MeasurementType> MeasurementUnit<T, *>.isInstanceOf(klass: KClass<out MeasurementUnit<T, *>>) = klass.isInstance(this)
 
 @Serializable
 sealed interface MeasurementType {
@@ -140,7 +152,7 @@ sealed interface MeasurementSystem {
   @Serializable data object None : MeasurementSystem
 }
 
-sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSystem> {
+sealed interface MeasurementUnit<out T : MeasurementType, out S : MeasurementSystem> {
   val name: String
   val factor: Float
   val abbreviation: String
@@ -149,7 +161,7 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
   val normalizationHigh: Float
 
   @Serializable
-  sealed class Mass<out S: MeasurementSystem>(
+  sealed class Mass<out S : MeasurementSystem>(
     override val name: String,
     override val factor: Float,
     override val abbreviation: String,
@@ -159,7 +171,7 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
   ) : MeasurementUnit<MeasurementType.Mass, S>
 
   @Serializable
-  sealed class Volume<out S: MeasurementSystem>(
+  sealed class Volume<out S : MeasurementSystem>(
     override val name: String,
     override val factor: Float,
     override val abbreviation: String,
@@ -391,10 +403,6 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
           it.factor
         }
       )
-    }
-
-    fun <T : MeasurementType, S : MeasurementSystem> values() {
-      values
     }
 
     private val wet = listOf(Wet)
