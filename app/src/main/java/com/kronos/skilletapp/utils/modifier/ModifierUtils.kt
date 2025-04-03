@@ -1,20 +1,33 @@
 package com.kronos.skilletapp.utils.modifier
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.*
 
-inline fun Modifier.applyIf(condition: Boolean, block: Modifier.() -> Modifier) = if (condition) {
+@Composable
+fun Modifier.applyIf(condition: Boolean, block: @Composable Modifier.() -> Modifier) = if (condition) {
   this then block()
 } else {
   this
 }
 
-inline fun Modifier.applyUnless(condition: Boolean, block: Modifier.() -> Modifier) = if (condition) {
+@Composable
+fun Modifier.applyUnless(condition: Boolean, block: @Composable Modifier.() -> Modifier) = if (condition) {
   this
 } else {
   this then block()
 }
+
+@Composable
+fun <T> Modifier.applyIfNotNull(value: T?, block: @Composable Modifier.(T) -> Modifier) = if (value != null) {
+  this then block(value)
+} else {
+  this
+}
+
+
 
 fun Modifier.verticalFadingEdge() = this
   .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)

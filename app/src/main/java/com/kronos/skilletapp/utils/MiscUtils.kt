@@ -1,6 +1,5 @@
 package com.kronos.skilletapp.utils
 
-import androidx.core.util.Predicate
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
