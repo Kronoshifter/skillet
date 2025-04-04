@@ -4,7 +4,9 @@ import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
 import com.kronos.skilletapp.model.IngredientType.*
+import com.kronos.skilletapp.utils.roundToNearestFraction
 import com.kronos.skilletapp.utils.toFraction
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -124,60 +126,65 @@ fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Re
   return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr { }
 }
 
-@Serializable
-sealed interface MeasurementType {
-  @Serializable data object Mass : MeasurementType
-  @Serializable data object Volume : MeasurementType
-  @Serializable data object Custom : MeasurementType
-  @Serializable data object None : MeasurementType
+enum class MeasurementType {
+  Mass,
+  Volume,
+  Other
+}
+
+enum class MeasurementSystem {
+  Metric,
+  Imperial,
+  Other
 }
 
 @Serializable
-sealed interface MeasurementSystem {
-  @Serializable data object Metric : MeasurementSystem
-  @Serializable data object UnitedStatesCustomary : MeasurementSystem
-  @Serializable data object Other : MeasurementSystem
-  @Serializable data object None : MeasurementSystem
-}
-
-sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSystem> {
-  val name: String
-  val factor: Float
-  val abbreviation: String
-  val aliases: List<String> //TODO: potentially replace aliases here with lookup table
-  val normalizationLow: Float
-  val normalizationHigh: Float
+sealed class MeasurementUnit(
+  @SerialName("measurementType")
+  val type: MeasurementType
+) {
+  abstract val name: String
+  abstract val factor: Float
+  abstract val abbreviation: String
+  abstract val aliases: List<String> //TODO: potentially replace aliases here with lookup table
+  abstract val system: MeasurementSystem
+  abstract val normalizationLow: Float
+  abstract val normalizationHigh: Float
 
   @Serializable
-  sealed class Mass<out S: MeasurementSystem>(
+  sealed class Mass(
     override val name: String,
     override val factor: Float,
     override val abbreviation: String,
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit<MeasurementType.Mass, S>
+    override val system: MeasurementSystem,
+  ) : MeasurementUnit(MeasurementType.Mass)
 
   @Serializable
-  sealed class Volume<out S: MeasurementSystem>(
+  sealed class Volume(
     override val name: String,
     override val factor: Float,
     override val abbreviation: String,
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit<MeasurementType.Volume, S>
+    override val system: MeasurementSystem,
+  ) : MeasurementUnit(MeasurementType.Volume)
 
   @Serializable
   data class Custom(
     override val name: String
-  ) : MeasurementUnit<MeasurementType.Custom, Nothing> {
+  ) : MeasurementUnit(MeasurementType.Other) {
     override val factor: Float
       get() = 1f
     override val abbreviation: String
       get() = name
     override val aliases: List<String>
       get() = listOf(name)
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.Other
     override val normalizationLow: Float
       get() = 0f
     override val normalizationHigh: Float
@@ -185,7 +192,7 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
   }
 
   @Serializable
-  data object None : MeasurementUnit<Nothing, Nothing> {
+  data object None : MeasurementUnit(MeasurementType.Other) {
     override val name: String
       get() = "none"
     override val factor: Float
@@ -194,6 +201,8 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
       get() = "none"
     override val aliases: List<String>
       get() = listOf("none")
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.Other
     override val normalizationLow: Float
       get() = 0f
     override val normalizationHigh: Float
@@ -205,115 +214,126 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
   //// Metric
 
   @Serializable
-  data object Milliliter : Volume<MeasurementSystem.Metric>(
+  data object Milliliter : Volume(
     name = "milliliter",
     factor = 1f,
     abbreviation = "mL",
     aliases = listOf("mL"),
     normalizationLow = 0f,
     normalizationHigh = 1000f,
+    system = MeasurementSystem.Metric
   )
 
   @Serializable
-  data object Liter : Volume<MeasurementSystem.Metric>(
+  data object Liter : Volume(
     name = "liter",
     factor = 1000f,
     abbreviation = "L",
     aliases = listOf("L"),
     normalizationLow = 0.5f,
     normalizationHigh = Float.POSITIVE_INFINITY,
+    system = MeasurementSystem.Metric
   )
 
-  //// United States Customary
+  //// Imperial
 
   @Serializable
-  data object Pinch : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Pinch : Volume(
     factor = 0.3080575f,
     name = "pinch",
     abbreviation = "pinch",
     aliases = listOf("pinch"),
     normalizationLow = 0f,
     normalizationHigh = 2f,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Dash : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Dash : Volume(
     factor = 0.616115f,
     name = "dash",
     abbreviation = "dash",
     aliases = listOf("dash"),
     normalizationLow = 0.5f,
     normalizationHigh = 2f,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Teaspoon : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Teaspoon : Volume(
     factor = 4.92892f,
     name = "teaspoon",
     abbreviation = "tsp",
     aliases = listOf("tsp", "t", "teaspoons"),
     normalizationLow = 0.25f,
     normalizationHigh = 3f,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Tablespoon : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Tablespoon : Volume(
     factor = 14.7868f,
     name = "tablespoon",
     abbreviation = "tbsp",
     aliases = listOf("tbsp", "Tbsp", "T", "tbs", "Tbs", "tablespoons", "Tablespoons"),
     normalizationLow = 0.334f,
     normalizationHigh = 4f,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Cup : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Cup : Volume(
     factor = 236.588f,
     name = "cup",
     abbreviation = "cup",
     aliases = listOf("cup", "c", "C", "cups"),
     normalizationLow = 0.25f,
     normalizationHigh = Float.POSITIVE_INFINITY,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Pint : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Pint : Volume(
     factor = 473.176f,
     name = "pint",
     abbreviation = "pt",
     aliases = listOf("pt", "pints", "Pint"),
     normalizationLow = 0.5f,
     normalizationHigh = 2f,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Quart : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Quart : Volume(
     factor = 946.353f,
     name = "quart",
     abbreviation = "qt",
     aliases = listOf("qt", "quarts", "Quart"),
     normalizationLow = 0.5f,
     normalizationHigh = 4f,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Gallon : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object Gallon : Volume(
     factor = 3785.41f,
     name = "gallon",
     abbreviation = "gal",
     aliases = listOf("gal", "gallons", "Gallon"),
     normalizationLow = 0.25f,
     normalizationHigh = Float.POSITIVE_INFINITY,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object FluidOunce : Volume<MeasurementSystem.UnitedStatesCustomary>(
+  data object FluidOunce : Volume(
     factor = 29.5735f,
     name = "fluid ounce",
     abbreviation = "fl oz",
     aliases = listOf("fl oz"),
     normalizationLow = 0.5f,
     normalizationHigh = 8f,
+    system = MeasurementSystem.Imperial
   )
 
   // Mass
@@ -321,45 +341,49 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
   //// Metric
 
   @Serializable
-  data object Gram : Mass<MeasurementSystem.Metric>(
+  data object Gram : Mass(
     factor = 1f,
     name = "gram",
     abbreviation = "g",
     aliases = listOf("g", "grams"),
     normalizationLow = 0f,
     normalizationHigh = 1000f,
+    system = MeasurementSystem.Metric
   )
 
   @Serializable
-  data object Kilogram : Mass<MeasurementSystem.Metric>(
+  data object Kilogram : Mass(
     factor = 1000f,
     name = "kilogram",
     abbreviation = "kg",
     aliases = listOf("kg", "kilograms"),
     normalizationLow = 0.5f,
     normalizationHigh = Float.POSITIVE_INFINITY,
+    system = MeasurementSystem.Metric
   )
 
-  //// United States Customary
+  //// Standard
 
   @Serializable
-  data object Ounce : Mass<MeasurementSystem.UnitedStatesCustomary>(
+  data object Ounce : Mass(
     factor = 28.3495f,
     name = "ounce",
     abbreviation = "oz",
     aliases = listOf("oz", "ounces", "Ounce"),
     normalizationLow = 0f,
     normalizationHigh = 16f,
+    system = MeasurementSystem.Imperial
   )
 
   @Serializable
-  data object Pound : Mass<MeasurementSystem.UnitedStatesCustomary>(
+  data object Pound : Mass(
     factor = 453.592f,
     name = "pound",
     abbreviation = "lb",
     aliases = listOf("lb", "lbs", "pounds", "Pound"),
     normalizationLow = 0.5f,
     normalizationHigh = Float.POSITIVE_INFINITY,
+    system = MeasurementSystem.Imperial
   )
 
   companion object {
@@ -380,21 +404,7 @@ sealed interface MeasurementUnit<out T: MeasurementType, out S: MeasurementSyste
         Kilogram,
         Ounce,
         Pound,
-      ).sortedWith(
-        compareBy<MeasurementUnit<*, *>> {
-          when (it) {
-            is Volume -> 0
-            is Mass -> 1
-            else -> 2
-          }
-        }.thenBy {
-          it.factor
-        }
-      )
-    }
-
-    fun <T : MeasurementType, S : MeasurementSystem> values() {
-      values
+      ).sortedBy { it.factor }.sortedBy { it.type }
     }
 
     private val wet = listOf(Wet)
