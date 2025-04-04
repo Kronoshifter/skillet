@@ -4,7 +4,6 @@ import com.github.michaelbull.result.*
 import com.kronos.skilletapp.utils.roundToEighth
 import kotlin.math.roundToInt
 import com.kronos.skilletapp.model.IngredientType.*
-import com.kronos.skilletapp.utils.roundToNearestFraction
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -15,12 +14,12 @@ data class Measurement(
   val unit: MeasurementUnit,
 ) {
   operator fun times(factor: Float) = scale(factor)
-  operator fun times(factor: Double) = scale(factor.toFloat())
-  operator fun times(factor: Int) = scale(factor.toFloat())
+  operator fun times(factor: Double) = times(factor.toFloat())
+  operator fun times(factor: Int) = times(factor.toFloat())
 
-  operator fun div(factor: Float) = scale(1 / factor)
-  operator fun div(factor: Double) = scale(1 / factor.toFloat())
-  operator fun div(factor: Int) = scale(1 / factor.toFloat())
+  operator fun div(divisor: Float) = scale(1 / divisor)
+  operator fun div(divisor: Double) = div(divisor.toFloat())
+  operator fun div(divisor: Int) = div(divisor.toFloat())
 
   operator fun unaryMinus() = copy(quantity = -quantity)
 
