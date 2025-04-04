@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.hasSameTypeAs
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
@@ -149,7 +150,7 @@ fun IngredientListItem(
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurements = MeasurementUnit.values
-    .filter { it.type == ingredient.measurement.unit.type }
+    .filter { it hasSameTypeAs ingredient.measurement.unit }
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
@@ -200,7 +201,7 @@ fun IngredientPill(
   var showBottomSheet by remember { mutableStateOf(false) }
 
   val measurements = MeasurementUnit.values
-    .filter { it.type == ingredient.measurement.unit.type }
+    .filter { it hasSameTypeAs ingredient.measurement.unit }
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
