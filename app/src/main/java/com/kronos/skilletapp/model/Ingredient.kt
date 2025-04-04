@@ -9,7 +9,7 @@ import kotlin.uuid.Uuid
 @Serializable
 data class Ingredient(
   val name: String,
-  val measurement: Measurement<*, *>,
+  val measurement: Measurement,
   val raw: String,
   val comment: String? = null,
   val id: String = Uuid.random().toString(),

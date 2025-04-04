@@ -27,9 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Measurement
-import com.kronos.skilletapp.model.MeasurementType
 import com.kronos.skilletapp.model.MeasurementUnit
-import com.kronos.skilletapp.model.isInstanceOf
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
@@ -43,7 +41,7 @@ fun IngredientRow(
   ingredient: Ingredient,
   modifier: Modifier = Modifier,
   scale: Float = 1f,
-  selectedUnit: MeasurementUnit<*, *>? = null,
+  selectedUnit: MeasurementUnit? = null,
   enabled: Boolean = true,
   checked: Boolean = false,
   onClick: () -> Unit = {},
@@ -74,7 +72,7 @@ fun IngredientRow(
         label = "Detail Box",
         transitionSpec = {
           fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 120)) togetherWith
-              fadeOut(animationSpec = tween(durationMillis = 90))
+          fadeOut(animationSpec = tween(durationMillis = 90))
         }
       ) { isChecked ->
         if (isChecked) {
@@ -140,20 +138,18 @@ fun IngredientRow(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T : MeasurementType> IngredientListItem(
+fun IngredientListItem(
   ingredient: Ingredient,
   scale: Float,
-  selectedUnit: MeasurementUnit<T, *>?,
-  onUnitSelect: (Ingredient, MeasurementUnit<T, *>?) -> Unit,
+  selectedUnit: MeasurementUnit?,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
   checked: Boolean = false,
   onCheckedChange: (Boolean) -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurements = MeasurementUnit.values
-//    .filterIsInstance<MeasurementUnit<T, *>>()
-    .filter { it::class == ingredient.measurement.unit::class }
-//    .filter { it.isInstanceOf(ingredient.measurement.unit::class) }
+    .filter { it.type == ingredient.measurement.unit.type }
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
