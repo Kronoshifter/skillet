@@ -1,29 +1,32 @@
 package com.kronos.skilletapp.model
 
-abstract class MeasurementConverter(
-//  protected val from: MeasurementUnit,
-//  protected val to: MeasurementUnit
-) {
-  protected abstract val ratio: Float
+interface MeasurementConverter {
+  val ratio: Float
   fun convert(quantity: Float): Float = quantity * ratio
 
   @MeasurementUnitConverterDsl
   class Builder {
-    private var _ratio: MeasurementRatio = MeasurementRatio()
+    private var _ratio: MeasurementRatio = MeasurementRatio.None
 
-    fun build(): MeasurementConverter = object : MeasurementConverter() {
+    fun build(): MeasurementConverter = object : MeasurementConverter {
       override val ratio: Float
-        get() = _ratio.ratio
+        get() {
+          check(_ratio != MeasurementRatio.None) { "Ratio must be initialized before getting the ratio, use the 'ratio' function, or use the extension functions for Measurement or MeasurementUnit" }
+          return _ratio.ratio
+        }
     }
 
-    fun ratio(block: MeasurementRatio.() -> Unit) {
-      val ratio = MeasurementRatio()
-      ratio.block()
-      _ratio = ratio
+    fun ratio(init: RatioBuilder.() -> MeasurementRatio) {
+      _ratio = RatioBuilder().init()
     }
 
-    infix fun Measurement.to(other: Measurement) = ratio { this@to to other }
-    infix fun MeasurementUnit.to(other: MeasurementUnit) = ratio { this@to to other }
+    infix fun Measurement.to(other: Measurement) = ratio {
+      quantity { this@to to other }
+    }
+
+    infix fun MeasurementUnit.to(other: MeasurementUnit) = ratio {
+      unit { this@to to other }
+    }
   }
 }
 
@@ -38,49 +41,73 @@ fun massConverter(from: MeasurementUnit.Mass, to: MeasurementUnit.Mass) = conver
 annotation class MeasurementUnitConverterDsl
 
 @MeasurementUnitConverterDsl
-class MeasurementRatio {
-  internal constructor()
+class RatioBuilder {
+  fun unit(init: MeasurementRatio.Unit.() -> Unit): MeasurementRatio {
+    return MeasurementRatio.Unit().apply(init)
+  }
+
+  fun quantity(init: MeasurementRatio.Quantity.() -> Unit): MeasurementRatio {
+    return MeasurementRatio.Quantity().apply(init)
+  }
+}
+
+@MeasurementUnitConverterDsl
+sealed class MeasurementRatio {
+  abstract val ratio: Float
 
   var left: Measurement = Measurement.None
-    private set
+    protected set
   var right: Measurement = Measurement.None
-    private set
-  var isUnitRatio: Boolean = false
-    private set
+    protected set
 
-  val quantityRatio: Float
-    get() {
-      checkMeasurementsAreSet()
-      return right.quantity / left.quantity
+  abstract fun inverse(): MeasurementRatio
+
+  protected fun checkMeasurementsAreSet() = check(left != Measurement.None && right != Measurement.None) { "Measurements must be initialized before getting the ratio" }
+
+  class Unit : MeasurementRatio {
+    internal constructor()
+
+    override val ratio: Float
+      get() {
+        checkMeasurementsAreSet()
+        return left.unit.factor / right.unit.factor
+      }
+
+    override fun inverse() = Unit().also {
+      it.left = right
+      it.right = left
     }
 
-  val unitRatio: Float
-    get() {
-      checkMeasurementsAreSet()
-      return left.unit.factor / right.unit.factor
+    infix fun MeasurementUnit.to(other: MeasurementUnit) {
+      left = 1 of this
+      right = 1 of other
     }
-
-  val ratio: Float
-    get() {
-      checkMeasurementsAreSet()
-      return if (isUnitRatio) unitRatio else quantityRatio
-    }
-
-  private fun checkMeasurementsAreSet() = check(left != Measurement.None && right != Measurement.None) { "Measurements must be initialized before getting the ratio" }
-
-  fun inverse() = MeasurementRatio().also {
-    it.left = right
-    it.right = left
   }
 
-  infix fun Measurement.to(other: Measurement) {
-    left = this
-    right = other
-    isUnitRatio = false
+  class Quantity : MeasurementRatio {
+    internal constructor()
+
+    override val ratio: Float
+      get() {
+        checkMeasurementsAreSet()
+        return right.quantity / left.quantity
+      }
+
+    override fun inverse() = Quantity().also {
+      it.left = right
+      it.right = left
+    }
+
+    infix fun Measurement.to(other: Measurement) {
+      left = this
+      right = other
+    }
   }
 
-  infix fun MeasurementUnit.to(other: MeasurementUnit) {
-    (1 of this) to (1 of other)
-    isUnitRatio = true
+  object None : MeasurementRatio() {
+    override val ratio: Float
+      get() = 0f
+
+    override fun inverse() = None
   }
 }
