@@ -114,27 +114,44 @@ data class Measurement(
       is MeasurementSystem.Metric -> quantity.toString().take(4).removeSuffix(".")
       else -> quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
     }
+
+  companion object {
+    val None = Measurement(0f, MeasurementUnit.None)
+  }
 }
 
 fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it hasSameTypeAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
+  val filtered = MeasurementUnit.values.filter { it hasSameDimension this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr { }
 }
 
 fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it hasSameTypeAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
+  val filtered = MeasurementUnit.values.filter { it hasSameDimension this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr { }
 }
 
-infix fun MeasurementUnit.hasSameTypeAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementType::class.nestedClasses.toTypedArray())
+infix fun MeasurementUnit.hasSameDimension(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementDimension::class.nestedClasses.toTypedArray())
 infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementSystem::class.nestedClasses.toTypedArray())
+infix fun Number.of(unit: MeasurementUnit): Measurement = Measurement(this.toFloat(), unit)
 
 @Serializable
-sealed interface MeasurementType {
-  interface Mass : MeasurementType
-  interface Volume : MeasurementType
-  interface Custom : MeasurementType
-  interface None : MeasurementType
+sealed interface MeasurementDimension {
+  val baseUnit: MeasurementUnit
+
+  interface Mass : MeasurementDimension {
+    override val baseUnit: MeasurementUnit.Mass
+      get() = MeasurementUnit.Gram
+  }
+
+  interface Volume : MeasurementDimension {
+    override val baseUnit: MeasurementUnit.Volume
+      get() = MeasurementUnit.Milliliter
+  }
+
+  interface None : MeasurementDimension {
+    override val baseUnit: MeasurementUnit.None
+      get() = MeasurementUnit.None
+  }
 }
 
 @Serializable
@@ -162,7 +179,7 @@ sealed interface MeasurementUnit {
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit, MeasurementType.Mass
+  ) : MeasurementUnit, MeasurementDimension.Mass
 
   @Serializable
   sealed class Volume(
@@ -172,12 +189,12 @@ sealed interface MeasurementUnit {
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit, MeasurementType.Volume
+  ) : MeasurementUnit, MeasurementDimension.Volume
 
   @Serializable
   data class Custom(
     override val name: String
-  ) : MeasurementUnit, MeasurementType.Custom {
+  ) : MeasurementUnit, MeasurementSystem.Custom, MeasurementDimension.None {
     override val factor: Float
       get() = 1f
     override val abbreviation: String
@@ -191,7 +208,7 @@ sealed interface MeasurementUnit {
   }
 
   @Serializable
-  data object None : MeasurementUnit, MeasurementType.None, MeasurementSystem.None {
+  data object None : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
     override val name: String
       get() = "none"
     override val factor: Float
@@ -390,11 +407,11 @@ sealed interface MeasurementUnit {
         compareBy(
           { it.factor },
           {
-            when (it as MeasurementType) {
-              is MeasurementType.Volume -> 0
-              is MeasurementType.Mass -> 1
-              is MeasurementType.Custom -> 2
-              is MeasurementType.None -> 3
+            when (it) {
+              is Volume -> 0
+              is Mass -> 1
+              is Custom -> 2
+              is None -> 3
             }
           }
         )
