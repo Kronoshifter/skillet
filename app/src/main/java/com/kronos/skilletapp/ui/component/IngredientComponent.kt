@@ -2,7 +2,6 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,8 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -35,7 +32,6 @@ import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
 import com.kronos.skilletapp.utils.toFraction
-import kotlinx.coroutines.launch
 
 @Composable
 fun IngredientRow(

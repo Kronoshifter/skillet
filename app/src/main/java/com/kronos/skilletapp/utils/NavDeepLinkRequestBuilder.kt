@@ -1,8 +1,6 @@
 package com.kronos.skilletapp.utils
 
-import android.R.attr.action
 import android.net.Uri
-import androidx.core.net.toUri
 import androidx.navigation.NavDeepLinkRequest
 
 @DslMarker public annotation class NavDeepLinkRequestDsl
