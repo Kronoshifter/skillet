@@ -1,10 +1,9 @@
 package com.kronos.skilletapp
 
-import com.kronos.skilletapp.model.Measurement
-import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.Measurement
+import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 

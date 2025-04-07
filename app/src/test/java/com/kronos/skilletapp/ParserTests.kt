@@ -1,12 +1,10 @@
 package com.kronos.skilletapp
 
-import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
-import io.kotest.core.project.projectContext
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 
 class ParserTests : FunSpec({
 

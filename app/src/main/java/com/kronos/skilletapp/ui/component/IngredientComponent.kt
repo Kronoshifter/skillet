@@ -23,9 +23,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.Measurement
-import com.kronos.skilletapp.model.MeasurementUnit
-import com.kronos.skilletapp.model.hasSameDimension
+import com.kronos.skilletapp.model.measurement.Measurement
+import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.hasSameDimension
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction

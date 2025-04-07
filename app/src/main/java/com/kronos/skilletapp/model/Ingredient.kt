@@ -1,7 +1,7 @@
 package com.kronos.skilletapp.model
 
+import com.kronos.skilletapp.model.measurement.Measurement
 import kotlinx.serialization.Serializable
-import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

@@ -1,4 +1,4 @@
-package com.kronos.skilletapp.model
+package com.kronos.skilletapp.model.measurement
 
 interface MeasurementConverter {
   val ratio: Float

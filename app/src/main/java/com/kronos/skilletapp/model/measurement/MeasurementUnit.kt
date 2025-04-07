@@ -1,4 +1,4 @@
-package com.kronos.skilletapp.model
+package com.kronos.skilletapp.model.measurement
 
 import com.kronos.skilletapp.model.IngredientType.Dry
 import com.kronos.skilletapp.model.IngredientType.Wet

@@ -21,8 +21,8 @@ import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
-import com.kronos.skilletapp.model.Measurement
-import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.Measurement
+import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.RecipeSource
 import com.kronos.skilletapp.model.RecipeTime
