@@ -6,6 +6,8 @@ import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class MeasurementTests : FunSpec({
   val grams = Measurement(10f, MeasurementUnit.Gram)
@@ -22,6 +24,10 @@ class MeasurementTests : FunSpec({
   val pint = Measurement(1f, MeasurementUnit.Pint)
   val quart = Measurement(1f, MeasurementUnit.Quart)
   val gallon = Measurement(1f, MeasurementUnit.Gallon)
+
+  val json = Json {
+    ignoreUnknownKeys = true
+  }
 
   context("Scaling") {
     test("Double") {
@@ -564,6 +570,21 @@ class MeasurementTests : FunSpec({
         diff.quantity shouldBe (1f plusOrMinus 0.001f)
         diff.unit shouldBe MeasurementUnit.Cup
       }
+    }
+  }
+
+  context("Serialization") {
+    test("Serialize") {
+      val measurement = Measurement(8f, MeasurementUnit.Ounce)
+      val data = json.encodeToString(measurement)
+      data shouldBe """{"quantity":8.0,"unit":{"measurement_type":"ounce"}}"""
+    }
+
+    test("Deserialize") {
+      val data = """{"quantity":8.0,"unit":{"measurement_type":"ounce"}}"""
+      val measurement = json.decodeFromString<Measurement>(data)
+      measurement.quantity shouldBe 8f
+      measurement.unit shouldBe MeasurementUnit.Ounce
     }
   }
 })

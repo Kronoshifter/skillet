@@ -2,7 +2,10 @@ package com.kronos.skilletapp.model.measurement
 
 import com.kronos.skilletapp.model.IngredientType.Dry
 import com.kronos.skilletapp.model.IngredientType.Wet
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
 
 @Serializable
 sealed interface MeasurementDimension {
@@ -20,8 +23,7 @@ sealed interface MeasurementDimension {
 
   interface None : MeasurementDimension {
     override val baseUnit: MeasurementUnit.None
-      get() = MeasurementUnit.None
-  }
+      get() = MeasurementUnit.None  }
 }
 
 @Serializable
@@ -32,7 +34,9 @@ sealed interface MeasurementSystem {
   interface None : MeasurementSystem
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonClassDiscriminator("measurement_type")
 sealed interface MeasurementUnit {
   val name: String
   val factor: Float
@@ -42,6 +46,7 @@ sealed interface MeasurementUnit {
   val normalizationHigh: Float
 
   @Serializable
+  @SerialName("mass")
   sealed class Mass(
     override val name: String,
     override val factor: Float,
@@ -52,6 +57,7 @@ sealed interface MeasurementUnit {
   ) : MeasurementUnit, MeasurementDimension.Mass
 
   @Serializable
+  @SerialName("volume")
   sealed class Volume(
     override val name: String,
     override val factor: Float,
@@ -62,6 +68,7 @@ sealed interface MeasurementUnit {
   ) : MeasurementUnit, MeasurementDimension.Volume
 
   @Serializable
+  @SerialName("custom")
   data class Custom(
     override val name: String
   ) : MeasurementUnit, MeasurementSystem.Custom, MeasurementDimension.None {
@@ -78,6 +85,7 @@ sealed interface MeasurementUnit {
   }
 
   @Serializable
+  @SerialName("none")
   data object None : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
     override val name: String
       get() = "none"
@@ -98,6 +106,7 @@ sealed interface MeasurementUnit {
   //// Metric
 
   @Serializable
+  @SerialName("milliliter")
   data object Milliliter : Volume(
     name = "milliliter",
     factor = 1f,
@@ -108,6 +117,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.Metric
 
   @Serializable
+  @SerialName("liter")
   data object Liter : Volume(
     name = "liter",
     factor = 1000f,
@@ -120,6 +130,7 @@ sealed interface MeasurementUnit {
   //// US Customary
 
   @Serializable
+  @SerialName("pinch")
   data object Pinch : Volume(
     factor = 0.3080575f,
     name = "pinch",
@@ -130,6 +141,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("dash")
   data object Dash : Volume(
     factor = 0.616115f,
     name = "dash",
@@ -140,6 +152,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("teaspoon")
   data object Teaspoon : Volume(
     factor = 4.92892f,
     name = "teaspoon",
@@ -150,6 +163,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("tablespoon")
   data object Tablespoon : Volume(
     factor = 14.7868f,
     name = "tablespoon",
@@ -160,6 +174,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("cup")
   data object Cup : Volume(
     factor = 236.588f,
     name = "cup",
@@ -170,6 +185,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("pint")
   data object Pint : Volume(
     factor = 473.176f,
     name = "pint",
@@ -180,6 +196,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("quart")
   data object Quart : Volume(
     factor = 946.353f,
     name = "quart",
@@ -190,6 +207,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("gallon")
   data object Gallon : Volume(
     factor = 3785.41f,
     name = "gallon",
@@ -200,6 +218,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("fluid_ounce")
   data object FluidOunce : Volume(
     factor = 29.5735f,
     name = "fluid ounce",
@@ -214,6 +233,7 @@ sealed interface MeasurementUnit {
   //// Metric
 
   @Serializable
+  @SerialName("gram")
   data object Gram : Mass(
     factor = 1f,
     name = "gram",
@@ -224,6 +244,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.Metric
 
   @Serializable
+  @SerialName("kilogram")
   data object Kilogram : Mass(
     factor = 1000f,
     name = "kilogram",
@@ -236,6 +257,7 @@ sealed interface MeasurementUnit {
   //// Standard
 
   @Serializable
+  @SerialName("ounce")
   data object Ounce : Mass(
     factor = 28.3495f,
     name = "ounce",
@@ -246,6 +268,7 @@ sealed interface MeasurementUnit {
   ), MeasurementSystem.UsCustomary
 
   @Serializable
+  @SerialName("pound")
   data object Pound : Mass(
     factor = 453.592f,
     name = "pound",
