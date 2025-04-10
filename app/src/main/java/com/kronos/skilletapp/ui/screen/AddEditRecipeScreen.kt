@@ -1352,7 +1352,7 @@ fun InstructionComponent(
 
 @Composable
 private fun IngredientQuantity(ingredient: Ingredient) {
-  val measurement = ingredient.measurement.normalize { it !is MeasurementUnit.FluidOunce}
+  val measurement = ingredient.measurement.normalized { it !is MeasurementUnit.FluidOunce}
 
   val quantity = measurement.displayQuantity.let {
     if (ingredient.measurement.unit !is MeasurementUnit.None) {

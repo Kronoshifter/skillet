@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
-import com.kronos.skilletapp.model.measurement.hasSameDimension
+import com.kronos.skilletapp.model.measurement.hasSameDimensionAs
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
@@ -46,7 +46,7 @@ fun IngredientRow(
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurement = with(ingredient.measurement.scale(scale)) {
-    selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+    selectedUnit?.let { convert(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
   }
 
   val bgColor by animateColorAsState(
@@ -146,7 +146,7 @@ fun IngredientListItem(
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurements = MeasurementUnit.values
-    .filter { it hasSameDimension ingredient.measurement.unit }
+    .filter { it hasSameDimensionAs ingredient.measurement.unit }
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
@@ -197,7 +197,7 @@ fun IngredientPill(
   var showBottomSheet by remember { mutableStateOf(false) }
 
   val measurements = MeasurementUnit.values
-    .filter { it hasSameDimension ingredient.measurement.unit }
+    .filter { it hasSameDimensionAs ingredient.measurement.unit }
     .map { ingredient.measurement.convert(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
@@ -211,7 +211,7 @@ fun IngredientPill(
     leadingContent = {
       if (ingredient.measurement.quantity > 0) {
         val measurement = with(ingredient.measurement.scale(scale)) {
-          selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+          selectedUnit?.let { convert(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
         }
 
         val quantity = measurement.displayQuantity.let {
