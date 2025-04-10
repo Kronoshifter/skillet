@@ -3,7 +3,7 @@ package com.kronos.skilletapp.model.measurement
 class MeasurementConverter(
   val ratio: MeasurementRatio
 ) {
-  fun convert(quantity: Float): Float = quantity * ratio.decimal
+  fun convert(quantity: Float): Measurement = Measurement(quantity * ratio.decimal, ratio.right.unit)
 
   @MeasurementUnitConverterDsl
   class Builder {
@@ -35,11 +35,30 @@ fun converter(builder: MeasurementConverter.Builder.() -> Unit): MeasurementConv
   return MeasurementConverter.Builder().apply(builder).build()
 }
 
-fun volumeConverter(from: MeasurementUnit.Volume, to: MeasurementUnit.Volume) = converter { from to to }
-fun massConverter(from: MeasurementUnit.Mass, to: MeasurementUnit.Mass) = converter { from to to }
+infix fun Measurement.convertTo(to: Measurement): Measurement {
+  val converter = if (unit hasSameDimensionAs to.unit) {
+    converter { unit to to.unit }
+  } else {
+    converter { this@convertTo to to }
+  }
 
-@DslMarker
-annotation class MeasurementUnitConverterDsl
+  return this convertWith converter
+}
+
+infix fun Measurement.convertBy(block: MeasurementConverter.Builder.() -> Unit): Measurement {
+  val converter = converter(block)
+  require(unit hasSameDimensionAs converter.ratio.left.unit) {
+    """
+      First measurement in convertBy block must measure the same dimension as the measurement to be converted, if necessary chain calls
+      Measurement to be converted: $this
+      First measurement: ${converter.ratio.left}
+    """.trimIndent()
+  }
+
+  return this convertTo converter.ratio.left convertWith converter
+}
+
+private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
 
 @MeasurementUnitConverterDsl
 class RatioBuilder {
@@ -50,6 +69,7 @@ class RatioBuilder {
 
   fun unit(block: RatioBuilder.() -> Unit = {}) {
     block()
+    check(left.unit hasSameDimensionAs right.unit) { "Units must have the same dimension" }
     ratio = MeasurementRatio.Unit(left, right)
   }
 
@@ -111,3 +131,6 @@ sealed interface MeasurementRatio {
     override fun inverse() = None
   }
 }
+
+@DslMarker
+annotation class MeasurementUnitConverterDsl
