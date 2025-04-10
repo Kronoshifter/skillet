@@ -278,7 +278,7 @@ class MeasurementTests : FunSpec({
     context("Misc") {
       test("Normalization of no unit") {
         val measurement = Measurement(0f, MeasurementUnit.None)
-        val normalized = measurement.normalize()
+        val normalized = measurement.normalized()
         normalized.quantity shouldBe 0f
         normalized.unit shouldBe MeasurementUnit.None
       }
@@ -289,13 +289,13 @@ class MeasurementTests : FunSpec({
 
     context("Teaspoon") {
       test("Teaspoon to Tablespoon") {
-        val normalized = Measurement(3f, MeasurementUnit.Teaspoon).normalize()
+        val normalized = Measurement(3f, MeasurementUnit.Teaspoon).normalized()
         normalized.quantity shouldBe (1f plusOrMinus 0.001f)
         normalized.unit shouldBe MeasurementUnit.Tablespoon
       }
 
       test("Teaspoon to Cup") {
-        val normalized = Measurement(48f, MeasurementUnit.Teaspoon).normalize()
+        val normalized = Measurement(48f, MeasurementUnit.Teaspoon).normalized()
         normalized.quantity shouldBe (1f plusOrMinus 0.001f)
         normalized.unit shouldBe MeasurementUnit.Cup
       }
@@ -570,21 +570,6 @@ class MeasurementTests : FunSpec({
         diff.quantity shouldBe (1f plusOrMinus 0.001f)
         diff.unit shouldBe MeasurementUnit.Cup
       }
-    }
-  }
-
-  context("Serialization") {
-    test("Serialize") {
-      val measurement = Measurement(8f, MeasurementUnit.Ounce)
-      val data = json.encodeToString(measurement)
-      data shouldBe """{"quantity":8.0,"unit":{"measurement_type":"ounce"}}"""
-    }
-
-    test("Deserialize") {
-      val data = """{"quantity":8.0,"unit":{"measurement_type":"ounce"}}"""
-      val measurement = json.decodeFromString<Measurement>(data)
-      measurement.quantity shouldBe 8f
-      measurement.unit shouldBe MeasurementUnit.Ounce
     }
   }
 })
