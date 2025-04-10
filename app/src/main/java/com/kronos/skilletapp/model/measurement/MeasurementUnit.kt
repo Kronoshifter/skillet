@@ -30,7 +30,6 @@ sealed interface MeasurementDimension {
 sealed interface MeasurementSystem {
   interface Metric : MeasurementSystem
   interface UsCustomary : MeasurementSystem
-  interface Custom : MeasurementSystem
   interface None : MeasurementSystem
 }
 
@@ -71,7 +70,7 @@ sealed interface MeasurementUnit {
   @SerialName("custom")
   data class Custom(
     override val name: String
-  ) : MeasurementUnit, MeasurementSystem.Custom, MeasurementDimension.None {
+  ) : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
     override val factor: Float
       get() = 1f
     override val abbreviation: String
