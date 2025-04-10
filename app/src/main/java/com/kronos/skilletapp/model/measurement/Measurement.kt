@@ -89,9 +89,9 @@ data class Measurement(
   fun convert(to: MeasurementUnit, converter: (Float) -> Float) = Measurement(converter(quantity), unit = to)
 
 
-  fun scaleAndNormalize(factor: Float) = scale(factor).normalize()
+  fun scaleAndNormalize(factor: Float) = scale(factor).normalized()
 
-  fun normalize(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
+  fun normalized(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
     while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
       if (normalized.quantity <= normalized.unit.normalizationLow) {
@@ -120,15 +120,15 @@ data class Measurement(
 }
 
 fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it hasSameDimension this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
+  val filtered = MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr { }
 }
 
 fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it hasSameDimension this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
+  val filtered = MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr { }
 }
 
-infix fun MeasurementUnit.hasSameDimension(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementDimension::class.nestedClasses.toTypedArray())
+infix fun MeasurementUnit.hasSameDimensionAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementDimension::class.nestedClasses.toTypedArray())
 infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementSystem::class.nestedClasses.toTypedArray())
 infix fun Number.of(unit: MeasurementUnit): Measurement = Measurement(this.toFloat(), unit)
