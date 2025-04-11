@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.convertTo
 import com.kronos.skilletapp.model.measurement.hasSameDimensionAs
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -46,7 +47,7 @@ fun IngredientRow(
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurement = with(ingredient.measurement.scale(scale)) {
-    selectedUnit?.let { convert(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
+    selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
   }
 
   val bgColor by animateColorAsState(
@@ -147,7 +148,7 @@ fun IngredientListItem(
 ) {
   val measurements = MeasurementUnit.values
     .filter { it hasSameDimensionAs ingredient.measurement.unit }
-    .map { ingredient.measurement.convert(it).scale(scale) }
+    .map { ingredient.measurement.convertTo(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   var showBottomSheet by remember { mutableStateOf(false) }
@@ -198,7 +199,7 @@ fun IngredientPill(
 
   val measurements = MeasurementUnit.values
     .filter { it hasSameDimensionAs ingredient.measurement.unit }
-    .map { ingredient.measurement.convert(it).scale(scale) }
+    .map { ingredient.measurement.convertTo(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   val borderColor =
@@ -211,7 +212,7 @@ fun IngredientPill(
     leadingContent = {
       if (ingredient.measurement.quantity > 0) {
         val measurement = with(ingredient.measurement.scale(scale)) {
-          selectedUnit?.let { convert(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
+          selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
         }
 
         val quantity = measurement.displayQuantity.let {

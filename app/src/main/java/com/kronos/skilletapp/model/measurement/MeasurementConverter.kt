@@ -35,6 +35,14 @@ fun converter(builder: MeasurementConverter.Builder.() -> Unit): MeasurementConv
   return MeasurementConverter.Builder().apply(builder).build()
 }
 
+infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
+  require(unit hasSameDimensionAs to) {
+    "This overload is only valid if the units have the same dimension, try using the overload that takes a measurement"
+  }
+
+  return this convertWith converter { unit to to }
+}
+
 infix fun Measurement.convertTo(to: Measurement): Measurement {
   val converter = if (unit hasSameDimensionAs to.unit) {
     converter { unit to to.unit }
@@ -92,7 +100,7 @@ sealed interface MeasurementRatio {
 
   fun inverse(): MeasurementRatio
 
-  fun checkMeasurementsAreSet() = check(left != Measurement.None && right != Measurement.None) { "Measurements must be initialized before getting the ratio" }
+  fun checkMeasurementsAreSet() = check(left.isNotNone() && right.isNotNone()) { "Measurements must be initialized before getting the ratio" }
 
   data class Unit(
     override val left: Measurement = Measurement.None,

@@ -23,14 +23,20 @@ data class Measurement(
 
   operator fun unaryMinus() = copy(quantity = -quantity)
 
-  operator fun plus(other: Measurement) = when (unit) {
-    other.unit -> copy(quantity = quantity + other.quantity)
-    else -> copy(quantity = quantity + other.convert(unit).quantity)
+  operator fun plus(other: Measurement): Measurement {
+    require(unit hasSameDimensionAs other.unit) { "Units must measure the same dimension to properly add" }
+    return when (unit) {
+      other.unit -> copy(quantity = quantity + other.quantity)
+      else -> copy(quantity = quantity + other.convertTo(unit).quantity)
+    }
   }
 
-  operator fun minus(other: Measurement) = when (unit) {
-    other.unit -> copy(quantity = quantity - other.quantity)
-    else -> copy(quantity = quantity - other.convert(unit).quantity)
+  operator fun minus(other: Measurement): Measurement {
+    require(unit hasSameDimensionAs other.unit) { "Units must measure the same dimension to properly subtract" }
+    return when (unit) {
+      other.unit -> copy(quantity = quantity - other.quantity)
+      else -> copy(quantity = quantity - other.convertTo(unit).quantity)
+    }
   }
 
   operator fun inc() = copy(quantity = quantity + 1)
@@ -47,11 +53,11 @@ data class Measurement(
   }
 
   override fun equals(other: Any?): Boolean {
-    return other?.let {
-      (it as? Measurement)?.let { that ->
-        (this - that).quantity in -0.001..0.001
-      } ?: false
-    } ?: false
+    if (other == null) return false
+    val that = other as? Measurement ?: return false
+    if (!(unit hasSameDimensionAs that.unit)) return false
+    if (!(unit hasSameSystemAs that.unit)) return false
+    return (this - that).quantity in -0.001..0.001
   }
 
   override fun hashCode(): Int {
@@ -69,35 +75,15 @@ data class Measurement(
 
   fun scale(factor: Float) = copy(quantity = quantity * factor)
 
-  private fun convert(to: MeasurementUnit.Mass) = convert(to) {
-    check(unit is MeasurementUnit.Mass)
-    it * unit.factor / to.factor
-  }
-
-  private fun convert(to: MeasurementUnit.Volume) = convert(to) {
-    check(unit is MeasurementUnit.Volume)
-    it * unit.factor / to.factor
-  }
-
-  fun convert(to: MeasurementUnit) = when (unit) {
-    is MeasurementUnit.Mass -> convert(to as MeasurementUnit.Mass)
-    is MeasurementUnit.Volume -> convert(to as MeasurementUnit.Volume)
-    is MeasurementUnit.Custom -> copy(unit = to)
-    MeasurementUnit.None -> this
-  }
-
-  fun convert(to: MeasurementUnit, converter: (Float) -> Float) = Measurement(converter(quantity), unit = to)
-
-
   fun scaleAndNormalize(factor: Float) = scale(factor).normalized()
 
   fun normalized(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
     while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
       if (normalized.quantity <= normalized.unit.normalizationLow) {
-        normalized = normalized.convert(normalized.unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" })
+        normalized = normalized convertTo normalized.unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
       } else if (normalized.quantity >= normalized.unit.normalizationHigh) {
-        normalized = normalized.convert(normalized.unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" })
+        normalized = normalized convertTo normalized.unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
       }
     }
     return normalized
@@ -132,3 +118,5 @@ fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Re
 infix fun MeasurementUnit.hasSameDimensionAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementDimension::class.nestedClasses.toTypedArray())
 infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementSystem::class.nestedClasses.toTypedArray())
 infix fun Number.of(unit: MeasurementUnit): Measurement = Measurement(this.toFloat(), unit)
+fun Measurement.isNone() = unit == MeasurementUnit.None && quantity == 0f
+fun Measurement.isNotNone() = !isNone()
