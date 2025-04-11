@@ -2,6 +2,9 @@ package com.kronos.skilletapp
 
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.convertBy
+import com.kronos.skilletapp.model.measurement.convertTo
+import com.kronos.skilletapp.model.measurement.of
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.floats.plusOrMinus
@@ -70,13 +73,13 @@ class MeasurementTests : FunSpec({
     context("Mass") {
       context("Metric") {
         test("Grams to Kilograms") {
-          val converted = grams.convert(MeasurementUnit.Kilogram)
+          val converted = grams convertTo MeasurementUnit.Kilogram
           converted.quantity shouldBe (0.01f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Kilogram
         }
 
         test("Kilograms to Grams") {
-          val converted = kilogram.convert(MeasurementUnit.Gram)
+          val converted = kilogram convertTo MeasurementUnit.Gram
           converted.quantity shouldBe (1000f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Gram
         }
@@ -84,13 +87,13 @@ class MeasurementTests : FunSpec({
 
       context("Imperial") {
         test("Ounces to Pounds") {
-          val converted = ounces.convert(MeasurementUnit.Pound)
+          val converted = ounces convertTo MeasurementUnit.Pound
           converted.quantity shouldBe (1f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Pound
         }
 
         test("Pounds to Ounces") {
-          val converted = pound.convert(MeasurementUnit.Ounce)
+          val converted = pound convertTo MeasurementUnit.Ounce
           converted.quantity shouldBe (16f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Ounce
         }
@@ -98,13 +101,13 @@ class MeasurementTests : FunSpec({
 
       context("Metric to Imperial") {
         test("Grams to Ounces") {
-          val converted = grams.convert(MeasurementUnit.Ounce)
+          val converted = grams convertTo MeasurementUnit.Ounce
           converted.quantity shouldBe (0.35274f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Ounce
         }
 
         test("Kilograms to Pounds") {
-          val converted = kilogram.convert(MeasurementUnit.Pound)
+          val converted = kilogram convertTo MeasurementUnit.Pound
           converted.quantity shouldBe (2.20462f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Pound
         }
@@ -112,13 +115,13 @@ class MeasurementTests : FunSpec({
 
       context("Imperial to Metric") {
         test("Ounces to Grams") {
-          val converted = ounces.convert(MeasurementUnit.Gram)
+          val converted = ounces convertTo MeasurementUnit.Gram
           converted.quantity shouldBe (453.592f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Gram
         }
 
         test("Pounds to Kilograms") {
-          val converted = pound.convert(MeasurementUnit.Kilogram)
+          val converted = pound convertTo MeasurementUnit.Kilogram
           converted.quantity shouldBe (0.453592f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Kilogram
         }
@@ -128,13 +131,13 @@ class MeasurementTests : FunSpec({
     context("Volume") {
       context("Metric") {
         test("Milliliter to Liter") {
-          val converted = milliliters.convert(MeasurementUnit.Liter)
+          val converted = milliliters convertTo MeasurementUnit.Liter
           converted.quantity shouldBe (0.1f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Liter
         }
 
         test("Liter to Milliliter") {
-          val converted = liter.convert(MeasurementUnit.Milliliter)
+          val converted = liter convertTo MeasurementUnit.Milliliter
           converted.quantity shouldBe (1000f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Milliliter
         }
@@ -142,73 +145,73 @@ class MeasurementTests : FunSpec({
 
       context("Imperial") {
         test("Gallons to Quarts") {
-          val converted = gallon.convert(MeasurementUnit.Quart)
+          val converted = gallon convertTo MeasurementUnit.Quart
           converted.quantity shouldBe (4f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Quart
         }
 
         test("Quarts to Gallons") {
-          val converted = quart.convert(MeasurementUnit.Gallon)
+          val converted = quart convertTo MeasurementUnit.Gallon
           converted.quantity shouldBe (0.25f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Gallon
         }
 
         test("Quarts to Pints") {
-          val converted = quart.convert(MeasurementUnit.Pint)
+          val converted = quart convertTo MeasurementUnit.Pint
           converted.quantity shouldBe (2f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Pint
         }
 
         test("Pints to Quarts") {
-          val converted = pint.convert(MeasurementUnit.Quart)
+          val converted = pint convertTo MeasurementUnit.Quart
           converted.quantity shouldBe (0.5f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Quart
         }
 
         test("Cups to Tablespoons") {
-          val converted = cup.convert(MeasurementUnit.Tablespoon)
+          val converted = cup convertTo MeasurementUnit.Tablespoon
           converted.quantity shouldBe (16f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Tablespoon
         }
 
         test("Tablespoons to Cups") {
-          val converted = tablespoon.convert(MeasurementUnit.Cup)
+          val converted = tablespoon convertTo MeasurementUnit.Cup
           converted.quantity shouldBe (0.0625f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Cup
         }
 
         test("Cups to Fluid Ounces") {
-          val converted = cup.convert(MeasurementUnit.FluidOunce)
+          val converted = cup convertTo MeasurementUnit.FluidOunce
           converted.quantity shouldBe (8f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.FluidOunce
         }
 
         test("Fluid Ounces to Cups") {
-          val converted = fluidOunce.convert(MeasurementUnit.Cup)
+          val converted = fluidOunce convertTo MeasurementUnit.Cup
           converted.quantity shouldBe (0.125f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Cup
         }
 
         test("Fluid Ounces to Tablespoons") {
-          val converted = fluidOunce.convert(MeasurementUnit.Tablespoon)
+          val converted = fluidOunce convertTo MeasurementUnit.Tablespoon
           converted.quantity shouldBe (2f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Tablespoon
         }
 
         test("Tablespoons to Fluid Ounces") {
-          val converted = tablespoon.convert(MeasurementUnit.FluidOunce)
+          val converted = tablespoon convertTo MeasurementUnit.FluidOunce
           converted.quantity shouldBe (0.5f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.FluidOunce
         }
 
         test("Tablespoons to Teaspoons") {
-          val converted = tablespoon.convert(MeasurementUnit.Teaspoon)
+          val converted = tablespoon convertTo MeasurementUnit.Teaspoon
           converted.quantity shouldBe (3f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Teaspoon
         }
 
         test("Teaspoons to Tablespoons") {
-          val converted = teaspoon.convert(MeasurementUnit.Tablespoon)
+          val converted = teaspoon convertTo MeasurementUnit.Tablespoon
           converted.quantity shouldBe (0.333f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Tablespoon
         }
@@ -216,13 +219,13 @@ class MeasurementTests : FunSpec({
 
       context("Metric to Imperial") {
         test("Milliliters to Fluid Ounces") {
-          val converted = milliliters.convert(MeasurementUnit.FluidOunce)
+          val converted = milliliters convertTo MeasurementUnit.FluidOunce
           converted.quantity shouldBe (3.381f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.FluidOunce
         }
 
         test("Milliliters to Cups") {
-          val converted = milliliters.convert(MeasurementUnit.Cup)
+          val converted = milliliters convertTo MeasurementUnit.Cup
           converted.quantity shouldBe (0.4232f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Cup
         }
@@ -230,23 +233,25 @@ class MeasurementTests : FunSpec({
 
       context("Imperial to Metric") {
         test("Tablespoons to Milliliters") {
-          val converted = tablespoon.convert(MeasurementUnit.Milliliter)
+          val converted = tablespoon convertTo MeasurementUnit.Milliliter
           converted.quantity shouldBe (14.7868f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Milliliter
         }
 
         test("Cups to Milliliters") {
-          val converted = cup.convert(MeasurementUnit.Milliliter)
+          val converted = cup convertTo MeasurementUnit.Milliliter
           converted.quantity shouldBe (236.588f plusOrMinus 0.001f)
           converted.unit shouldBe MeasurementUnit.Milliliter
         }
       }
     }
 
-    context("Custom Conversions") {
+    context("Cross-Dimension Conversions") {
       test("Volume to Mass") {
         val tablespoonsButter = Measurement(2f, MeasurementUnit.Tablespoon)
-        val gramsButter = tablespoonsButter.convert(MeasurementUnit.Gram) { it * 14 }
+        val gramsButter = tablespoonsButter.convertBy {
+          (1 of MeasurementUnit.Tablespoon) to (14 of MeasurementUnit.Gram)
+        }
 
         gramsButter.quantity shouldBe (28f plusOrMinus 0.001f)
         gramsButter.unit shouldBe MeasurementUnit.Gram
@@ -254,23 +259,65 @@ class MeasurementTests : FunSpec({
 
       test("Mass to Volume") {
         val gramsButter = Measurement(28f, MeasurementUnit.Gram)
-        val tablespoonsButter = gramsButter.convert(MeasurementUnit.Tablespoon) { it / 14 }
+        val tablespoonsButter = gramsButter.convertBy {
+          (14 of MeasurementUnit.Gram) to (1 of MeasurementUnit.Tablespoon)
+        }
 
         tablespoonsButter.quantity shouldBe (2f plusOrMinus 0.001f)
         tablespoonsButter.unit shouldBe MeasurementUnit.Tablespoon
+      }
+
+      test("Custom to Mass") {
+        val garlic = Measurement(1f, MeasurementUnit.Custom("cloves"))
+        val gramsGarlic = garlic.convertBy {
+          garlic to (3 of MeasurementUnit.Gram)
+        }
+
+        gramsGarlic.quantity shouldBe (3f plusOrMinus 0.001f)
+        gramsGarlic.unit shouldBe MeasurementUnit.Gram
+      }
+
+      test("Custom to Volume") {
+        val garlic = Measurement(2f, MeasurementUnit.Custom("cloves"))
+        val gramsGarlic = garlic.convertBy {
+          (1 of MeasurementUnit.Custom("cloves")) to (0.5f of MeasurementUnit.Teaspoon)
+        }
+
+        gramsGarlic.quantity shouldBe (1f plusOrMinus 0.001f)
+        gramsGarlic.unit shouldBe MeasurementUnit.Teaspoon
+      }
+
+      test("None to mass") {
+        val coconut = Measurement(1f, MeasurementUnit.None)
+        val gramsCoconut = coconut.convertBy {
+          coconut to (400 of MeasurementUnit.Gram)
+        }
+
+        gramsCoconut.quantity shouldBe (400f plusOrMinus 0.001f)
+        gramsCoconut.unit shouldBe MeasurementUnit.Gram
+      }
+
+      test("None to volume") {
+        val coconut = Measurement(2f, MeasurementUnit.None)
+        val quarterCupCoconut = coconut.convertBy {
+          (1 of MeasurementUnit.None) to (0.25f of MeasurementUnit.Cup)
+        }
+
+        quarterCupCoconut.quantity shouldBe (0.5f plusOrMinus 0.001f)
+        quarterCupCoconut.unit shouldBe MeasurementUnit.Cup
       }
     }
 
     context("Improper Conversions") {
       test("Improper Volume to Mass") {
         shouldThrowAny {
-          teaspoon.convert(MeasurementUnit.Gram)
+          teaspoon convertTo MeasurementUnit.Gram
         }
       }
 
       test("Improper Mass to Volume") {
         shouldThrowAny {
-          grams.convert(MeasurementUnit.Teaspoon)
+          grams convertTo MeasurementUnit.Teaspoon
         }
       }
     }
@@ -543,7 +590,16 @@ class MeasurementTests : FunSpec({
         sum.unit shouldBe MeasurementUnit.Cup
       }
 
+      context("Unsafe Addition") {
+        test("Cup + Kilogram") {
+          val m1 = Measurement(1f, MeasurementUnit.Cup)
+          val m2 = Measurement(8f, MeasurementUnit.Kilogram)
 
+          shouldThrowAny {
+            m1 + m2
+          }
+        }
+      }
     }
 
     context("Subtraction") {
@@ -569,6 +625,16 @@ class MeasurementTests : FunSpec({
         val diff = m1 - m2
         diff.quantity shouldBe (1f plusOrMinus 0.001f)
         diff.unit shouldBe MeasurementUnit.Cup
+      }
+
+      context("Unsafe Subtraction") {
+        test("Cup - Kilogram") {
+          val m1 = Measurement(2f, MeasurementUnit.Cup)
+          val m2 = Measurement(8f, MeasurementUnit.Kilogram)
+          shouldThrowAny {
+            m1 - m2
+          }
+        }
       }
     }
   }
