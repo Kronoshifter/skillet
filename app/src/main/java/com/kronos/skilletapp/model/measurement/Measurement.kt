@@ -1,28 +1,25 @@
 package com.kronos.skilletapp.model.measurement
 
-import com.github.michaelbull.result.*
-import com.kronos.skilletapp.utils.roundToEighth
-import kotlin.math.roundToInt
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.expect
+import com.github.michaelbull.result.toResultOr
 import com.kronos.skilletapp.utils.haveSameTypes
+import com.kronos.skilletapp.utils.roundToEighth
 import com.kronos.skilletapp.utils.toFraction
 import kotlinx.serialization.Serializable
-import kotlin.collections.filter
+import kotlin.math.absoluteValue
 
 @Serializable
 data class Measurement(
   val quantity: Float,
   val unit: MeasurementUnit,
 ) {
-  operator fun times(factor: Float) = scale(factor)
-  operator fun times(factor: Double) = times(factor.toFloat())
-  operator fun times(factor: Int) = times(factor.toFloat())
-
-  operator fun div(divisor: Float) = scale(1 / divisor)
-  operator fun div(divisor: Double) = div(divisor.toFloat())
-  operator fun div(divisor: Int) = div(divisor.toFloat())
+  operator fun times(factor: Number) = scale(factor.toFloat())
+  operator fun div(divisor: Number) = scale(1f / divisor.toFloat())
 
   operator fun unaryMinus() = copy(quantity = -quantity)
 
+  operator fun plus(other: Number) = copy(quantity = quantity + other.toFloat())
   operator fun plus(other: Measurement): Measurement {
     require(unit hasSameDimensionAs other.unit) { "Units must measure the same dimension to properly add" }
     return when (unit) {
@@ -31,6 +28,7 @@ data class Measurement(
     }
   }
 
+  operator fun minus(other: Number) = copy(quantity = quantity - other.toFloat())
   operator fun minus(other: Measurement): Measurement {
     require(unit hasSameDimensionAs other.unit) { "Units must measure the same dimension to properly subtract" }
     return when (unit) {
@@ -39,8 +37,8 @@ data class Measurement(
     }
   }
 
-  operator fun inc() = copy(quantity = quantity + 1)
-  operator fun dec() = copy(quantity = quantity - 1)
+  operator fun inc() = copy(quantity = quantity + 1f)
+  operator fun dec() = copy(quantity = quantity - 1f)
 
   //  operator fun compareTo(other: Measurement) = (amount * unit.factor).compareTo(other.amount * other.unit.factor)
   operator fun compareTo(other: Measurement): Int {
@@ -52,20 +50,6 @@ data class Measurement(
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (other == null) return false
-    val that = other as? Measurement ?: return false
-    if (!(unit hasSameDimensionAs that.unit)) return false
-    if (!(unit hasSameSystemAs that.unit)) return false
-    return (this - that).quantity in -0.001..0.001
-  }
-
-  override fun hashCode(): Int {
-    var result = quantity.hashCode()
-    result = 31 * result + unit.hashCode()
-    return result
-  }
-
   override fun toString(): String {
     return when (unit) {
       is MeasurementSystem.Metric -> "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
@@ -75,24 +59,23 @@ data class Measurement(
 
   fun scale(factor: Float) = copy(quantity = quantity * factor)
 
-  fun scaleAndNormalize(factor: Float) = scale(factor).normalized()
-
   fun normalized(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
+
     while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
-      if (normalized.quantity <= normalized.unit.normalizationLow) {
-        normalized = normalized convertTo normalized.unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
-      } else if (normalized.quantity >= normalized.unit.normalizationHigh) {
-        normalized = normalized convertTo normalized.unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
+      with(normalized) {
+        if (quantity <= unit.normalizationLow) {
+          normalized = normalized convertTo unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
+        } else if (quantity >= unit.normalizationHigh) {
+          normalized = normalized convertTo unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
+        }
       }
     }
+
     return normalized
   }
 
   fun roundToEighth() = copy(quantity = quantity.roundToEighth())
-  fun round() = copy(quantity = quantity.roundToInt().toFloat())
-
-  fun scaleAndRound(factor: Float) = scale(factor).roundToEighth()
 
   val displayQuantity
     get() = when (unit) {
@@ -118,5 +101,14 @@ fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Re
 infix fun MeasurementUnit.hasSameDimensionAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementDimension::class.nestedClasses.toTypedArray())
 infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementSystem::class.nestedClasses.toTypedArray())
 infix fun Number.of(unit: MeasurementUnit): Measurement = Measurement(this.toFloat(), unit)
-fun Measurement.isNone() = unit == MeasurementUnit.None && quantity == 0f
+fun Measurement.isNone() = this == Measurement.None
 fun Measurement.isNotNone() = !isNone()
+
+infix fun Measurement.isEquivalentTo(other: Measurement): Boolean = when {
+  isNone() -> other.isNone()
+  other.isNone() -> isNone()
+  unit is MeasurementUnit.Custom && other.unit is MeasurementUnit.Custom && unit.name != other.unit.name -> false
+  unit == other.unit -> (quantity - other.quantity) in -0.001f..0.001f
+  unit hasSameDimensionAs other.unit -> (this - other).quantity in -0.001f..0.001f
+  else -> false
+}
