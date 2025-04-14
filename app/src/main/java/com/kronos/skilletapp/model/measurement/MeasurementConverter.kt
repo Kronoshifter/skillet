@@ -35,12 +35,26 @@ fun converter(builder: MeasurementConverter.Builder.() -> Unit): MeasurementConv
   return MeasurementConverter.Builder().apply(builder).build()
 }
 
+fun withConverter(converter: MeasurementConverter, block: MeasurementConversionScope.() -> Measurement): Measurement {
+  return MeasurementConversionScopeImpl(converter).block()
+}
+
+fun withConverter(builder: MeasurementConverter.Builder.() -> Unit, block: MeasurementConversionScope.() -> Measurement): Measurement {
+  return MeasurementConversionScopeImpl(converter(builder)).block()
+}
+
 infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
   require(unit hasSameDimensionAs to) {
     "This overload is only valid if the units have the same dimension, try using the overload that takes a measurement"
   }
 
-  return this convertWith converter { unit to to }
+  return withConverter(
+    converter {
+      this@convertTo.unit to to
+    }
+  ) {
+    this@convertTo convertTo to
+  }
 }
 
 infix fun Measurement.convertTo(to: Measurement): Measurement {
@@ -50,23 +64,18 @@ infix fun Measurement.convertTo(to: Measurement): Measurement {
     converter { this@convertTo to to }
   }
 
-  return this convertWith converter
+  return withConverter(converter) {
+    this@convertTo convertTo to.unit
+  }
 }
 
 infix fun Measurement.convertBy(block: MeasurementConverter.Builder.() -> Unit): Measurement {
   val converter = converter(block)
-  require(unit hasSameDimensionAs converter.ratio.left.unit) {
-    """
-      First measurement in convertBy block must measure the same dimension as the measurement to be converted, if necessary chain calls
-      Measurement to be converted: $this
-      First measurement: ${converter.ratio.left}
-    """.trimIndent()
+
+  return withConverter(converter) {
+    this@convertBy convertTo converter.ratio.right.unit
   }
-
-  return this convertTo converter.ratio.left convertWith converter
 }
-
-private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
 
 @MeasurementUnitConverterDsl
 class RatioBuilder {
@@ -138,6 +147,45 @@ sealed interface MeasurementRatio {
 
     override fun inverse() = None
   }
+}
+
+@MeasurementUnitConverterDsl
+interface MeasurementConversionScope {
+  infix fun Measurement.convertTo(to: MeasurementUnit): Measurement
+}
+
+private class MeasurementConversionScopeImpl(val converter: MeasurementConverter) : MeasurementConversionScope {
+  override fun Measurement.convertTo(to: MeasurementUnit): Measurement {
+    require(unit hasSameDimensionAs converter.ratio.left.unit) {
+      """
+        First unit in converter block must measure the same dimension as the measurement to be converted, if necessary chain calls
+        Measurement to be converted: $this
+        First measurement: ${converter.ratio.left}
+      """.trimIndent()
+    }
+
+    require(to hasSameDimensionAs converter.ratio.right.unit) {
+      """
+        Second unit in converter block must measure the same dimension unit to be converted to, if necessary chain calls
+        Unit to be converted to: $this
+        Second measurement: ${converter.ratio.right}
+      """.trimIndent()
+    }
+
+    val left = converter.ratio.left.unit
+    val right = converter.ratio.right.unit
+
+    val fromToLeftConverter = converter { unit to left }
+    val rightToToConverter = converter { right to to }
+
+    return if (unit == left && to == right) {
+      this convertWith converter
+    } else {
+      this convertWith fromToLeftConverter convertWith converter convertWith rightToToConverter
+    }
+  }
+
+  private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
 }
 
 @DslMarker
