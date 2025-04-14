@@ -122,7 +122,7 @@ sealed interface MeasurementUnit {
     factor = 1000f,
     abbreviation = "L",
     aliases = listOf("L"),
-    normalizationLow = 0.5f,
+    normalizationLow = 0.51f,
     normalizationHigh = Float.POSITIVE_INFINITY,
   ), MeasurementSystem.Metric
 
@@ -146,7 +146,7 @@ sealed interface MeasurementUnit {
     name = "dash",
     abbreviation = "dash",
     aliases = listOf("dash"),
-    normalizationLow = 0.5f,
+    normalizationLow = 0.51f,
     normalizationHigh = 2f,
   ), MeasurementSystem.UsCustomary
 
@@ -157,7 +157,7 @@ sealed interface MeasurementUnit {
     name = "teaspoon",
     abbreviation = "tsp",
     aliases = listOf("tsp", "t", "teaspoons"),
-    normalizationLow = 0.25f,
+    normalizationLow = 0.26f,
     normalizationHigh = 3f,
   ), MeasurementSystem.UsCustomary
 
@@ -179,7 +179,7 @@ sealed interface MeasurementUnit {
     name = "cup",
     abbreviation = "cup",
     aliases = listOf("cup", "c", "C", "cups"),
-    normalizationLow = 0.25f,
+    normalizationLow = 0.26f,
     normalizationHigh = Float.POSITIVE_INFINITY,
   ), MeasurementSystem.UsCustomary
 
@@ -190,7 +190,7 @@ sealed interface MeasurementUnit {
     name = "pint",
     abbreviation = "pt",
     aliases = listOf("pt", "pints", "Pint"),
-    normalizationLow = 0.5f,
+    normalizationLow = 0.51f,
     normalizationHigh = 2f,
   ), MeasurementSystem.UsCustomary
 
@@ -201,7 +201,7 @@ sealed interface MeasurementUnit {
     name = "quart",
     abbreviation = "qt",
     aliases = listOf("qt", "quarts", "Quart"),
-    normalizationLow = 0.5f,
+    normalizationLow = 0.51f,
     normalizationHigh = 4f,
   ), MeasurementSystem.UsCustomary
 
@@ -212,7 +212,7 @@ sealed interface MeasurementUnit {
     name = "gallon",
     abbreviation = "gal",
     aliases = listOf("gal", "gallons", "Gallon"),
-    normalizationLow = 0.25f,
+    normalizationLow = 0.26f,
     normalizationHigh = Float.POSITIVE_INFINITY,
   ), MeasurementSystem.UsCustomary
 
@@ -223,7 +223,7 @@ sealed interface MeasurementUnit {
     name = "fluid ounce",
     abbreviation = "fl oz",
     aliases = listOf("fl oz"),
-    normalizationLow = 0.5f,
+    normalizationLow = 0.51f,
     normalizationHigh = 8f,
   ), MeasurementSystem.UsCustomary
 
@@ -249,7 +249,7 @@ sealed interface MeasurementUnit {
     name = "kilogram",
     abbreviation = "kg",
     aliases = listOf("kg", "kilograms"),
-    normalizationLow = 0.5f,
+    normalizationLow = 0.51f,
     normalizationHigh = Float.POSITIVE_INFINITY,
   ), MeasurementSystem.Metric
 
@@ -273,7 +273,7 @@ sealed interface MeasurementUnit {
     name = "pound",
     abbreviation = "lb",
     aliases = listOf("lb", "lbs", "pounds", "Pound"),
-    normalizationLow = 0.5f,
+    normalizationLow = 0.51f,
     normalizationHigh = Float.POSITIVE_INFINITY,
   ), MeasurementSystem.UsCustomary
 
