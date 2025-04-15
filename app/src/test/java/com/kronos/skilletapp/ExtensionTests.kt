@@ -1,13 +1,10 @@
 package com.kronos.skilletapp
 
-import com.kronos.skilletapp.model.Measurement
 import com.kronos.skilletapp.utils.gcd
 import com.kronos.skilletapp.utils.roundToEighth
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
-import java.math.BigDecimal
-import java.math.RoundingMode
 
 class ExtensionTests : FunSpec() {
   init {

@@ -2,7 +2,6 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,8 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -26,15 +23,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.Measurement
-import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.Measurement
+import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.convertTo
+import com.kronos.skilletapp.model.measurement.hasSameDimensionAs
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
 import com.kronos.skilletapp.utils.toFraction
-import kotlinx.coroutines.launch
 
 @Composable
 fun IngredientRow(
@@ -49,7 +47,7 @@ fun IngredientRow(
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurement = with(ingredient.measurement.scale(scale)) {
-    selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+    selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
   }
 
   val bgColor by animateColorAsState(
@@ -149,8 +147,8 @@ fun IngredientListItem(
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurements = MeasurementUnit.values
-    .filter { it.type == ingredient.measurement.unit.type }
-    .map { ingredient.measurement.convert(it).scale(scale) }
+    .filter { it hasSameDimensionAs ingredient.measurement.unit }
+    .map { ingredient.measurement.convertTo(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   var showBottomSheet by remember { mutableStateOf(false) }
@@ -200,8 +198,8 @@ fun IngredientPill(
   var showBottomSheet by remember { mutableStateOf(false) }
 
   val measurements = MeasurementUnit.values
-    .filter { it.type == ingredient.measurement.unit.type }
-    .map { ingredient.measurement.convert(it).scale(scale) }
+    .filter { it hasSameDimensionAs ingredient.measurement.unit }
+    .map { ingredient.measurement.convertTo(it).scale(scale) }
     .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   val borderColor =
@@ -214,7 +212,7 @@ fun IngredientPill(
     leadingContent = {
       if (ingredient.measurement.quantity > 0) {
         val measurement = with(ingredient.measurement.scale(scale)) {
-          selectedUnit?.let { convert(it) } ?: normalize { it !is MeasurementUnit.FluidOunce }
+          selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
         }
 
         val quantity = measurement.displayQuantity.let {

@@ -48,6 +48,8 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
 import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.model.measurement.Measurement
+import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.KoinPreview
@@ -1350,7 +1352,7 @@ fun InstructionComponent(
 
 @Composable
 private fun IngredientQuantity(ingredient: Ingredient) {
-  val measurement = ingredient.measurement.normalize { it !is MeasurementUnit.FluidOunce}
+  val measurement = ingredient.measurement.normalized { it !is MeasurementUnit.FluidOunce}
 
   val quantity = measurement.displayQuantity.let {
     if (ingredient.measurement.unit !is MeasurementUnit.None) {
