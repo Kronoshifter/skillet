@@ -4,6 +4,7 @@ import com.kronos.skilletapp.model.measurement.*
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.floats.plusOrMinus
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.Json
 
@@ -461,7 +462,7 @@ class MeasurementTests : FunSpec({
       }
 
       test("Cup to Tablespoon") {
-        val normalized = Measurement(1f / 16f, MeasurementUnit.Cup).normalized()
+        val normalized = Measurement(1f / 16f, MeasurementUnit.Cup).normalized { it !is MeasurementUnit.FluidOunce }
         normalized.unit shouldBe MeasurementUnit.Tablespoon
         normalized.quantity shouldBe (1f plusOrMinus 0.001f)
       }
