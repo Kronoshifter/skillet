@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
+import android.R.attr.onClick
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -74,6 +76,7 @@ import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.utils.fraction
+import com.kronos.skilletapp.utils.mutateUnless
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -487,8 +490,10 @@ private fun ScalingControls(
     ) {
       scaleOptions.forEach { option ->
         val selected = scale == option
+        val enabled = (option * baseServings) >= 1
         SegmentedButton(
           selected = selected,
+          enabled = enabled,
           onClick = {
             val newScale = option
             val newServings = (baseServings * newScale).roundToInt()
@@ -510,7 +515,7 @@ private fun ScalingControls(
               append("x")
             },
             fontSize = 16.sp,
-            color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
+            color = LocalContentColor.current.mutateUnless(enabled) { copy(alpha = 0.5f) },
           )
         }
       }
