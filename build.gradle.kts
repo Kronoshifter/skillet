@@ -6,6 +6,7 @@ plugins {
   id("org.jetbrains.kotlin.android") version kotlin_version apply false
   id("com.google.devtools.ksp") version "$kotlin_version-1.0.27" apply false
   id("org.jetbrains.kotlin.plugin.compose") version kotlin_version apply false
+  id("androidx.room") version "2.6.1" apply false
 
   kotlin("plugin.serialization") version kotlin_version
 }

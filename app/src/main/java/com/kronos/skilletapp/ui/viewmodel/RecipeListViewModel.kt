@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -51,7 +52,10 @@ class RecipeListViewModel(
   private val _recipesAsync = recipeRepository.observeRecipes()
     .distinctUntilChanged()
     .map { UiState.LoadedWithData(it) }
-    .catch<UiState<List<Recipe>>> { emit(UiState.Error(SkilletError("Error loading recipes"))) }
+    .catch<UiState<List<Recipe>>> {
+      Log.e("RecipeListViewModel", "Error loading recipes", it)
+      emit(UiState.Error(SkilletError("Error loading recipes")))
+    }
 
   val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
     when {

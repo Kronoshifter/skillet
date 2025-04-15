@@ -9,7 +9,7 @@ import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
 import kotlinx.coroutines.flow.*
 

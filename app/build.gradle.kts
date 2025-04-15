@@ -5,6 +5,7 @@ plugins {
   id("kotlin-parcelize")
   id("com.google.devtools.ksp")
   id("org.jetbrains.kotlin.plugin.compose")
+  id("androidx.room")
 }
 
 android {
@@ -54,6 +55,10 @@ android {
     unitTests.all {
       it.useJUnitPlatform()
     }
+  }
+
+  room {
+    schemaDirectory("$projectDir/schemas")
   }
 }
 
