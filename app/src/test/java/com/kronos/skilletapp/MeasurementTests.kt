@@ -1,14 +1,7 @@
 package com.kronos.skilletapp
 
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
-import com.kronos.skilletapp.model.measurement.convertBy
-import com.kronos.skilletapp.model.measurement.convertTo
-import com.kronos.skilletapp.model.measurement.converter
-import com.kronos.skilletapp.model.measurement.isEquivalentTo
-import com.kronos.skilletapp.model.measurement.of
-import com.kronos.skilletapp.model.measurement.withConverter
-import io.kotest.assertions.throwables.shouldThrowAny
+import com.kronos.skilletapp.model.measurement.*
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
@@ -255,7 +248,7 @@ class MeasurementTests : FunSpec({
           val gramsButter = tablespoonsButter.convertBy {
             (1 of MeasurementUnit.Tablespoon) to (14 of MeasurementUnit.Gram)
           }
-  
+
           gramsButter.unit shouldBe MeasurementUnit.Gram
           gramsButter.quantity shouldBe (28f plusOrMinus 0.001f)
         }
@@ -265,7 +258,7 @@ class MeasurementTests : FunSpec({
           val tablespoonsButter = gramsButter.convertBy {
             (14 of MeasurementUnit.Gram) to (1 of MeasurementUnit.Tablespoon)
           }
-  
+
           tablespoonsButter.unit shouldBe MeasurementUnit.Tablespoon
           tablespoonsButter.quantity shouldBe (2f plusOrMinus 0.001f)
         }
@@ -275,7 +268,7 @@ class MeasurementTests : FunSpec({
           val gramsGarlic = garlic.convertBy {
             garlic to (3 of MeasurementUnit.Gram)
           }
-  
+
           gramsGarlic.unit shouldBe MeasurementUnit.Gram
           gramsGarlic.quantity shouldBe (3f plusOrMinus 0.001f)
         }
@@ -286,7 +279,7 @@ class MeasurementTests : FunSpec({
           val gramsGarlic = garlic.convertBy {
             (1 of unit) to (0.5f of MeasurementUnit.Teaspoon)
           }
-  
+
           gramsGarlic.unit shouldBe MeasurementUnit.Teaspoon
           gramsGarlic.quantity shouldBe (1f plusOrMinus 0.001f)
         }
@@ -296,7 +289,7 @@ class MeasurementTests : FunSpec({
           val gramsCoconut = coconut.convertBy {
             coconut to (400 of MeasurementUnit.Gram)
           }
-  
+
           gramsCoconut.unit shouldBe MeasurementUnit.Gram
           gramsCoconut.quantity shouldBe (400f plusOrMinus 0.001f)
         }
@@ -306,12 +299,12 @@ class MeasurementTests : FunSpec({
           val quarterCupCoconut = coconut.convertBy {
             (1 of MeasurementUnit.None) to (0.25f of MeasurementUnit.Cup)
           }
-  
+
           quarterCupCoconut.unit shouldBe MeasurementUnit.Cup
           quarterCupCoconut.quantity shouldBe (0.5f plusOrMinus 0.001f)
         }
       }
-      
+
       context("Measurement.convertTo") {
         test("Volume to Mass") {
           val tablespoonsButter = Measurement(2f, MeasurementUnit.Tablespoon)
@@ -320,7 +313,7 @@ class MeasurementTests : FunSpec({
           gramsButter.unit shouldBe MeasurementUnit.Gram
           gramsButter.quantity shouldBe (28f plusOrMinus 0.001f)
         }
-        
+
         test("Mass to Volume") {
           val gramsButter = Measurement(28f, MeasurementUnit.Gram)
           val tablespoonsButter = gramsButter convertTo (2 of MeasurementUnit.Tablespoon)
@@ -430,13 +423,13 @@ class MeasurementTests : FunSpec({
 
     context("Improper Conversions") {
       test("Improper Volume to Mass") {
-        shouldThrowAny {
+        shouldThrow<IllegalArgumentException> {
           teaspoon convertTo MeasurementUnit.Gram
         }
       }
 
       test("Improper Mass to Volume") {
-        shouldThrowAny {
+        shouldThrow<IllegalArgumentException> {
           grams convertTo MeasurementUnit.Teaspoon
         }
       }
@@ -791,7 +784,7 @@ class MeasurementTests : FunSpec({
           val m1 = Measurement(1f, MeasurementUnit.Cup)
           val m2 = Measurement(8f, MeasurementUnit.Kilogram)
 
-          shouldThrowAny {
+          shouldThrow<IllegalArgumentException> {
             m1 + m2
           }
         }
@@ -827,7 +820,7 @@ class MeasurementTests : FunSpec({
         test("Cup - Kilogram") {
           val m1 = Measurement(2f, MeasurementUnit.Cup)
           val m2 = Measurement(8f, MeasurementUnit.Kilogram)
-          shouldThrowAny {
+          shouldThrow<IllegalArgumentException> {
             m1 - m2
           }
         }
