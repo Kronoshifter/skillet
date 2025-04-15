@@ -1,10 +1,15 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
 import android.R.attr.onClick
+import android.webkit.URLUtil
+import android.webkit.URLUtil.isValidUrl
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.expandVertically
@@ -57,6 +62,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -343,10 +350,13 @@ private fun RecipeContentHeader(
       }
   ) {
     image?.let {
+      val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
+      val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
+
       transition.AnimatedVisibility(
         visible = { isExpanded -> isExpanded },
-        enter = slideInVertically(initialOffsetY = { -it }) + expandVertically(expandFrom = Alignment.Top),
-        exit = slideOutVertically(targetOffsetY = { -it }) + shrinkVertically(shrinkTowards = Alignment.Top),
+        enter = slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) + expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
+        exit = slideOutVertically(animationSpec = slideSpec,targetOffsetY = { -it }) + shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
       ) {
         AsyncImage(
           model = it,
@@ -404,7 +414,7 @@ private fun RecipeContentHeader(
             text = source.name,
             color = MaterialTheme.colorScheme.primary
           )
-          if (source.name != source.source && source.source.isNotBlank()) {
+          if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
             Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
           }
         }

@@ -14,7 +14,7 @@ import kotlin.math.*
 fun Double.roundToEighth() = (this * 8.0).roundToInt() / 8.0
 fun Double.roundToThird() = (this * 3.0).roundToInt() / 3.0
 
-fun Float.roundToNth(n: Int) = (this * n.toFloat()).roundToInt() / n.toFloat()
+fun Float.roundToNth(n: Number) = (this * n.toFloat()).roundToInt() / n.toFloat()
 
 val Float.nearestEighth get() = roundToNth(8)
 val Float.nearestThird get() = roundToNth(3)
