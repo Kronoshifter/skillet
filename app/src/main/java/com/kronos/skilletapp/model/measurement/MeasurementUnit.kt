@@ -21,9 +21,7 @@ sealed interface MeasurementDimension {
       get() = MeasurementUnit.Milliliter
   }
 
-  interface None : MeasurementDimension {
-    override val baseUnit: MeasurementUnit.None
-      get() = MeasurementUnit.None  }
+  interface None : MeasurementDimension
 }
 
 @Serializable
@@ -38,41 +36,43 @@ sealed interface MeasurementSystem {
 @JsonClassDiscriminator("measurement_type")
 sealed interface MeasurementUnit {
   val name: String
-  val factor: Float
   val abbreviation: String
   val aliases: List<String> //TODO: potentially replace aliases here with lookup table
   val normalizationLow: Float
   val normalizationHigh: Float
+  val baseUnit: MeasurementUnit
 
   @Serializable
   @SerialName("mass")
   sealed class Mass(
     override val name: String,
-    override val factor: Float,
     override val abbreviation: String,
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit, MeasurementDimension.Mass
+  ) : MeasurementUnit, MeasurementDimension.Mass {
+    override val baseUnit: Mass
+      get() = Gram
+  }
 
   @Serializable
   @SerialName("volume")
   sealed class Volume(
     override val name: String,
-    override val factor: Float,
     override val abbreviation: String,
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit, MeasurementDimension.Volume
+  ) : MeasurementUnit, MeasurementDimension.Volume {
+    override val baseUnit: Volume
+      get() = Milliliter
+  }
 
   @Serializable
   @SerialName("custom")
   data class Custom(
     override val name: String
   ) : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
-    override val factor: Float
-      get() = 1f
     override val abbreviation: String
       get() = name
     override val aliases: List<String>
@@ -81,6 +81,9 @@ sealed interface MeasurementUnit {
       get() = 0f
     override val normalizationHigh: Float
       get() = Float.POSITIVE_INFINITY
+
+    override val baseUnit: MeasurementUnit
+      get() = this
   }
 
   @Serializable
@@ -88,16 +91,17 @@ sealed interface MeasurementUnit {
   data object None : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
     override val name: String
       get() = "none"
-    override val factor: Float
-      get() = 1f
     override val abbreviation: String
-      get() = "none"
+      get() = ""
     override val aliases: List<String>
-      get() = listOf("none")
+      get() = emptyList()
     override val normalizationLow: Float
       get() = 0f
     override val normalizationHigh: Float
       get() = Float.POSITIVE_INFINITY
+
+    override val baseUnit: MeasurementUnit
+      get() = this
   }
 
   // Volume
@@ -108,7 +112,6 @@ sealed interface MeasurementUnit {
   @SerialName("milliliter")
   data object Milliliter : Volume(
     name = "milliliter",
-    factor = 1f,
     abbreviation = "mL",
     aliases = listOf("mL"),
     normalizationLow = 0f,
@@ -119,7 +122,6 @@ sealed interface MeasurementUnit {
   @SerialName("liter")
   data object Liter : Volume(
     name = "liter",
-    factor = 1000f,
     abbreviation = "L",
     aliases = listOf("L"),
     normalizationLow = 0.51f,
@@ -131,7 +133,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("pinch")
   data object Pinch : Volume(
-    factor = 0.3080575f,
     name = "pinch",
     abbreviation = "pinch",
     aliases = listOf("pinch"),
@@ -142,7 +143,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("dash")
   data object Dash : Volume(
-    factor = 0.616115f,
     name = "dash",
     abbreviation = "dash",
     aliases = listOf("dash"),
@@ -153,7 +153,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("teaspoon")
   data object Teaspoon : Volume(
-    factor = 4.92892f,
     name = "teaspoon",
     abbreviation = "tsp",
     aliases = listOf("tsp", "t", "teaspoons"),
@@ -164,7 +163,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("tablespoon")
   data object Tablespoon : Volume(
-    factor = 14.7868f,
     name = "tablespoon",
     abbreviation = "tbsp",
     aliases = listOf("tbsp", "Tbsp", "T", "tbs", "Tbs", "tablespoons", "Tablespoons"),
@@ -175,7 +173,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("cup")
   data object Cup : Volume(
-    factor = 236.588f,
     name = "cup",
     abbreviation = "cup",
     aliases = listOf("cup", "c", "C", "cups"),
@@ -186,7 +183,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("pint")
   data object Pint : Volume(
-    factor = 473.176f,
     name = "pint",
     abbreviation = "pt",
     aliases = listOf("pt", "pints", "Pint"),
@@ -197,7 +193,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("quart")
   data object Quart : Volume(
-    factor = 946.353f,
     name = "quart",
     abbreviation = "qt",
     aliases = listOf("qt", "quarts", "Quart"),
@@ -208,7 +203,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("gallon")
   data object Gallon : Volume(
-    factor = 3785.41f,
     name = "gallon",
     abbreviation = "gal",
     aliases = listOf("gal", "gallons", "Gallon"),
@@ -219,7 +213,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("fluid_ounce")
   data object FluidOunce : Volume(
-    factor = 29.5735f,
     name = "fluid ounce",
     abbreviation = "fl oz",
     aliases = listOf("fl oz"),
@@ -234,7 +227,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("gram")
   data object Gram : Mass(
-    factor = 1f,
     name = "gram",
     abbreviation = "g",
     aliases = listOf("g", "grams"),
@@ -245,7 +237,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("kilogram")
   data object Kilogram : Mass(
-    factor = 1000f,
     name = "kilogram",
     abbreviation = "kg",
     aliases = listOf("kg", "kilograms"),
@@ -258,7 +249,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("ounce")
   data object Ounce : Mass(
-    factor = 28.3495f,
     name = "ounce",
     abbreviation = "oz",
     aliases = listOf("oz", "ounces", "Ounce"),
@@ -269,7 +259,6 @@ sealed interface MeasurementUnit {
   @Serializable
   @SerialName("pound")
   data object Pound : Mass(
-    factor = 453.592f,
     name = "pound",
     abbreviation = "lb",
     aliases = listOf("lb", "lbs", "pounds", "Pound"),
@@ -297,7 +286,7 @@ sealed interface MeasurementUnit {
         Pound,
       ).sortedWith(
         compareBy(
-          { it.factor },
+          { (1 of it).convertToBaseUnit().quantity },
           {
             when (it) {
               is Volume -> 0

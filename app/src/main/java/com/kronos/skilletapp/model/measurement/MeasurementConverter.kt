@@ -1,9 +1,20 @@
 package com.kronos.skilletapp.model.measurement
 
+import com.kronos.skilletapp.model.measurement.MeasurementUnit.None.baseUnit
+import com.kronos.skilletapp.utils.mutateIf
+import com.kronos.skilletapp.utils.mutateUnless
+import kotlin.div
+
 class MeasurementConverter(
   val ratio: MeasurementRatio
 ) {
-  fun convert(quantity: Float): Measurement = Measurement(quantity * ratio.decimal, ratio.right.unit)
+  fun convert(quantity: Float): Measurement = convert(quantity, ratio)
+  fun reverse(quantity: Float): Measurement = convert(quantity, ratio.invert())
+
+  private fun convert(quantity: Float, ratio: MeasurementRatio) = with(ratio) { Measurement(quantity * decimal, right.unit) }
+
+  val from get() = ratio.left.unit
+  val to get() = ratio.right.unit
 
   @MeasurementUnitConverterDsl
   class Builder {
@@ -29,7 +40,29 @@ class MeasurementConverter(
       }
     }
   }
+
+  companion object {
+    val baseConverters = listOf(
+      MeasurementUnit.Liter.baseConverter(1000),
+      MeasurementUnit.Pinch.baseConverter(0.3080575),
+      MeasurementUnit.Dash.baseConverter(0.616115),
+      MeasurementUnit.Teaspoon.baseConverter(4.92892),
+      MeasurementUnit.Tablespoon.baseConverter(14.7868),
+      MeasurementUnit.FluidOunce.baseConverter(29.5735),
+      MeasurementUnit.Cup.baseConverter(236.588),
+      MeasurementUnit.Pint.baseConverter(473.176),
+      MeasurementUnit.Quart.baseConverter(946.353),
+      MeasurementUnit.Gallon.baseConverter(3785.41),
+      MeasurementUnit.Kilogram.baseConverter(1000),
+      MeasurementUnit.Ounce.baseConverter(28.3495),
+      MeasurementUnit.Pound.baseConverter(453.592),
+    )
+  }
 }
+
+private fun MeasurementUnit.baseConverter(baseUnitQuantity: Number): MeasurementConverter = converter { (1 of this@baseConverter) to (baseUnitQuantity of baseUnit) }
+
+fun MeasurementUnit.isBaseUnit(): Boolean = this == baseUnit
 
 fun converter(builder: MeasurementConverter.Builder.() -> Unit): MeasurementConverter {
   return MeasurementConverter.Builder().apply(builder).build()
@@ -40,7 +73,7 @@ fun withConverter(converter: MeasurementConverter, block: MeasurementConversionS
 }
 
 fun withConverter(builder: MeasurementConverter.Builder.() -> Unit, block: MeasurementConversionScope.() -> Measurement): Measurement {
-  return MeasurementConversionScopeImpl(converter(builder)).block()
+  return withConverter(converter(builder), block)
 }
 
 infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
@@ -48,12 +81,24 @@ infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
     "This overload is only valid if the units have the same dimension, try using the overload that takes a measurement"
   }
 
+  if (to.isBaseUnit()) return convertToBaseUnit()
+
   return withConverter(
-    converter {
-      this@convertTo.unit to to
-    }
+    converter { unit to to }
   ) {
     this@convertTo convertTo to
+  }
+}
+
+fun Measurement.convertToBaseUnit(): Measurement {
+  if (unit.isBaseUnit()) return this
+
+  val converter = requireNotNull(MeasurementConverter.baseConverters.find { it.from == unit }) {
+    "No base unit converter found for ${unit.name}"
+  }
+
+  return withConverter(converter) {
+    this@convertToBaseUnit convertTo unit.baseUnit
   }
 }
 
@@ -107,8 +152,7 @@ sealed interface MeasurementRatio {
   val left: Measurement
   val right: Measurement
 
-  fun inverse(): MeasurementRatio
-
+  fun invert(): MeasurementRatio
   fun checkMeasurementsAreSet() = check(left.isNotNone() && right.isNotNone()) { "Measurements must be initialized before getting the ratio" }
 
   data class Unit(
@@ -118,10 +162,13 @@ sealed interface MeasurementRatio {
     override val decimal: Float
       get() {
         checkMeasurementsAreSet()
-        return left.unit.factor / right.unit.factor
+        val leftInBase = left.mutateUnless(left.unit.isBaseUnit()) { left.convertToBaseUnit() }
+        val rightInBase = right.mutateUnless(right.unit.isBaseUnit()) { right.convertToBaseUnit() }
+
+        return leftInBase.quantity / rightInBase.quantity
       }
 
-    override fun inverse() = copy(left = right, right = left)
+    override fun invert() = copy(left = right, right = left)
   }
 
   data class Quantity(
@@ -134,7 +181,7 @@ sealed interface MeasurementRatio {
         return right.quantity / left.quantity
       }
 
-    override fun inverse() = copy(left = right, right = left)
+    override fun invert() = copy(left = right, right = left)
   }
 
   object None : MeasurementRatio {
@@ -145,7 +192,7 @@ sealed interface MeasurementRatio {
     override val right: Measurement
       get() = Measurement.None
 
-    override fun inverse() = None
+    override fun invert() = None
   }
 }
 
@@ -175,17 +222,15 @@ private class MeasurementConversionScopeImpl(val converter: MeasurementConverter
     val left = converter.ratio.left.unit
     val right = converter.ratio.right.unit
 
-    val fromToLeftConverter = converter { unit to left }
-    val rightToToConverter = converter { right to to }
-
     return if (unit == left && to == right) {
       this convertWith converter
     } else {
-      this convertWith fromToLeftConverter convertWith converter convertWith rightToToConverter
+      this convertTo left convertWith converter convertTo to
     }
   }
 
   private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
+  private infix fun Measurement.reverseWith(converter: MeasurementConverter) = converter.reverse(quantity)
 }
 
 @DslMarker

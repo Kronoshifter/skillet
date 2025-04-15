@@ -40,7 +40,6 @@ data class Measurement(
   operator fun inc() = copy(quantity = quantity + 1f)
   operator fun dec() = copy(quantity = quantity - 1f)
 
-  //  operator fun compareTo(other: Measurement) = (amount * unit.factor).compareTo(other.amount * other.unit.factor)
   operator fun compareTo(other: Measurement): Int {
     val result = this - other
     return when {
