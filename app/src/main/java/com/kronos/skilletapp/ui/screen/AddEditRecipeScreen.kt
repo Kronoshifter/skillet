@@ -60,6 +60,7 @@ import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
@@ -606,7 +607,6 @@ private fun RecipeInfoContent(
             AsyncImage(
               model = it,
               contentDescription = "Recipe Image",
-              imageLoader = koinInject(),
               contentScale = ContentScale.Crop,
               modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)

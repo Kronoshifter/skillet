@@ -72,6 +72,7 @@ import coil3.compose.AsyncImage
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
@@ -361,7 +362,6 @@ private fun RecipeContentHeader(
         AsyncImage(
           model = imageUri,
           contentDescription = "Recipe image",
-          imageLoader = koinInject(),
           contentScale = ContentScale.FillWidth,
           modifier = Modifier
             .fillMaxWidth()
