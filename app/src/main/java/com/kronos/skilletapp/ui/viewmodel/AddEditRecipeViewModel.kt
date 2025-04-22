@@ -5,21 +5,28 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.mapBoth
-import com.kronos.skilletapp.navigation.Route
+import com.github.michaelbull.result.onFailure
+import com.kronos.skilletapp.data.InvalidFormError
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.data.err
+import com.kronos.skilletapp.data.ok
+import com.kronos.skilletapp.model.Equipment
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.RecipeScrape
 import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.first
-import kotlin.collections.map
 import kotlin.time.Duration
 
 data class RecipeState(
@@ -71,10 +78,8 @@ class AddEditRecipeViewModel(
   }
 
   fun saveRecipe() {
-    checkForInvalidForm()?.let { msg ->
-      _recipeState.update {
-        it.copy(userMessage = msg)
-      }
+    validateForm() onFailure { error ->
+      _recipeState.update { it.copy(userMessage = error.message) }
       return
     }
 
@@ -354,20 +359,19 @@ class AddEditRecipeViewModel(
     viewModelScope.launch {
       _recipeState.update { state ->
         scraper.scrapeRecipe(url).mapBoth(
-          success = {
+          success = { scrape ->
             RecipeState(
-              name = it.recipe.name,
-              description = it.recipe.description,
-//              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+              name = scrape.recipe.name,
+              description = scrape.recipe.description,
               servings = """\d+""".toRegex().let { regex ->
-                regex.find(it.recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
+                regex.find(scrape.recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
               },
-              prepTime = it.recipe.prepTime.parseMinutes(),
-              cookTime = it.recipe.cookTime.parseMinutes(),
+              prepTime = scrape.recipe.prepTime.parseMinutes(),
+              cookTime = scrape.recipe.cookTime.parseMinutes(),
               source = url,
-              sourceName = it.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
-              ingredients = it.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
-              instructions = it.recipe.instructions.map { Instruction(text = it.text) },
+              sourceName = scrape.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
+              ingredients = scrape.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
+              instructions = scrape.recipe.instructions.map { Instruction(text = it.text) },
               tharBeChanges = true
             )
           },
@@ -384,14 +388,14 @@ class AddEditRecipeViewModel(
     }
   }
 
-  private fun checkForInvalidForm(): String? = with(_recipeState.value) {
+  private fun validateForm(): Result<RecipeState, InvalidFormError> = with(_recipeState.value) {
     return when {
-      name.isBlank() -> "Name cannot be blank"
-      ingredients.isEmpty() -> "At least one ingredient is required"
-      instructions.isEmpty() -> "At least one instruction is required"
-      servings <= 0 -> "Servings must be greater than 0"
-      cookTime <= 0 -> "Cook time must be greater than 0"
-      else -> null
+      name.isBlank() -> InvalidFormError("Name cannot be blank").err()
+      ingredients.isEmpty() -> InvalidFormError("At least one ingredient is required").err()
+      instructions.isEmpty() -> InvalidFormError("At least one instruction is required").err()
+      servings <= 0 -> InvalidFormError("Servings must be greater than 0").err()
+      cookTime <= 0 -> InvalidFormError("Cook time must be greater than 0").err()
+      else -> ok()
     }
   }
 

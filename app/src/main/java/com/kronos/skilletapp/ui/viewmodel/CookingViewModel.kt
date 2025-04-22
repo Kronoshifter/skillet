@@ -1,13 +1,15 @@
 package com.kronos.skilletapp.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.kronos.skilletapp.data.RecipeCouldNotBeLoadedError
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.data.RecipeRepository
-import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
+import com.kronos.skilletapp.data.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe
@@ -31,7 +33,10 @@ class CookingViewModel(
   private val _isLoading = MutableStateFlow(false)
   private val _recipeAsync = recipeRepository.observeRecipe(recipeId)
     .map { UiState.LoadedWithData(it) }
-    .catch<UiState<Recipe>> { emit(UiState.Error(SkilletError(it.message ?: "Unknown error"))) }
+    .catch<UiState<Recipe>> {
+      Log.e("CookingScreen", it.message, it)
+      emit(UiState.Error(RecipeCouldNotBeLoadedError("Could not load recipe")))
+    }
 
   val recipeState = combine(_isLoading, _recipeAsync) { loading, recipeAsync ->
     when {
@@ -43,7 +48,7 @@ class CookingViewModel(
           recipeAsync.data
         )
 
-        else -> UiState.Error(SkilletError("UiState.Loaded should not be used here"))
+        else -> UiState.Error(UsedLoadedWhereYouShouldntError)
       }
     }
   }.stateIn(

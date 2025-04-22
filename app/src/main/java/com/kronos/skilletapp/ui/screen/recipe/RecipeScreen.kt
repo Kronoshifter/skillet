@@ -349,7 +349,7 @@ private fun RecipeContentHeader(
         )
       }
   ) {
-    image?.let {
+    image?.let { imageUri ->
       val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
       val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
 
@@ -359,7 +359,7 @@ private fun RecipeContentHeader(
         exit = slideOutVertically(animationSpec = slideSpec,targetOffsetY = { -it }) + shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
       ) {
         AsyncImage(
-          model = it,
+          model = imageUri,
           contentDescription = "Recipe image",
           imageLoader = koinInject(),
           contentScale = ContentScale.FillWidth,
