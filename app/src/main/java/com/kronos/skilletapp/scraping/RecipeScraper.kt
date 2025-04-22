@@ -1,9 +1,9 @@
 package com.kronos.skilletapp.scraping
 
 import com.github.michaelbull.result.*
-import com.kronos.skilletapp.data.InvalidHtmlError
-import com.kronos.skilletapp.data.JsonParseError
-import com.kronos.skilletapp.data.RecipeScrapeError
+import com.kronos.skilletapp.model.InvalidHtmlError
+import com.kronos.skilletapp.model.JsonParseError
+import com.kronos.skilletapp.model.RecipeScrapeError
 import it.skrape.core.htmlDocument
 import it.skrape.fetcher.AsyncFetcher
 import it.skrape.fetcher.HttpFetcher

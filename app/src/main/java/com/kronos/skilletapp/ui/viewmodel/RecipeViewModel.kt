@@ -5,12 +5,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.kronos.skilletapp.data.RecipeCouldNotBeLoadedError
+import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.data.RecipeRepository
-import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.data.UsedLoadedWhereYouShouldntError
+import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.model.Recipe

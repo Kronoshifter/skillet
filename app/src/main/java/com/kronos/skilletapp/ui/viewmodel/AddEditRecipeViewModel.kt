@@ -8,11 +8,11 @@ import androidx.navigation.toRoute
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.onFailure
-import com.kronos.skilletapp.data.InvalidFormError
+import com.kronos.skilletapp.model.InvalidFormError
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.data.err
-import com.kronos.skilletapp.data.ok
+import com.kronos.skilletapp.utils.err
+import com.kronos.skilletapp.utils.ok
 import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction

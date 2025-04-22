@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.kronos.skilletapp.data.SkilletError
+import com.kronos.skilletapp.model.SkilletError
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.measurement.Measurement

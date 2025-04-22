@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.navigation.toRoute
-import com.kronos.skilletapp.data.RecipeCouldNotBeLoadedError
+import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.navigation.SharedRecipe
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.data.UsedLoadedWhereYouShouldntError
+import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.saverOf
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
