@@ -1,36 +1,13 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
-import android.R.attr.onClick
-import android.webkit.URLUtil
 import android.webkit.URLUtil.isValidUrl
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -47,38 +24,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
-import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
+import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientListItem
-import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
+import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -88,7 +55,7 @@ import com.kronos.skilletapp.utils.mutateUnless
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import kotlin.collections.set
+import kotlin.math.exp
 import kotlin.math.roundToInt
 
 private enum class RecipeContentTab {
@@ -131,8 +98,9 @@ fun RecipeScreen(
 
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = { /*Intentionally left empty*/ },
+      LargeTopAppBar(
+//        title = { /*Intentionally left empty*/ },
+        title = { Text("This is a title") },
         navigationIcon = {
           IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -213,17 +181,49 @@ private fun RecipeContent(
   ) {
     //TODO: add notes
     val expanded by remember { derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f } }
+    val collapsedFraction = topAppBarScrollBehavior.state.collapsedFraction
+
+    val coroutineScope = rememberCoroutineScope()
+    var dragState by remember { mutableFloatStateOf(0f) }
 
     RecipeContentHeader(
       expanded = expanded,
+      collapsedFraction = collapsedFraction,
       name = recipe.name,
       source = recipe.source,
       time = recipe.time,
       image = recipe.cover,
-      topAppBarScrollBehavior = topAppBarScrollBehavior,
       modifier = Modifier
         .padding(horizontal = 8.dp)
         .fillMaxWidth()
+        .pointerInput(Unit) {
+          detectVerticalDragGestures(
+            onDragEnd = {
+              coroutineScope.launch {
+                topAppBarScrollBehavior.nestedScrollConnection.onPostFling(
+                  consumed = Velocity.Zero,
+                  available = Velocity(0f, dragState * 2f)
+                )
+              }
+            },
+            onVerticalDrag = { change, dragAmount ->
+              change.consume()
+              dragState = dragAmount
+
+              val scrollDelta = Offset(0f, dragAmount * 0.6f)
+              val preConsumed = topAppBarScrollBehavior.nestedScrollConnection.onPreScroll(
+                available = scrollDelta,
+                source = NestedScrollSource.UserInput
+              )
+              val remaining = scrollDelta - preConsumed
+              topAppBarScrollBehavior.nestedScrollConnection.onPostScroll(
+                consumed = preConsumed,
+                available = remaining,
+                source = NestedScrollSource.UserInput
+              )
+            }
+          )
+        }
     )
 
     ScalingControls(
@@ -306,123 +306,109 @@ private fun RecipeContent(
 @Composable
 private fun RecipeContentHeader(
   expanded: Boolean,
+  collapsedFraction: Float,
   name: String,
   source: RecipeSource,
   time: RecipeTime,
   image: String?,
-  topAppBarScrollBehavior: TopAppBarScrollBehavior,
   modifier: Modifier = Modifier,
 ) {
   val transition = updateTransition(expanded, label = "Recipe header visibility")
+//  val transition = updateTransition(collapsedFraction, label = "Recipe header collapsed fraction")
 
-  val coroutineScope = rememberCoroutineScope()
-  var dragState by remember { mutableFloatStateOf(0f) }
+
+  val animationState = remember { AnimationState(initialValue = 0f) }
+
+  val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
+  val expand = expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top)
+  val shrink = shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top)
 
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     modifier = modifier
-      .pointerInput(Unit) {
-        detectVerticalDragGestures(
-          onDragEnd = {
-            coroutineScope.launch {
-              topAppBarScrollBehavior.nestedScrollConnection.onPostFling(
-                consumed = Velocity.Zero,
-                available = Velocity(0f, dragState * 2f)
-              )
-            }
-          },
-          onVerticalDrag = { change, dragAmount ->
-            change.consume()
-            dragState = dragAmount
-
-            val scrollDelta = Offset(0f, dragAmount * 0.6f)
-            val preConsumed = topAppBarScrollBehavior.nestedScrollConnection.onPreScroll(
-              available = scrollDelta,
-              source = NestedScrollSource.UserInput
-            )
-            val remaining = scrollDelta - preConsumed
-            topAppBarScrollBehavior.nestedScrollConnection.onPostScroll(
-              consumed = preConsumed,
-              available = remaining,
-              source = NestedScrollSource.UserInput
-            )
-          }
-        )
-      }
   ) {
-    image?.let { imageUri ->
-      val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
-      val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
-
-      transition.AnimatedVisibility(
-        visible = { isExpanded -> isExpanded },
-        enter = slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) + expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
-        exit = slideOutVertically(animationSpec = slideSpec,targetOffsetY = { -it }) + shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
-      ) {
-        AsyncImage(
-          model = imageUri,
-          contentDescription = "Recipe image",
-          contentScale = ContentScale.FillWidth,
-          modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(2f, matchHeightConstraintsFirst = true)
-            .clip(MaterialTheme.shapes.large)//.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
-        )
-      }
-    }
+    val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
 
     transition.AnimatedVisibility(
       visible = { isExpanded -> isExpanded },
-      enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-      exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+//      visible = { fraction -> fraction < 0.9f },
+      enter = expand + slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }),
+      exit = shrink + slideOutVertically(animationSpec = slideSpec, targetOffsetY = { -it }),
     ) {
-      Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+      Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth()
       ) {
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-          Text(
-            text = buildAnnotatedString {
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                append("Prep: ")
-              }
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                append("${time.preparation} min")
-              }
-            },
-          )
-
-          Text(
-            text = buildAnnotatedString {
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                append("Cook: ")
-              }
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                append("${time.cooking} min")
-              }
-            },
+        image?.let { imageUri ->
+          AsyncImage(
+            model = imageUri,
+            contentDescription = "Recipe image",
+            contentScale = ContentScale.FillWidth,
+            modifier = Modifier
+              .fillMaxWidth()
+              .aspectRatio(2f, matchHeightConstraintsFirst = true)
+              .clip(MaterialTheme.shapes.large)//.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
           )
         }
 
-        //TODO: make this clickable to open source in browser, if source is a url
         Column(
-          verticalArrangement = Arrangement.spacedBy(4.dp)
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+          modifier = Modifier
+            .fillMaxWidth()
+            .animateEnterExit(
+              enter = fadeIn(),
+              exit = fadeOut()
+            )
         ) {
-          Text(
-            text = source.name,
-            color = MaterialTheme.colorScheme.primary
-          )
-          if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
-            Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
+          Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 8.dp)
+          ) {
+            Row(
+              horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+              Text(
+                text = buildAnnotatedString {
+                  withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
+                    append("Prep: ")
+                  }
+                  withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                    append("${time.preparation} min")
+                  }
+                },
+              )
+
+              Text(
+                text = buildAnnotatedString {
+                  withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
+                    append("Cook: ")
+                  }
+                  withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                    append("${time.cooking} min")
+                  }
+                },
+              )
+            }
+
+            //TODO: make this clickable to open source in browser, if source is a url
+            Column(
+              verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+              Text(
+                text = source.name,
+                color = MaterialTheme.colorScheme.primary
+              )
+              if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
+                Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
+              }
+            }
           }
+
+          Spacer(modifier = Modifier.height(8.dp))
         }
       }
-    }
-
-    if (!expanded) {
-      Spacer(modifier = Modifier.height(8.dp))
     }
 
     Text(
@@ -583,7 +569,7 @@ private fun InstructionsList(
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
   listState: LazyListState = rememberLazyListState(),
-  listPadding: PaddingValues = PaddingValues(vertical = 8.dp)
+  listPadding: PaddingValues = PaddingValues(vertical = 8.dp),
 ) {
   if (instructions.isEmpty()) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
