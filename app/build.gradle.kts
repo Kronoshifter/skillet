@@ -73,6 +73,7 @@ dependencies {
   implementation(libs.androidx.lifecycle.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.activity.compose)
+  implementation(libs.androidx.constraintlayout.compose)
 
   // Compose
   implementation(platform(libs.compose.bom))
