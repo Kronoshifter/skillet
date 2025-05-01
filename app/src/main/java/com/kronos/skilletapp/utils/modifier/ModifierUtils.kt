@@ -6,28 +6,23 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.*
 
-@Composable
-fun Modifier.applyIf(condition: Boolean, block: @Composable Modifier.() -> Modifier) = if (condition) {
+fun Modifier.applyIf(condition: Boolean, block: Modifier.() -> Modifier) = if (condition) {
   this then block()
 } else {
   this
 }
 
-@Composable
-fun Modifier.applyUnless(condition: Boolean, block: @Composable Modifier.() -> Modifier) = if (condition) {
+fun Modifier.applyUnless(condition: Boolean, block: Modifier.() -> Modifier) = if (condition) {
   this
 } else {
   this then block()
 }
 
-@Composable
-fun <T> Modifier.applyIfNotNull(value: T?, block: @Composable Modifier.(T) -> Modifier) = if (value != null) {
+fun <T> Modifier.applyIfNotNull(value: T?, block: Modifier.(T) -> Modifier) = if (value != null) {
   this then block(value)
 } else {
   this
 }
-
-
 
 fun Modifier.verticalFadingEdge() = this
   .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)

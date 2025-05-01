@@ -5,7 +5,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -98,9 +102,9 @@ fun RecipeScreen(
 
   Scaffold(
     topBar = {
-      LargeTopAppBar(
-//        title = { /*Intentionally left empty*/ },
-        title = { Text("This is a title") },
+      TopAppBar(
+        title = { /*Intentionally left empty*/ },
+//        title = { Text("This is a title") },
         navigationIcon = {
           IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -180,15 +184,16 @@ private fun RecipeContent(
     modifier = modifier
   ) {
     //TODO: add notes
-    val expanded by remember { derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f } }
+    val expanded by remember { derivedStateOf { topAppBarScrollBehavior.state.overlappedFraction < 0.2f } }
     val collapsedFraction = topAppBarScrollBehavior.state.collapsedFraction
+    val overlappedFraction = topAppBarScrollBehavior.state.overlappedFraction
 
     val coroutineScope = rememberCoroutineScope()
     var dragState by remember { mutableFloatStateOf(0f) }
 
     RecipeContentHeader(
       expanded = expanded,
-      collapsedFraction = collapsedFraction,
+      collapsedFraction = overlappedFraction,
       name = recipe.name,
       source = recipe.source,
       time = recipe.time,
@@ -316,9 +321,6 @@ private fun RecipeContentHeader(
   val transition = updateTransition(expanded, label = "Recipe header visibility")
 //  val transition = updateTransition(collapsedFraction, label = "Recipe header collapsed fraction")
 
-
-  val animationState = remember { AnimationState(initialValue = 0f) }
-
   val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
   val expand = expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top)
   val shrink = shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top)
@@ -348,6 +350,7 @@ private fun RecipeContentHeader(
               .fillMaxWidth()
               .aspectRatio(2f, matchHeightConstraintsFirst = true)
               .clip(MaterialTheme.shapes.large)//.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
+              .animateEnterExit()
           )
         }
 
