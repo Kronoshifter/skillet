@@ -24,7 +24,7 @@ fun <T> Modifier.applyIfNotNull(value: T?, block: Modifier.(T) -> Modifier) = if
   this
 }
 
-fun Modifier.verticalFadingEdge() = this
+fun Modifier.verticalFadingEdge() = this then Modifier
   .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
   .drawWithContent {
     drawContent()
@@ -38,8 +38,7 @@ fun Modifier.verticalFadingEdge() = this
     )
   }
 
-
-fun Modifier.horizontalFadingEdge() = this
+fun Modifier.horizontalFadingEdge() = this then Modifier
   .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
   .drawWithContent {
     drawContent()
