@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.modifier.applyIf
-import com.kronos.skilletapp.utils.modifier.composableApplyIf
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

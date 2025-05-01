@@ -57,16 +57,17 @@ fun UnitSelectionBottomSheet(
           val bgColor = MaterialTheme.colorScheme.primaryContainer
           val contentColor = contentColorFor(bgColor)
 
+          val shape = MaterialTheme.shapes.medium
           Box(
             modifier = Modifier
               .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-              .clip(MaterialTheme.shapes.medium)
-              .background(bgColor, MaterialTheme.shapes.medium)
+              .clip(shape)
+              .background(bgColor, shape)
               .applyIf(selectedUnit == measurement.unit) {
                 border(
                   width = 2.dp,
                   color = contentColor,
-                  shape = MaterialTheme.shapes.medium
+                  shape = shape
                 )
               }
               .clickable { onUnitSelect(measurement.unit) }
