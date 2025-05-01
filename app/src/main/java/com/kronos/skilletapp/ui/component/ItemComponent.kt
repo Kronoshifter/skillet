@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.modifier.applyIf
+import com.kronos.skilletapp.utils.modifier.composableApplyIf
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -59,13 +60,14 @@ fun ItemRow(
         CompositionLocalProvider(
           LocalContentColor provides detailContentColor
         ) {
+          val shape = MaterialTheme.shapes.medium
           Box(
             modifier = Modifier
               .sizeIn(minWidth = boxSize, minHeight = boxSize)
-              .clip(MaterialTheme.shapes.medium)
-              .background(detailBackgroundColor, MaterialTheme.shapes.medium)
+              .clip(shape)
+              .background(detailBackgroundColor, shape)
               .applyIf(decoration) {
-                border(2.dp, detailContentColor, MaterialTheme.shapes.medium)
+                border(2.dp, detailContentColor, shape)
               },
             contentAlignment = Alignment.Center,
             content = detail
