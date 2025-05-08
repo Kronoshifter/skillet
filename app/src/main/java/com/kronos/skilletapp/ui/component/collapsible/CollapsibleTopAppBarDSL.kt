@@ -76,6 +76,36 @@ fun Placeable.placeCollapsible(maxWidth: Int, layoutHeight: Int, progress: Float
     val offset = lerp(collapsedOffset, expandedOffset, progress)
 
     place(offset)
+  } ?: horizontalRoadData?.let { (collapsed, expanded) ->
+    val collapsedOffset = collapsed.align(
+      size = width,
+      space = maxWidth,
+      layoutDirection = measureScope.layoutDirection,
+    )
+
+    val expandedOffset = expanded.align(
+      size = width,
+      space = maxWidth,
+      layoutDirection = measureScope.layoutDirection,
+    )
+
+    val offset = lerp(collapsedOffset, expandedOffset, progress)
+
+    place(offset, 0)
+  } ?: verticalRoadData?.let { (collapsed, expanded) ->
+    val collapsedOffset = collapsed.align(
+      size = height,
+      space = layoutHeight,
+    )
+
+    val expandedOffset = expanded.align(
+      size = height,
+      space = layoutHeight,
+    )
+
+    val offset = lerp(collapsedOffset, expandedOffset, progress)
+
+    place(0, offset)
   } ?: parallaxRatio?.let { parallaxRatio ->
     val offset = (parallaxRatio * heightOffset).roundToInt()
 
@@ -88,12 +118,11 @@ private enum class CollapsibleTopAppBarLayoutContent {
 }
 
 interface CollapsibleTopAppBarScope {
-
   val progress: Float
   val heightOffset: Float
 
-  fun Modifier.fadeOnExpand(targetAlpha: Float = 0f): Modifier = fade(1f, targetAlpha)
-  fun Modifier.fadeOnCollapse(targetAlpha: Float = 0f): Modifier = fade(targetAlpha, 1f)
+  fun Modifier.fadeOnExpand(targetAlpha: Float = 0f): Modifier = this then Modifier.fade(1f, targetAlpha)
+  fun Modifier.fadeOnCollapse(targetAlpha: Float = 0f): Modifier = this then Modifier.fade(targetAlpha, 1f)
   fun Modifier.fade(collapsed: Float, expanded: Float): Modifier
   fun Modifier.background(collapsedColor: Color, expandedColor: Color, collapsedShape: Shape = RectangleShape, expandedShape: Shape = collapsedShape): Modifier
 }

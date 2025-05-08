@@ -5,9 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
@@ -15,6 +13,7 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -27,19 +26,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
@@ -47,19 +48,23 @@ import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
-import com.kronos.skilletapp.ui.component.IngredientListItem
-import com.kronos.skilletapp.ui.component.IngredientPill
-import com.kronos.skilletapp.ui.component.IngredientRow
+import com.kronos.skilletapp.ui.component.*
+import com.kronos.skilletapp.ui.component.collapsible.CollapsibleTopAppBar
+import com.kronos.skilletapp.ui.component.collapsible.collapsibleLayout
+import com.kronos.skilletapp.ui.component.collapsible.parallax
+import com.kronos.skilletapp.ui.component.collapsible.progress
+import com.kronos.skilletapp.ui.component.collapsible.road
+import com.kronos.skilletapp.ui.component.collapsible.topAppBarDragBehavior
 import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
+import com.kronos.skilletapp.ui.screen.InstructionComponent
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.utils.fraction
+import com.kronos.skilletapp.utils.modifier.applyIfComposable
 import com.kronos.skilletapp.utils.mutateUnless
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import kotlin.math.exp
 import kotlin.math.roundToInt
 
 private enum class RecipeContentTab {
@@ -99,28 +104,67 @@ fun RecipeScreen(
   }
 
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+  val actionsEnabled by remember { derivedStateOf { scrollBehavior.state.progress > 0.1f } }
 
   Scaffold(
+//    topBar = {
+//      CollapsibleTopAppBar(
+////        title = { /*Intentionally left empty*/ },
+//        title = { Text("This is a title", modifier = Modifier.road(Alignment.CenterStart, Alignment.CenterEnd).collapsibleLayout()) },
+//        navigationIcon = {
+//          IconButton(onClick = onBack) {
+//            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+//          }
+//        },
+//        actions = {
+//          IconButton(enabled = actionsEnabled, onClick = onEdit) {
+//            Icon(Icons.Filled.Edit, contentDescription = "Edit")
+//          }
+//
+//          IconButton(enabled = actionsEnabled, onClick = { /*TODO*/ }) {
+//            Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
+//          }
+//        },
+//        background = {
+//          (recipeState as? UiState.LoadedWithData)?.data?.cover?.let { imageUri ->
+//            AsyncImage(
+//              model = imageUri,
+//              contentDescription = "Recipe image",
+//              contentScale = ContentScale.FillWidth,
+//              modifier = Modifier
+//                .fillMaxWidth()
+//                .aspectRatio(2f, matchHeightConstraintsFirst = true)
+//                .clip(MaterialTheme.shapes.large.copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp)))
+//            )
+//          }
+//        },
+//        scrollBehavior = scrollBehavior,
+//      ) {
+//
+//      }
+//    },
     topBar = {
-      TopAppBar(
-        title = { /*Intentionally left empty*/ },
-//        title = { Text("This is a title") },
-        navigationIcon = {
-          IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-          }
-        },
-        actions = {
-          IconButton(onClick = onEdit) {
-            Icon(Icons.Filled.Edit, contentDescription = "Edit")
-          }
+      CollapsibleTopAppBar(scrollBehavior = scrollBehavior) {
+        (recipeState as? UiState.LoadedWithData)?.data?.cover?.let { imageUri ->
+          AsyncImage(
+            model = imageUri,
+            contentDescription = "Recipe image",
+            contentScale = ContentScale.FillWidth,
+            modifier = Modifier
+              .fillMaxWidth()
+              .aspectRatio(2f, matchHeightConstraintsFirst = true)
+              .clip(MaterialTheme.shapes.large.copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp)))
+              .parallax(0.5f)
+              .fadeOnCollapse()
+          )
+        }
 
-          IconButton(onClick = { /*TODO*/ }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
-          }
-        },
-        scrollBehavior = scrollBehavior,
-      )
+        Text(
+          text = (recipeState as? UiState.LoadedWithData)?.data?.name ?: "",
+          modifier = Modifier.padding(horizontal = 8.dp).road(Alignment.TopStart, Alignment.BottomEnd),
+          fontSize = lerp(MaterialTheme.typography.titleLarge.fontSize, MaterialTheme.typography.headlineLarge.fontSize, progress)
+        )
+      }
     },
     floatingActionButton = {
       fabTransition.AnimatedVisibility(
@@ -191,45 +235,45 @@ private fun RecipeContent(
     val coroutineScope = rememberCoroutineScope()
     var dragState by remember { mutableFloatStateOf(0f) }
 
-    RecipeContentHeader(
-      expanded = expanded,
-      collapsedFraction = overlappedFraction,
-      name = recipe.name,
-      source = recipe.source,
-      time = recipe.time,
-      image = recipe.cover,
-      modifier = Modifier
-        .padding(horizontal = 8.dp)
-        .fillMaxWidth()
-        .pointerInput(Unit) {
-          detectVerticalDragGestures(
-            onDragEnd = {
-              coroutineScope.launch {
-                topAppBarScrollBehavior.nestedScrollConnection.onPostFling(
-                  consumed = Velocity.Zero,
-                  available = Velocity(0f, dragState * 2f)
-                )
-              }
-            },
-            onVerticalDrag = { change, dragAmount ->
-              change.consume()
-              dragState = dragAmount
-
-              val scrollDelta = Offset(0f, dragAmount * 0.6f)
-              val preConsumed = topAppBarScrollBehavior.nestedScrollConnection.onPreScroll(
-                available = scrollDelta,
-                source = NestedScrollSource.UserInput
-              )
-              val remaining = scrollDelta - preConsumed
-              topAppBarScrollBehavior.nestedScrollConnection.onPostScroll(
-                consumed = preConsumed,
-                available = remaining,
-                source = NestedScrollSource.UserInput
-              )
-            }
-          )
-        }
-    )
+//    RecipeContentHeader(
+//      expanded = expanded,
+//      collapsedFraction = overlappedFraction,
+//      name = recipe.name,
+//      source = recipe.source,
+//      time = recipe.time,
+//      image = recipe.cover,
+//      modifier = Modifier
+//        .padding(horizontal = 8.dp)
+//        .fillMaxWidth()
+//        .pointerInput(Unit) {
+//          detectVerticalDragGestures(
+//            onDragEnd = {
+//              coroutineScope.launch {
+//                topAppBarScrollBehavior.nestedScrollConnection.onPostFling(
+//                  consumed = Velocity.Zero,
+//                  available = Velocity(0f, dragState * 2f)
+//                )
+//              }
+//            },
+//            onVerticalDrag = { change, dragAmount ->
+//              change.consume()
+//              dragState = dragAmount
+//
+//              val scrollDelta = Offset(0f, dragAmount * 0.6f)
+//              val preConsumed = topAppBarScrollBehavior.nestedScrollConnection.onPreScroll(
+//                available = scrollDelta,
+//                source = NestedScrollSource.UserInput
+//              )
+//              val remaining = scrollDelta - preConsumed
+//              topAppBarScrollBehavior.nestedScrollConnection.onPostScroll(
+//                consumed = preConsumed,
+//                available = remaining,
+//                source = NestedScrollSource.UserInput
+//              )
+//            }
+//          )
+//        }
+//    )
 
     ScalingControls(
       scale = scale,
@@ -237,13 +281,14 @@ private fun RecipeContent(
       baseServings = recipe.servings,
       onScalingChanged = onScalingChanged,
       scaleOptions = listOf(0.5f, 1f, 2f),
+      modifier = Modifier.topAppBarDragBehavior(topAppBarScrollBehavior)
     )
 
     HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
     PrimaryTabRow(
       selectedTabIndex = tab.ordinal,
-      modifier = Modifier.fillMaxWidth()
+      modifier = Modifier.fillMaxWidth().topAppBarDragBehavior(topAppBarScrollBehavior),
     ) {
       Tab(
         selected = tab == RecipeContentTab.Ingredients,
@@ -428,6 +473,7 @@ private fun ScalingControls(
   servings: Int,
   baseServings: Int,
   onScalingChanged: (scale: Float, servings: Int) -> Unit,
+  modifier: Modifier = Modifier,
   scaleOptions: List<Float> = listOf(1f, 2f, 3f),
 ) {
   Row(
@@ -437,6 +483,7 @@ private fun ScalingControls(
       .padding(8.dp)
       .fillMaxWidth()
       .height(IntrinsicSize.Min)
+      .then(modifier)
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,

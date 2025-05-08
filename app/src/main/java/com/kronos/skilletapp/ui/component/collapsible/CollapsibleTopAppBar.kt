@@ -17,7 +17,7 @@ import kotlin.math.abs
 
 @Composable
 fun CollapsibleTopAppBar(
-  title: @Composable () -> Unit,
+  title: @Composable context(CollapsibleTopAppBarScope) () -> Unit,
   scrollBehavior: TopAppBarScrollBehavior,
   modifier: Modifier = Modifier,
   navigationIcon: @Composable () -> Unit = {},
@@ -40,7 +40,9 @@ fun CollapsibleTopAppBar(
     background()
   }
 
-  Column {
+  Column(
+    modifier = Modifier.wrapContentHeight()
+  ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
       modifier = Modifier.fillMaxWidth()
@@ -59,15 +61,16 @@ fun CollapsibleTopAppBar(
       Box(
         modifier = Modifier
           .padding(horizontal = TopAppBarHorizontalPadding)
+          .wrapContentHeight()
           .weight(1f)
-          .road(Alignment.TopStart, Alignment.BottomCenter)
       ) {
         val merged = LocalTextStyle.current.merge(MaterialTheme.typography.titleLarge)
         CompositionLocalProvider(
           LocalTextStyle provides merged,
           LocalContentColor provides colors.titleContentColor,
-          content = title
-        )
+        ) {
+          title()
+        }
       }
 
       Box(

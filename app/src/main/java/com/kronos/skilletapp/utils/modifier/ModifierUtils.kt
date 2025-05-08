@@ -7,7 +7,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.*
 
 fun Modifier.applyIf(condition: Boolean, block: Modifier.() -> Modifier) = if (condition) {
-  this then block()
+  this then Modifier.block()
 } else {
   this
 }
@@ -15,11 +15,18 @@ fun Modifier.applyIf(condition: Boolean, block: Modifier.() -> Modifier) = if (c
 fun Modifier.applyUnless(condition: Boolean, block: Modifier.() -> Modifier) = if (condition) {
   this
 } else {
-  this then block()
+  this then Modifier.block()
 }
 
 fun <T> Modifier.applyIfNotNull(value: T?, block: Modifier.(T) -> Modifier) = if (value != null) {
-  this then block(value)
+  this then Modifier.block(value)
+} else {
+  this
+}
+
+@Composable
+fun Modifier.applyIfComposable(condition: Boolean, block: @Composable Modifier.() -> Modifier) = if (condition) {
+  this then Modifier.block()
 } else {
   this
 }

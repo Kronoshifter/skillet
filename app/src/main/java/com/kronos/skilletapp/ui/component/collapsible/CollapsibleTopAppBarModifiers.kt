@@ -2,15 +2,12 @@
 
 package com.kronos.skilletapp.ui.component.collapsible
 
-import android.R.attr.orientation
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.AnimationState
-import androidx.compose.animation.core.DecayAnimationSpec
-import androidx.compose.animation.core.animateDecay
-import androidx.compose.animation.core.animateTo
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -25,7 +22,6 @@ import androidx.compose.ui.node.ParentDataModifierNode
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Velocity
-import androidx.constraintlayout.compose.SwipeMode.Companion.velocity
 import kotlin.math.abs
 
 context(_: CollapsibleTopAppBarScope)
@@ -37,11 +33,20 @@ fun Modifier.parallax(ratio: Float = 0.2f) = this then ParallaxElement(ratio)
 context(_: CollapsibleTopAppBarScope)
 fun Modifier.road(collapsed: Alignment, expanded: Alignment) = this then RoadElement(collapsed, expanded)
 
-context(collapsibleScope: CollapsibleTopAppBarScope, rowScope: RowScope)
-fun Modifier.road(collapsed: Alignment.Horizontal, expanded: Alignment.Horizontal) = this then Modifier.road(collapsed, expanded) then collapsibleLayout()
+context(_: CollapsibleTopAppBarScope)
+fun Modifier.horizontalRoad(collapsed: Alignment.Horizontal, expanded: Alignment.Horizontal) = this then HorizontalRoadElement(collapsed, expanded)
+
+context(_: CollapsibleTopAppBarScope)
+fun Modifier.verticalRoad(collapsed: Alignment.Vertical, expanded: Alignment.Vertical) = this then VerticalRoadElement(collapsed, expanded)
+
+context(collapsibleScope: CollapsibleTopAppBarScope, _: RowScope)
+fun Modifier.road(collapsed: Alignment.Horizontal, expanded: Alignment.Horizontal) = this then Modifier.horizontalRoad(collapsed, expanded) then Modifier.collapsibleLayout()
+
+context(collapsibleScope: CollapsibleTopAppBarScope, _: ColumnScope)
+fun Modifier.road(collapsed: Alignment.Vertical, expanded: Alignment.Vertical) = this then Modifier.verticalRoad(collapsed, expanded) then Modifier.collapsibleLayout()
 
 context(collapsibleScope: CollapsibleTopAppBarScope)
-private fun Modifier.collapsibleLayout(): Modifier = this then layout { measurable, constraints ->
+fun Modifier.collapsibleLayout(): Modifier = this then Modifier.layout { measurable, constraints ->
   val placeable = measurable.measure(constraints)
 
   layout(placeable.width, placeable.height) {
@@ -70,6 +75,10 @@ private data object PinnedElement : ModifierNodeElement<PinnedModifier>() {
 
   override fun update(node: PinnedModifier) {
 
+  }
+
+  override fun InspectorInfo.inspectableProperties() {
+    name = "pinned"
   }
 }
 
@@ -137,17 +146,99 @@ private class RoadModifier(
   }
 }
 
+private data class HorizontalRoadElement(
+  private val collapsed: Alignment.Horizontal,
+  private val expanded: Alignment.Horizontal,
+) : ModifierNodeElement<HorizontalRoadModifier>() {
+  override fun create(): HorizontalRoadModifier {
+    return HorizontalRoadModifier(collapsed, expanded)
+  }
+
+  override fun update(node: HorizontalRoadModifier) {
+    node.collapsed = collapsed
+    node.expanded = expanded
+  }
+
+  override fun InspectorInfo.inspectableProperties() {
+    name = "horizontalRoad"
+    properties["collapsed"] = collapsed
+    properties["expanded"] = expanded
+  }
+}
+
+private class HorizontalRoadModifier(
+  collapsed: Alignment.Horizontal,
+  expanded: Alignment.Horizontal,
+) : ParentDataModifierNode, CollapsibleTopAppBarHorizontalRoadData, Modifier.Node() {
+  override var collapsed: Alignment.Horizontal = collapsed
+    internal set
+  override var expanded: Alignment.Horizontal = expanded
+    internal set
+
+  override fun Density.modifyParentData(parentData: Any?): Any? {
+    return this@HorizontalRoadModifier
+  }
+}
+
+private data class VerticalRoadElement(
+  private val collapsed: Alignment.Vertical,
+  private val expanded: Alignment.Vertical,
+) : ModifierNodeElement<VerticalRoadModifier>() {
+  override fun create(): VerticalRoadModifier {
+    return VerticalRoadModifier(collapsed, expanded)
+  }
+
+  override fun update(node: VerticalRoadModifier) {
+    node.collapsed = collapsed
+    node.expanded = expanded
+  }
+
+  override fun InspectorInfo.inspectableProperties() {
+    name = "verticalRoad"
+    properties["collapsed"] = collapsed
+    properties["expanded"] = expanded
+  }
+}
+
+private class VerticalRoadModifier(
+  collapsed: Alignment.Vertical,
+  expanded: Alignment.Vertical,
+) : ParentDataModifierNode, CollapsibleTopAppBarVerticalRoadData, Modifier.Node() {
+  override var collapsed: Alignment.Vertical = collapsed
+    internal set
+  override var expanded: Alignment.Vertical = expanded
+    internal set
+
+  override fun Density.modifyParentData(parentData: Any?): Any? {
+    return this@VerticalRoadModifier
+  }
+}
+
+
 private sealed interface CollapsibleTopAppBarData
 private interface CollapsibleTopAppBarPinnedData : CollapsibleTopAppBarData
 private interface CollapsibleTopAppBarParallaxData : CollapsibleTopAppBarData {
   val ratio: Float
 }
+
 private interface CollapsibleTopAppBarRoadData : CollapsibleTopAppBarData {
   val collapsed: Alignment
   val expanded: Alignment
 }
 
+private interface CollapsibleTopAppBarHorizontalRoadData : CollapsibleTopAppBarData {
+  val collapsed: Alignment.Horizontal
+  val expanded: Alignment.Horizontal
+}
+
+private interface CollapsibleTopAppBarVerticalRoadData : CollapsibleTopAppBarData {
+  val collapsed: Alignment.Vertical
+  val expanded: Alignment.Vertical
+}
+
 data class RoadData(val collapsed: Alignment, val expanded: Alignment)
+data class HorizontalRoadData(val collapsed: Alignment.Horizontal, val expanded: Alignment.Horizontal)
+data class VerticalRoadData(val collapsed: Alignment.Vertical, val expanded: Alignment.Vertical)
 
 private val Placeable.isPinned: Boolean
   get() = parentData is CollapsibleTopAppBarPinnedData
@@ -158,6 +249,16 @@ val Placeable.parallaxRatio: Float?
 val Placeable.roadData: RoadData?
   get() = (parentData as? CollapsibleTopAppBarRoadData)?.let {
     RoadData(it.collapsed, it.expanded)
+  }
+
+val Placeable.horizontalRoadData: HorizontalRoadData?
+  get() = (parentData as? CollapsibleTopAppBarHorizontalRoadData)?.let {
+    HorizontalRoadData(it.collapsed, it.expanded)
+  }
+
+val Placeable.verticalRoadData: VerticalRoadData?
+  get() = (parentData as? CollapsibleTopAppBarVerticalRoadData)?.let {
+    VerticalRoadData(it.collapsed, it.expanded)
   }
 
 private suspend fun settleAppBar(
