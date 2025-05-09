@@ -49,11 +49,7 @@ import com.kronos.skilletapp.ui.FabPadding
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.*
-import com.kronos.skilletapp.ui.component.collapsible.CollapsibleTopAppBar
-import com.kronos.skilletapp.ui.component.collapsible.collapsibleLayout
-import com.kronos.skilletapp.ui.component.collapsible.parallax
 import com.kronos.skilletapp.ui.component.collapsible.progress
-import com.kronos.skilletapp.ui.component.collapsible.road
 import com.kronos.skilletapp.ui.component.collapsible.topAppBarDragBehavior
 import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
@@ -107,65 +103,49 @@ fun RecipeScreen(
   val actionsEnabled by remember { derivedStateOf { scrollBehavior.state.progress > 0.1f } }
 
   Scaffold(
+    topBar = {
+      TopAppBar(
+        title = { /*Intentionally left empty*/ },
+        navigationIcon = {
+          IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+          }
+        },
+        actions = {
+          IconButton(enabled = actionsEnabled, onClick = onEdit) {
+            Icon(Icons.Filled.Edit, contentDescription = "Edit")
+          }
+
+          IconButton(enabled = actionsEnabled, onClick = { /*TODO*/ }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
+          }
+        },
+        scrollBehavior = scrollBehavior,
+      )
+    },
 //    topBar = {
-//      CollapsibleTopAppBar(
-////        title = { /*Intentionally left empty*/ },
-//        title = { Text("This is a title", modifier = Modifier.road(Alignment.CenterStart, Alignment.CenterEnd).collapsibleLayout()) },
-//        navigationIcon = {
-//          IconButton(onClick = onBack) {
-//            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-//          }
-//        },
-//        actions = {
-//          IconButton(enabled = actionsEnabled, onClick = onEdit) {
-//            Icon(Icons.Filled.Edit, contentDescription = "Edit")
-//          }
+//      CollapsibleTopAppBar(scrollBehavior = scrollBehavior) {
+//        (recipeState as? UiState.LoadedWithData)?.data?.cover?.let { imageUri ->
+//          AsyncImage(
+//            model = imageUri,
+//            contentDescription = "Recipe image",
+//            contentScale = ContentScale.FillWidth,
+//            modifier = Modifier
+//              .fillMaxWidth()
+//              .aspectRatio(2f, matchHeightConstraintsFirst = true)
+//              .clip(MaterialTheme.shapes.large.copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp)))
+//              .parallax(0.5f)
+//              .fadeOnCollapse()
+//          )
+//        }
 //
-//          IconButton(enabled = actionsEnabled, onClick = { /*TODO*/ }) {
-//            Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
-//          }
-//        },
-//        background = {
-//          (recipeState as? UiState.LoadedWithData)?.data?.cover?.let { imageUri ->
-//            AsyncImage(
-//              model = imageUri,
-//              contentDescription = "Recipe image",
-//              contentScale = ContentScale.FillWidth,
-//              modifier = Modifier
-//                .fillMaxWidth()
-//                .aspectRatio(2f, matchHeightConstraintsFirst = true)
-//                .clip(MaterialTheme.shapes.large.copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp)))
-//            )
-//          }
-//        },
-//        scrollBehavior = scrollBehavior,
-//      ) {
-//
+//        Text(
+//          text = (recipeState as? UiState.LoadedWithData)?.data?.name ?: "",
+//          modifier = Modifier.padding(horizontal = 8.dp).road(Alignment.TopStart, Alignment.BottomEnd),
+//          fontSize = lerp(MaterialTheme.typography.titleLarge.fontSize, MaterialTheme.typography.headlineLarge.fontSize, progress)
+//        )
 //      }
 //    },
-    topBar = {
-      CollapsibleTopAppBar(scrollBehavior = scrollBehavior) {
-        (recipeState as? UiState.LoadedWithData)?.data?.cover?.let { imageUri ->
-          AsyncImage(
-            model = imageUri,
-            contentDescription = "Recipe image",
-            contentScale = ContentScale.FillWidth,
-            modifier = Modifier
-              .fillMaxWidth()
-              .aspectRatio(2f, matchHeightConstraintsFirst = true)
-              .clip(MaterialTheme.shapes.large.copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp)))
-              .parallax(0.5f)
-              .fadeOnCollapse()
-          )
-        }
-
-        Text(
-          text = (recipeState as? UiState.LoadedWithData)?.data?.name ?: "",
-          modifier = Modifier.padding(horizontal = 8.dp).road(Alignment.TopStart, Alignment.BottomEnd),
-          fontSize = lerp(MaterialTheme.typography.titleLarge.fontSize, MaterialTheme.typography.headlineLarge.fontSize, progress)
-        )
-      }
-    },
     floatingActionButton = {
       fabTransition.AnimatedVisibility(
         visible = { isVisible -> isVisible },

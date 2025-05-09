@@ -38,9 +38,9 @@ android {
   }
   kotlinOptions {
     jvmTarget = "1.8"
-    freeCompilerArgs += listOf(
-      "-Xcontext-parameters"
-    )
+//    freeCompilerArgs += listOf(
+//      "-Xcontext-parameters"
+//    )
   }
   buildFeatures {
     compose = true
@@ -72,11 +72,7 @@ tasks.withType<Test>().configureEach {
 
 dependencies {
   // AndroidX
-  implementation(libs.androidx.core.ktx)
-  implementation(libs.androidx.lifecycle.runtime)
-  implementation(libs.androidx.lifecycle.viewmodel.compose)
-  implementation(libs.androidx.activity.compose)
-  implementation(libs.androidx.constraintlayout.compose)
+  implementation(libs.bundles.androidx)
 
   // Compose
   implementation(platform(libs.compose.bom))

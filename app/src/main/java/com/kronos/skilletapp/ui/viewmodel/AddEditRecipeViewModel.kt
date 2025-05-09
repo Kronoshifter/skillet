@@ -23,6 +23,7 @@ import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -356,7 +357,7 @@ class AddEditRecipeViewModel(
 
   fun scrapeRecipe(url: String) {
     _uiState.update { UiState.Loading }
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.IO) {
       _recipeState.update { state ->
         scraper.scrapeRecipe(url).mapBoth(
           success = { scrape ->

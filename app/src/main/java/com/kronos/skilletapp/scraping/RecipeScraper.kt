@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.scraping
 
+import android.util.Log
 import com.github.michaelbull.result.*
 import com.kronos.skilletapp.model.InvalidHtmlError
 import com.kronos.skilletapp.model.JsonParseError
@@ -70,6 +71,7 @@ class RecipeScraper {
         }
       }
     }.mapError {
+      Log.e("Skrape", "Failed to extract JSON-LD from $recipeUrl: ${it.message}", it)
       InvalidHtmlError("Failed to extract JSON-LD from $recipeUrl")
     }
   }
