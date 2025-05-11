@@ -44,7 +44,7 @@ fun TimeSelectBottomSheet(
         onSelect = { hours = it },
         modifier = Modifier.weight(1f)
       ) { i ->
-        Text(text = if (i > 0) "$i hour".pluralize(i) { "${it}s" } else "-")
+        Text(text = if (i > 0) "$i hour".pluralize(i) else "-")
       }
 
       InfiniteScrollingPicker(
@@ -53,7 +53,7 @@ fun TimeSelectBottomSheet(
         onSelect = { minutes = it },
         modifier = Modifier.weight(1f)
       ) { i ->
-        Text(text = if (i > 0) "$i minute".pluralize(i) { "${it}s" } else "-")
+        Text(text = if (i > 0) "$i minute".pluralize(i) else "-")
       }
     }
   }

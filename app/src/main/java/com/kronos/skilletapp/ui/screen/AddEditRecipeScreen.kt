@@ -712,7 +712,7 @@ private fun RecipeInfoContent(
         }
       ) {
         Text(
-          text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings" },
+          text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) else "Set servings" },
           style = MaterialTheme.typography.titleMedium
         )
       }
@@ -767,14 +767,9 @@ private fun RecipeInfoContent(
         val hours = prepTime / 60
         val minutes = prepTime % 60
         val text = when {
-          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${
-            "minute".pluralize(
-              minutes
-            ) { "${it}s" }
-          }"
-
-          hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
-          minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
+          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours)}, $minutes ${"minute".pluralize(minutes)}"
+          hours > 0 -> "$hours hour".pluralize(hours)
+          minutes > 0 -> "$minutes minute".pluralize(minutes)
           else -> "Set prep time"
         }
 
@@ -818,14 +813,9 @@ private fun RecipeInfoContent(
         val hours = cookTime / 60
         val minutes = cookTime % 60
         val text = when {
-          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${
-            "minute".pluralize(
-              minutes
-            ) { "${it}s" }
-          }"
-
-          hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
-          minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
+          hours > 0 && minutes > 0 -> "$hours ${"hour".pluralize(hours)}, $minutes ${"minute".pluralize(minutes)}"
+          hours > 0 -> "$hours hour".pluralize(hours)
+          minutes > 0 -> "$minutes minute".pluralize(minutes)
           else -> "Set cook time"
         }
 
