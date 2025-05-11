@@ -302,7 +302,7 @@ fun RecipeCard(
         Image(
           painter = painter,
           contentDescription = recipe.name,
-          contentScale = ContentScale.Crop,
+          contentScale = ContentScale.Fit,
           modifier = Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 1.dp)
