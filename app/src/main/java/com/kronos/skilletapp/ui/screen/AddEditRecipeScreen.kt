@@ -559,7 +559,7 @@ private fun RecipeInfoContent(
                   tint = MaterialTheme.colorScheme.primary,
                   modifier = Modifier
                     .sharedElement(
-                      state = rememberSharedContentState(key = "image-controls-gallery"),
+                      sharedContentState = rememberSharedContentState(key = "image-controls-gallery"),
                       animatedVisibilityScope = this@AnimatedVisibility
                     )
                 )
@@ -574,7 +574,7 @@ private fun RecipeInfoContent(
                   tint = MaterialTheme.colorScheme.primary,
                   modifier = Modifier
                     .sharedElement(
-                      state = rememberSharedContentState(key = "image-controls-camera"),
+                      sharedContentState = rememberSharedContentState(key = "image-controls-camera"),
                       animatedVisibilityScope = this@AnimatedVisibility
                     )
                 )
@@ -626,7 +626,7 @@ private fun RecipeInfoContent(
                   contentDescription = "Choose from gallery",
                   modifier = Modifier
                     .sharedElement(
-                      state = rememberSharedContentState(key = "image-controls-gallery"),
+                      sharedContentState = rememberSharedContentState(key = "image-controls-gallery"),
                       animatedVisibilityScope = this@AnimatedContent
                     )
                 )
@@ -650,7 +650,7 @@ private fun RecipeInfoContent(
                   contentDescription = "Take a photo",
                   modifier = Modifier
                     .sharedElement(
-                      state = rememberSharedContentState(key = "image-controls-camera"),
+                      sharedContentState = rememberSharedContentState(key = "image-controls-camera"),
                       animatedVisibilityScope = this@AnimatedContent
                     )
                 )
