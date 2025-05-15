@@ -15,11 +15,11 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
     val name = ctx.name()?.text ?: ""
 
     val unit = MeasurementUnit.fromName(ctx.measurement()?.WORD()?.text)
-    val quantity = with(ctx.measurement()?.quantity()) {
-      this?.decimal()?.text?.toFloatOrNull() ?: this?.fraction()?.let {
-        when (it.NUMBER().size) {
-          2 -> Fraction(numerator = it.NUMBER(0).text.toInt(), denominator = it.NUMBER(1).text.toInt())
-          else -> Fraction(whole = it.NUMBER(0).text.toInt(), numerator = it.NUMBER(1).text.toInt(), denominator = it.NUMBER(2).text.toInt())
+    val quantity = ctx.measurement()?.quantity()?.let { quantity ->
+      quantity.decimal()?.text?.toFloatOrNull() ?: quantity.fraction()?.let { fraction ->
+        when (fraction.NUMBER().size) {
+          2 -> Fraction(numerator = fraction.NUMBER(0).text.toInt(), denominator = fraction.NUMBER(1).text.toInt())
+          else -> Fraction(whole = fraction.NUMBER(0).text.toInt(), numerator = fraction.NUMBER(1).text.toInt(), denominator = fraction.NUMBER(2).text.toInt())
         }.decimal
       }
     } ?: 0f
