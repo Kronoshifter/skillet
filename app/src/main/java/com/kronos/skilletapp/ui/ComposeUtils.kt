@@ -2,8 +2,16 @@ package com.kronos.skilletapp.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.with
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
@@ -51,6 +59,8 @@ import org.koin.dsl.module
 fun <T> LoadingContent(
   state: UiState<T>,
   modifier: Modifier = Modifier,
+  enter: EnterTransition = fadeIn(),
+  exit: ExitTransition = fadeOut(),
   loadingContent: @Composable () -> Unit = { CircularProgressIndicator() },
   errorContent: @Composable (SkilletError) -> Unit = { error -> Text(text = error.message) },
   content: @Composable (data: T) -> Unit,
@@ -58,6 +68,7 @@ fun <T> LoadingContent(
   AnimatedContent(
     targetState = state,
     label = "Loading",
+    transitionSpec = { enter togetherWith exit },
     modifier = Modifier.fillMaxSize(),
   ) { targetState ->
     Box(
@@ -79,6 +90,8 @@ fun <T> LoadingContent(
 fun LoadingContent(
   state: UiState<Nothing>,
   modifier: Modifier = Modifier,
+  enter: EnterTransition = fadeIn(),
+  exit: ExitTransition = fadeOut(),
   loadingContent: @Composable () -> Unit = { CircularProgressIndicator() },
   errorContent: @Composable (SkilletError) -> Unit = { error -> Text(text = error.message) },
   content: @Composable () -> Unit,
@@ -86,6 +99,7 @@ fun LoadingContent(
   AnimatedContent(
     targetState = state,
     label = "Loading",
+    transitionSpec = { enter togetherWith exit },
     modifier = Modifier.fillMaxSize(),
   ) { targetState ->
     Box(
