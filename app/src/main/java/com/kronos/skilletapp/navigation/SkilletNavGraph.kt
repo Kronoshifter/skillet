@@ -10,21 +10,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
-import androidx.navigation.navOptions
 import androidx.navigation.toRoute
 import com.kronos.skilletapp.ui.screen.AddEditRecipeScreen
 import com.kronos.skilletapp.ui.screen.cooking.CookingScreen
-import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
+import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.utils.navDeepLinkRequest
-import com.kronos.skilletapp.utils.navTypeOf
 import com.kronos.skilletapp.utils.toJson
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import kotlin.reflect.typeOf
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -39,27 +34,25 @@ fun SkilletNavGraph(
 ) {
   LaunchedEffect(intentFlow) {
     intentFlow.collectLatest { intent ->
-      if (intent.action != Intent.ACTION_SEND) return@collectLatest
+      if (intent.action == Intent.ACTION_SEND) {
+        val sharedRecipe = intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+          SharedRecipe(
+            url = it,
+            id = Uuid.random().toString()
+          )
+        }
 
-      val sharedRecipe = intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-        SharedRecipe(
-          url = URLEncoder.encode(it, StandardCharsets.UTF_8.toString()),
-          id = Uuid.random().toString()
-        )
-      }
+        intent.action?.let { intentAction ->
+          val json = sharedRecipe?.toJson()
+          val uri = Route.RecipeList.buildUri(json)
 
-      intent.action?.let { intentAction ->
-        val json = sharedRecipe?.toJson()
-        val uri = Route.RecipeList::class.buildUri(json)
-
-        //TODO: encapsulate in SkilletNavigationActions
-        navController.navigate(
-          request = navDeepLinkRequest(uri = uri) {
-            action = intentAction
-            mimeType = "text/*"
-          },
-          navOptions = navOptions { launchSingleTop = true }
-        )
+          navController.handleDeepLink(
+            request = navDeepLinkRequest(uri) {
+              action = intentAction
+              mimeType = "text/*"
+            }
+          )
+        }
       }
     }
   }
@@ -70,18 +63,18 @@ fun SkilletNavGraph(
     startDestination = startDestination,
   ) {
     composable<Route.RecipeList>(
-      typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)),
+      typeMap = Route.RecipeList.typeMap,
       deepLinks = listOf(
         navDeepLink<Route.RecipeList>(
-          basePath = Route.basePath(Route.RecipeList::class),
-          typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
+          basePath = Route.RecipeList.basePath,
+          typeMap = Route.RecipeList.typeMap,
         ) {
           action = Intent.ACTION_SEND
           mimeType = "text/*"
         }
       )
-    ) {
-      val args = it.toRoute<Route.RecipeList>()
+    ) { backStackEntry ->
+      val args = backStackEntry.toRoute<Route.RecipeList>()
       RecipeListScreen(
         onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
         onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },

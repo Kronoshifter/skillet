@@ -2,10 +2,9 @@ package com.kronos.skilletapp.utils
 
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
 import androidx.navigation.NavType
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.reflect.typeOf
 
 inline fun <reified T> navTypeOf(
   isNullableAllowed: Boolean = false,
@@ -20,3 +19,8 @@ inline fun <reified T> navTypeOf(
   override fun put(bundle: Bundle, key: String, value: T) = bundle.putString(key, json.encodeToString(value))
 
 }
+
+inline fun <reified T> navMapEntryOf(
+  isNullableAllowed: Boolean = false,
+  json: Json = Json,
+) = typeOf<T>() to navTypeOf<T>(isNullableAllowed, json)

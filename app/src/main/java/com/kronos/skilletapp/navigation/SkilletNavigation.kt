@@ -2,69 +2,106 @@ package com.kronos.skilletapp.navigation
 
 import android.net.Uri
 import androidx.compose.runtime.compositionLocalOf
-import androidx.core.net.toUri
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import com.kronos.skilletapp.utils.navTypeOf
 import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
+import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.typeOf
 
 @Serializable
 data class SharedRecipe(val url: String, val id: String)
 
+interface RouteInfo<out R : Route> {
+  val routeId: String
+
+  val basePath: String
+    get() = Route.BASE_URL + routeId
+
+  val typeMap: Map<KType, @JvmSuppressWildcards NavType<*>>
+    get() = emptyMap()
+
+}
+
 @Serializable
 sealed interface Route {
-  @Serializable data class RecipeList(val sharedRecipe: SharedRecipe? = null) : Route
-  @Serializable data class Recipe(val recipeId: String) : Route
-  @Serializable data class AddEditRecipe(val title: String, val recipeId: String? = null, val url: String? = null) : Route
-  @Serializable data class Cooking(val recipeId: String, val scale: Float) : Route
+  val routeId: String
+  
+  @Serializable
+  data class RecipeList(val sharedRecipe: SharedRecipe? = null) : Route {
+    override val routeId: String by RecipeList::routeId
+    companion object : RouteInfo<RecipeList> {
+      override val routeId = "recipeList"
+      override val typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
+    }
+  }
+
+  @Serializable
+  data class Recipe(val recipeId: String) : Route {
+    override val routeId: String by Recipe::routeId
+
+    companion object : RouteInfo<Recipe> {
+      override val routeId = "recipe"
+    }
+  }
+
+  @Serializable
+  data class AddEditRecipe(val title: String, val recipeId: String? = null, val url: String? = null) : Route {
+    override val routeId: String by AddEditRecipe::routeId
+
+    companion object : RouteInfo<AddEditRecipe> {
+      override val routeId = "addEditRecipe"
+    }
+  }
+
+  @Serializable
+  data class Cooking(val recipeId: String, val scale: Float) : Route {
+    override val routeId: String by Cooking::routeId
+
+    companion object : RouteInfo<Cooking> {
+      override val routeId = "cooking"
+    }
+  }
 
   companion object {
-    const val BASE_URL = "skilletapp://skillet"
+    const val SCHEME = "skilletapp"
+    const val AUTHORITY = "skillet"
+    const val BASE_URL = "$SCHEME://$AUTHORITY/"
+  }
+}
 
-    fun basePath(route: KClass<out Route>): String = "$BASE_URL/" + when (route) {
-      Route.RecipeList::class -> "recipeList"
-      Route.Recipe::class -> "recipe"
-      Route.AddEditRecipe::class -> "addEditRecipe"
-      Route.Cooking::class -> "cooking"
-      else -> throw UnsupportedOperationException("Unknown route: $route")
+inline fun <reified R : Route, reified T : R> RouteInfo<T>.buildUri(vararg args: Any?): Uri = Uri.Builder().apply {
+  scheme(Route.SCHEME)
+  authority(Route.AUTHORITY)
+  appendPath(routeId)
+
+  T::class.memberProperties.filterNot { it.name == "routeId" }.groupBy { it.returnType.isMarkedNullable }.let { grouped ->
+    val nonNullableProperties = grouped[false] ?: emptyList()
+    val nullableProperties = grouped[true] ?: emptyList()
+
+    require(args.size >= nonNullableProperties.size) {
+      "Not enough arguments provided for route $this"
+    }
+
+    require(args.size <= nonNullableProperties.size + nullableProperties.size) {
+      "Too many arguments provided for route $this"
+    }
+
+    args.slice(0 until nonNullableProperties.size).forEach { arg ->
+      appendPath(arg.toString())
+    }
+
+    args.slice(nonNullableProperties.size until args.size).forEachIndexed { index, arg ->
+      appendQueryParameter(nullableProperties[index].name, arg.toString())
+    }
+
+    nullableProperties.slice((args.size - nonNullableProperties.size) until nullableProperties.size).forEach { property ->
+      appendQueryParameter(property.name, "null")
     }
   }
-}
-
-fun KClass<out Route>.toRouteString(): String {
-  val basePath = Route.basePath(this)
-  val properties = memberProperties
-  return buildString {
-    append(basePath)
-
-    properties.groupBy { it.returnType.isMarkedNullable }.let { grouped ->
-      val nonNullableProperties = grouped[false] ?: emptyList()
-      val nullableProperties = grouped[true] ?: emptyList()
-      var count = 0
-
-      nonNullableProperties.forEach { property ->
-        append("/${count++}")
-      }
-
-      nullableProperties.forEach { property ->
-        append("?${property.name}={${count++}}")
-      }
-    }
-  }
-}
-
-fun KClass<out Route>.buildUri(vararg args: Any?): Uri {
-  var result = toRouteString()
-
-  args.forEachIndexed { index, arg ->
-    result = result.replace("{$index}", arg.toString())
-  }
-
-  result = result.replace("\\{\\d+\\}".toRegex(), "null")
-
-  return result.toUri()
-}
+}.build()
 
 class SkilletNavigationActions(private val navController: NavHostController) {
 

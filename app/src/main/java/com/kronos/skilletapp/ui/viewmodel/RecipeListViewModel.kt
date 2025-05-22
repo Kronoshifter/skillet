@@ -1,5 +1,6 @@
 package com.kronos.skilletapp.ui.viewmodel
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
@@ -17,6 +18,7 @@ import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.saverOf
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
+import com.kronos.skilletapp.utils.navMapEntryOf
 import com.kronos.skilletapp.utils.navTypeOf
 import kotlinx.coroutines.flow.*
 import java.net.URLDecoder
@@ -33,16 +35,10 @@ class RecipeListViewModel(
 ) : ViewModel() {
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
-  private val args = handle.toRoute<Route.RecipeList>(typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)))
+  private val args = handle.toRoute<Route.RecipeList>(typeMap = Route.RecipeList.typeMap)
 
   @OptIn(SavedStateHandleSaveableApi::class)
-  var sharedRecipe by handle.saveable(stateSaver = saverOf<SharedRecipe?>()) {
-    mutableStateOf<SharedRecipe?>(args.sharedRecipe?.let {
-      it.copy(
-        url = URLDecoder.decode(it.url, StandardCharsets.UTF_8.toString())
-      )
-    })
-  }
+  var sharedRecipe = args.sharedRecipe
 
   @OptIn(SavedStateHandleSaveableApi::class)
   var showSharedUrl by handle.saveable {
@@ -59,7 +55,7 @@ class RecipeListViewModel(
         else -> RecipeCouldNotBeLoadedError("Could not load recipes")
       }
       emit(UiState.Error(error))
-    }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
 
   val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
     when {
