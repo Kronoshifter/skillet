@@ -21,14 +21,13 @@ fun String.pluralize(count: Int) = pluralize(count) {
   val esPlurals = arrayOf("x", "s", "sh", "ch", "z", "o")
   if (endsWith(suffixes = esPlurals, ignoreCase = true)) {
     append("e")
-  } else if ("y".contains(last().lowercaseChar())) {
+  } else if (endsWith("y", true) && count != 1) {
     replace(lastIndex, lastIndex + 1, "ie")
   }
 
   append("s")
 }
 
-fun String.endsWith(vararg suffixes: String, ignoreCase: Boolean = false) = suffixes.any { endsWith(it, ignoreCase) }
-
+fun CharSequence.endsWith(vararg suffixes: CharSequence, ignoreCase: Boolean = false) = suffixes.any { endsWith(it, ignoreCase) }
 fun CharSequence?.isNotNullOrBlank() = !isNullOrBlank()
 fun CharSequence.isValidUrl() = isValidUrl(this.toString())
