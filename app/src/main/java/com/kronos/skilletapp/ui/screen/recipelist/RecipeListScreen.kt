@@ -47,6 +47,7 @@ import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.utils.isNotNullOrBlank
+import com.kronos.skilletapp.utils.isValidUrl
 import com.leinardi.android.speeddial.compose.SpeedDial
 import com.leinardi.android.speeddial.compose.SpeedDialOverlay
 import com.leinardi.android.speeddial.compose.SpeedDialState
@@ -169,7 +170,7 @@ fun RecipeListScreen(
         )
       }
 
-      var showSharedUrl by rememberSaveable { mutableStateOf(vm.sharedRecipe != null) }
+      var showSharedUrl by rememberSaveable(vm.sharedRecipe) { mutableStateOf(true) }
 
       LaunchedEffect(vm.sharedRecipe) {
         showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && showSharedUrl
@@ -180,8 +181,6 @@ fun RecipeListScreen(
       var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { showSharedUrl } ?: "") }
 
       if (showImportRecipeBottomSheet) {
-        val isValidUrl = isValidUrl(url)
-
         ActionBottomSheet(
           sheetState = sheetState,
           modifier = Modifier
@@ -201,7 +200,7 @@ fun RecipeListScreen(
                 showSharedUrl = false
                 sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
               },
-              enabled = isValidUrl
+              enabled = url.isValidUrl()
             ) {
               Text(text = "Import")
             }
@@ -217,7 +216,7 @@ fun RecipeListScreen(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
             keyboardActions = KeyboardActions(
               onDone = {
-                if (isValidUrl) {
+                if (url.isValidUrl()) {
                   onNewRecipeByUrl(url)
                   url = ""
                   showSharedUrl = false
@@ -228,9 +227,9 @@ fun RecipeListScreen(
               }
             ),
             singleLine = true,
-            isError = !isValidUrl && url.isNotBlank(),
+            isError = !url.isValidUrl() && url.isNotBlank(),
             supportingText = {
-              if (!isValidUrl && url.isNotBlank()) {
+              if (!url.isValidUrl() && url.isNotBlank()) {
                 Text(text = "Invalid URL")
               }
             }
