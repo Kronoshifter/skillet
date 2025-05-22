@@ -35,6 +35,8 @@ sealed interface Route {
     companion object : RouteInfo<RecipeList> {
       override val routeId = "recipeList"
       override val typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
+
+      const val INTENT_EXTRA_SHARED_RECIPE = "sharedRecipe"
     }
   }
 
