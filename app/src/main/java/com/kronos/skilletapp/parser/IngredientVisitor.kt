@@ -12,7 +12,7 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
   fun visitIngredients(ctx: IngredientGrammarParser.RecipeContext) = ctx.ingredient().map { visitIngredient(it) }
 
   override fun visitIngredient(ctx: IngredientGrammarParser.IngredientContext): Ingredient {
-    val name = ctx.name()?.text ?: ""
+    val name = ctx.name()?.text?.trim() ?: ""
 
     val unit = MeasurementUnit.fromName(ctx.measurement()?.WORD()?.text)
     val quantity = ctx.measurement()?.quantity()?.let { quantity ->
@@ -27,6 +27,6 @@ class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
 
     val comment = ctx.comment()?.text?.removePunctuation()?.trim()
 
-    return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text.trimEnd())
+    return Ingredient(name = name, comment = comment, measurement = measurement, raw = ctx.text.trimEnd('(', ')').trim())
   }
 }
