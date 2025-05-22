@@ -5,6 +5,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import com.kronos.skilletapp.utils.navMapEntryOf
 import com.kronos.skilletapp.utils.navTypeOf
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KType
@@ -34,7 +35,7 @@ sealed interface Route {
     override val routeId: String by RecipeList::routeId
     companion object : RouteInfo<RecipeList> {
       override val routeId = "recipeList"
-      override val typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
+      override val typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = mapOf(navMapEntryOf<SharedRecipe?>(true))
 
       const val INTENT_EXTRA_SHARED_RECIPE = "sharedRecipe"
     }

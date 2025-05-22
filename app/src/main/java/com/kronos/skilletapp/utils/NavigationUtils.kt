@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.navigation.NavType
 import kotlinx.serialization.json.Json
+import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 inline fun <reified T> navTypeOf(
