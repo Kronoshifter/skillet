@@ -36,14 +36,7 @@ class RecipeListViewModel(
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
   private val args = handle.toRoute<Route.RecipeList>(typeMap = Route.RecipeList.typeMap)
-
-  @OptIn(SavedStateHandleSaveableApi::class)
-  var sharedRecipe = args.sharedRecipe
-
-  @OptIn(SavedStateHandleSaveableApi::class)
-  var showSharedUrl by handle.saveable {
-    mutableStateOf(true)
-  }
+  val sharedRecipe = args.sharedRecipe
 
   private val _isLoading = MutableStateFlow(false)
   private val _recipesAsync = recipeRepository.observeRecipes()
@@ -55,9 +48,9 @@ class RecipeListViewModel(
         else -> RecipeCouldNotBeLoadedError("Could not load recipes")
       }
       emit(UiState.Error(error))
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
+    }
 
-  val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
+  val uiState = combine(_isLoading, _recipesAsync, _savedSortType) { isLoading, recipesAsync, sortType ->
     when {
       isLoading -> UiState.Loading
       else -> when (recipesAsync) {
@@ -65,10 +58,15 @@ class RecipeListViewModel(
         is UiState.Error -> UiState.Error(recipesAsync.error)
         is UiState.LoadedWithData -> UiState.LoadedWithData(
           RecipeListState(
-            recipes = recipesAsync.data,
+            recipes = recipesAsync.data.sortedBy {
+              when (sortType) {
+                RecipesSortType.NAME -> it.name
+                RecipesSortType.DATE -> it.name
+                RecipesSortType.RATING -> it.name
+              }
+            },
           )
         )
-
         else -> UiState.Error(UsedLoadedWhereYouShouldntError)
       }
     }

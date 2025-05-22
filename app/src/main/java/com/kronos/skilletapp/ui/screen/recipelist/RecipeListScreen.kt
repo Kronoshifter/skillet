@@ -169,16 +169,18 @@ fun RecipeListScreen(
         )
       }
 
+      var showSharedUrl by rememberSaveable { mutableStateOf(vm.sharedRecipe != null) }
+
       LaunchedEffect(vm.sharedRecipe) {
-        showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl
+        showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && showSharedUrl
       }
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
-      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "") }
+      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { showSharedUrl } ?: "") }
 
       if (showImportRecipeBottomSheet) {
-        var isValidUrl = isValidUrl(url)
+        val isValidUrl = isValidUrl(url)
 
         ActionBottomSheet(
           sheetState = sheetState,
@@ -187,7 +189,7 @@ fun RecipeListScreen(
             .padding(8.dp),
           onDismissRequest = {
             url = ""
-            vm.showSharedUrl = false
+            showSharedUrl = false
             showImportRecipeBottomSheet = false
           },
           title = { Text(text = "Import Recipe") },
@@ -196,7 +198,7 @@ fun RecipeListScreen(
               onClick = {
                 onNewRecipeByUrl(url)
                 url = ""
-                vm.showSharedUrl = false
+                showSharedUrl = false
                 sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
               },
               enabled = isValidUrl
@@ -218,7 +220,7 @@ fun RecipeListScreen(
                 if (isValidUrl) {
                   onNewRecipeByUrl(url)
                   url = ""
-                  vm.showSharedUrl = false
+                  showSharedUrl = false
                   sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
                 }
 
@@ -302,10 +304,11 @@ fun RecipeCard(
         Image(
           painter = painter,
           contentDescription = recipe.name,
-          contentScale = ContentScale.Fit,
+          contentScale = ContentScale.Crop,
           modifier = Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 1.dp)
+            .heightIn(min = 64.dp, max = 384.dp)
             .align(Alignment.Center)
         )
       } ?: Canvas(
