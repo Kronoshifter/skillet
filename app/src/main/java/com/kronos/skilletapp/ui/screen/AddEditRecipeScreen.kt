@@ -946,7 +946,7 @@ private fun IngredientsContent(
       ) { ingredient ->
         ReorderableItem(
           state = reorderableLazyListState,
-          key = ingredient.id
+          key = ingredient.id,
         ) { isDragging ->
           var editing by remember { mutableStateOf(false) }
           val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
@@ -1358,6 +1358,7 @@ fun InstructionComponent(
           modifier = Modifier
             .fillMaxWidth()
             .clickable { editing = true }
+            .animateContentSize()
         )
       } else {
         val focusRequester = remember { FocusRequester() }
