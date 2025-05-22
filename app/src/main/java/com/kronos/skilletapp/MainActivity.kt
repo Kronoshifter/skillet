@@ -16,13 +16,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.util.Consumer
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
+import coil3.ImageLoader
+import coil3.request.crossfade
+import com.kronos.skilletapp.data.RecipeRepository
+import com.kronos.skilletapp.database.RecipeDatabase
 import com.kronos.skilletapp.navigation.LocalNavController
 import com.kronos.skilletapp.navigation.LocalNavigationActions
 import com.kronos.skilletapp.navigation.SkilletNavGraph
 import com.kronos.skilletapp.navigation.SkilletNavigationActions
+import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
-import kotlinx.coroutines.flow.MutableSharedFlow
-import org.koin.androidx.compose.KoinAndroidContext
+import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
+import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
+import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
+import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.compose.KoinApplication
+import org.koin.core.module.dsl.*
+import org.koin.dsl.module
 
 class MainActivity : ComponentActivity() {
 
@@ -38,7 +52,13 @@ class MainActivity : ComponentActivity() {
 
     setContent {
       SkilletAppTheme {
-        KoinAndroidContext {
+        KoinApplication(
+          application = {
+            androidLogger()
+            androidContext(this@MainActivity)
+            modules(appModule)
+          }
+        ) {
           val navController = rememberNavController()
           val navActions = remember(navController) { SkilletNavigationActions(navController) }
 
@@ -72,4 +92,41 @@ class MainActivity : ComponentActivity() {
       }
     }
   }
+}
+
+val appModule = module {
+//  single { IngredientAiParser(androidContext()) }
+
+  single {
+    Room.databaseBuilder(
+      context = androidContext(),
+      klass = RecipeDatabase::class.java,
+      name = "recipes.db"
+    ).build()
+  } withOptions {
+    createdAtStart()
+  }
+
+  single { get<RecipeDatabase>().recipeDao() } withOptions {
+    createdAtStart()
+  }
+
+  singleOf(::RecipeRepository) {
+    createdAtStart()
+  }
+
+  singleOf(::IngredientParser)
+  factoryOf(::RecipeScraper)
+  single<ImageLoader> {
+    ImageLoader.Builder(androidContext())
+      .crossfade(true)
+      .build()
+  } withOptions {
+    createdAtStart()
+  }
+
+  viewModelOf(::RecipeListViewModel)
+  viewModelOf(::RecipeViewModel)
+  viewModelOf(::AddEditRecipeViewModel)
+  viewModelOf(::CookingViewModel)
 }
