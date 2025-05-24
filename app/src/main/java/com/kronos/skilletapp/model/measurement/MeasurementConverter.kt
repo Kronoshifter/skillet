@@ -1,17 +1,14 @@
 package com.kronos.skilletapp.model.measurement
 
-import com.kronos.skilletapp.model.measurement.MeasurementUnit.None.baseUnit
-import com.kronos.skilletapp.utils.mutateIf
 import com.kronos.skilletapp.utils.mutateUnless
-import kotlin.div
 
 class MeasurementConverter(
   val ratio: MeasurementRatio
 ) {
-  fun convert(quantity: Float): Measurement = convert(quantity, ratio)
-  fun reverse(quantity: Float): Measurement = convert(quantity, ratio.invert())
+  infix fun convert(quantity: Float): Measurement = convert(quantity, ratio)
+  infix fun reverse(quantity: Float): Measurement = convert(quantity, ratio.invert())
 
-  private fun convert(quantity: Float, ratio: MeasurementRatio) = with(ratio) { Measurement(quantity * decimal, right.unit) }
+  private fun convert(quantity: Float, ratio: MeasurementRatio) = ratio.run { Measurement(quantity * decimal, right.unit) }
 
   val from get() = ratio.left.unit
   val to get() = ratio.right.unit
@@ -62,19 +59,16 @@ class MeasurementConverter(
 
 private fun MeasurementUnit.baseConverter(baseUnitQuantity: Number): MeasurementConverter = converter { (1 of this@baseConverter) to (baseUnitQuantity of baseUnit) }
 
-fun MeasurementUnit.isBaseUnit(): Boolean = this == baseUnit
+fun converter(builder: MeasurementConverter.Builder.() -> Unit): MeasurementConverter = MeasurementConverter.Builder().apply(builder).build()
 
-fun converter(builder: MeasurementConverter.Builder.() -> Unit): MeasurementConverter {
-  return MeasurementConverter.Builder().apply(builder).build()
-}
+@MeasurementUnitConverterDsl
+infix fun MeasurementConverter.convert(block: context(MeasurementConversionScope, MeasurementConverter) () -> Measurement): Measurement = MeasurementConversionScope.run { block() }
 
-fun withConverter(converter: MeasurementConverter, block: MeasurementConversionScope.() -> Measurement): Measurement {
-  return MeasurementConversionScopeImpl(converter).block()
-}
+@MeasurementUnitConverterDsl
+fun convert(block: context(MeasurementConversionScope) () -> MeasurementUnitConversion): MeasurementUnitConversion = MeasurementConversionScope.run { block() }
 
-fun withConverter(builder: MeasurementConverter.Builder.() -> Unit, block: MeasurementConversionScope.() -> Measurement): Measurement {
-  return withConverter(converter(builder), block)
-}
+@MeasurementUnitConverterDsl
+infix fun MeasurementUnitConversion.using(builder: MeasurementConverter.Builder.() -> Unit): Measurement = converter { builder() } convert { from convertTo to }
 
 infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
   require(unit hasSameDimensionAs to) {
@@ -83,10 +77,26 @@ infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
 
   if (to.isBaseUnit()) return convertToBaseUnit()
 
-  return withConverter(
-    converter { unit to to }
-  ) {
-    this@convertTo convertTo to
+  return convert { this to to } using { unit to to }
+}
+
+infix fun Measurement.convertTo(to: Measurement): Measurement {
+  val converter = if (unit hasSameDimensionAs to.unit) {
+    converter { unit to to.unit }
+  } else {
+    converter { this@convertTo to to }
+  }
+
+  return converter convert {
+    this@convertTo convertTo to.unit
+  }
+}
+
+infix fun Measurement.convertBy(block: MeasurementConverter.Builder.() -> Unit): Measurement {
+  return converter(block).let { converter ->
+    converter convert {
+      this@convertBy convertTo converter.ratio.right.unit
+    }
   }
 }
 
@@ -97,30 +107,52 @@ fun Measurement.convertToBaseUnit(): Measurement {
     "No base unit converter found for ${unit.name}"
   }
 
-  return withConverter(converter) {
+  return converter convert {
     this@convertToBaseUnit convertTo unit.baseUnit
   }
 }
 
-infix fun Measurement.convertTo(to: Measurement): Measurement {
-  val converter = if (unit hasSameDimensionAs to.unit) {
-    converter { unit to to.unit }
+object MeasurementConversionScope
+
+@MeasurementUnitConverterDsl
+context(_: MeasurementConversionScope, converter: MeasurementConverter)
+infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
+  val left = converter.ratio.left.unit
+  val right = converter.ratio.right.unit
+
+  require(unit hasSameDimensionAs left) {
+    """
+        First unit in converter block must measure the same dimension as the measurement to be converted, if necessary chain calls
+        Measurement to be converted: $this
+        First measurement: ${converter.ratio.left}
+      """.trimIndent()
+  }
+
+  require(to hasSameDimensionAs right) {
+    """
+        Second unit in converter block must measure the same dimension unit to be converted to, if necessary chain calls
+        Unit to be converted to: $this
+        Second measurement: ${converter.ratio.right}
+      """.trimIndent()
+  }
+
+  return if (unit == left && to == right) {
+    this convertWith converter
   } else {
-    converter { this@convertTo to to }
-  }
-
-  return withConverter(converter) {
-    this@convertTo convertTo to.unit
+    this convertTo left convertWith converter convertTo to
   }
 }
 
-infix fun Measurement.convertBy(block: MeasurementConverter.Builder.() -> Unit): Measurement {
-  val converter = converter(block)
+context(_: MeasurementConversionScope)
+private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
 
-  return withConverter(converter) {
-    this@convertBy convertTo converter.ratio.right.unit
-  }
-}
+context(_: MeasurementConversionScope)
+private infix fun Measurement.reverseWith(converter: MeasurementConverter) = converter.reverse(quantity)
+
+data class MeasurementUnitConversion(val from: Measurement, val to: MeasurementUnit)
+
+context(_: MeasurementConversionScope)
+infix fun Measurement.to(to: MeasurementUnit): MeasurementUnitConversion = MeasurementUnitConversion(this, to)
 
 @MeasurementUnitConverterDsl
 class RatioBuilder {
@@ -148,7 +180,6 @@ class RatioBuilder {
 
 sealed interface MeasurementRatio {
   val decimal: Float
-
   val left: Measurement
   val right: Measurement
 
@@ -194,43 +225,6 @@ sealed interface MeasurementRatio {
 
     override fun invert() = None
   }
-}
-
-@MeasurementUnitConverterDsl
-interface MeasurementConversionScope {
-  infix fun Measurement.convertTo(to: MeasurementUnit): Measurement
-}
-
-private class MeasurementConversionScopeImpl(val converter: MeasurementConverter) : MeasurementConversionScope {
-  override fun Measurement.convertTo(to: MeasurementUnit): Measurement {
-    require(unit hasSameDimensionAs converter.ratio.left.unit) {
-      """
-        First unit in converter block must measure the same dimension as the measurement to be converted, if necessary chain calls
-        Measurement to be converted: $this
-        First measurement: ${converter.ratio.left}
-      """.trimIndent()
-    }
-
-    require(to hasSameDimensionAs converter.ratio.right.unit) {
-      """
-        Second unit in converter block must measure the same dimension unit to be converted to, if necessary chain calls
-        Unit to be converted to: $this
-        Second measurement: ${converter.ratio.right}
-      """.trimIndent()
-    }
-
-    val left = converter.ratio.left.unit
-    val right = converter.ratio.right.unit
-
-    return if (unit == left && to == right) {
-      this convertWith converter
-    } else {
-      this convertTo left convertWith converter convertTo to
-    }
-  }
-
-  private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
-  private infix fun Measurement.reverseWith(converter: MeasurementConverter) = converter.reverse(quantity)
 }
 
 @DslMarker

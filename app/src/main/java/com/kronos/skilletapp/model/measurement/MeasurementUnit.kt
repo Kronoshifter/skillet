@@ -1,5 +1,7 @@
 package com.kronos.skilletapp.model.measurement
 
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.toResultOr
 import com.kronos.skilletapp.model.IngredientType.Dry
 import com.kronos.skilletapp.model.IngredientType.Wet
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -11,24 +13,27 @@ import kotlinx.serialization.json.JsonClassDiscriminator
 sealed interface MeasurementDimension {
   val baseUnit: MeasurementUnit
 
-  interface Mass : MeasurementDimension {
+  data object Mass : MeasurementDimension {
     override val baseUnit: MeasurementUnit.Mass
       get() = MeasurementUnit.Gram
   }
 
-  interface Volume : MeasurementDimension {
+  data object Volume : MeasurementDimension {
     override val baseUnit: MeasurementUnit.Volume
       get() = MeasurementUnit.Milliliter
   }
 
-  interface None : MeasurementDimension
+  data object None : MeasurementDimension {
+    override val baseUnit: MeasurementUnit.None
+      get() = MeasurementUnit.None
+  }
 }
 
 @Serializable
 sealed interface MeasurementSystem {
-  interface Metric : MeasurementSystem
-  interface UsCustomary : MeasurementSystem
-  interface None : MeasurementSystem
+  data object Metric : MeasurementSystem
+  data object UsCustomary : MeasurementSystem
+  data object None : MeasurementSystem
 }
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -40,7 +45,8 @@ sealed interface MeasurementUnit {
   val aliases: List<String> //TODO: potentially replace aliases here with lookup table
   val normalizationLow: Float
   val normalizationHigh: Float
-  val baseUnit: MeasurementUnit
+  val dimension: MeasurementDimension
+  val system: MeasurementSystem
 
   @Serializable
   @SerialName("mass")
@@ -50,9 +56,9 @@ sealed interface MeasurementUnit {
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit, MeasurementDimension.Mass {
-    override val baseUnit: Mass
-      get() = Gram
+  ) : MeasurementUnit {
+    override val dimension: MeasurementDimension.Mass
+      get() = MeasurementDimension.Mass
   }
 
   @Serializable
@@ -63,16 +69,16 @@ sealed interface MeasurementUnit {
     override val aliases: List<String>,
     override val normalizationLow: Float,
     override val normalizationHigh: Float,
-  ) : MeasurementUnit, MeasurementDimension.Volume {
-    override val baseUnit: Volume
-      get() = Milliliter
+  ) : MeasurementUnit {
+    override val dimension: MeasurementDimension.Volume
+      get() = MeasurementDimension.Volume
   }
 
   @Serializable
   @SerialName("custom")
   data class Custom(
     override val name: String
-  ) : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
+  ) : MeasurementUnit {
     override val abbreviation: String
       get() = name
     override val aliases: List<String>
@@ -81,14 +87,15 @@ sealed interface MeasurementUnit {
       get() = 0f
     override val normalizationHigh: Float
       get() = Float.POSITIVE_INFINITY
-
-    override val baseUnit: MeasurementUnit
-      get() = this
+    override val dimension: MeasurementDimension.None
+      get() = MeasurementDimension.None
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.None
   }
 
   @Serializable
   @SerialName("none")
-  data object None : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
+  data object None : MeasurementUnit {
     override val name: String
       get() = "none"
     override val abbreviation: String
@@ -99,9 +106,10 @@ sealed interface MeasurementUnit {
       get() = 0f
     override val normalizationHigh: Float
       get() = Float.POSITIVE_INFINITY
-
-    override val baseUnit: MeasurementUnit
-      get() = this
+    override val dimension: MeasurementDimension.None
+      get() = MeasurementDimension.None
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.None
   }
 
   // Volume
@@ -116,7 +124,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("mL"),
     normalizationLow = 0f,
     normalizationHigh = 1000f,
-  ), MeasurementSystem.Metric
+  ) {
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.Metric
+  }
 
   @Serializable
   @SerialName("liter")
@@ -126,7 +137,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("L"),
     normalizationLow = 0.5f,
     normalizationHigh = Float.POSITIVE_INFINITY,
-  ), MeasurementSystem.Metric
+  ) {
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.Metric
+  }
 
   //// US Customary
 
@@ -138,7 +152,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("pinch"),
     normalizationLow = 0f,
     normalizationHigh = 2f,
-  ), MeasurementSystem.UsCustomary
+  ) {
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("dash")
@@ -148,7 +165,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("dash"),
     normalizationLow = 0.5f,
     normalizationHigh = 2f,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("teaspoon")
@@ -158,7 +178,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("tsp", "t", "teaspoons"),
     normalizationLow = 0.25f,
     normalizationHigh = 3f,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("tablespoon")
@@ -168,7 +191,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("tbsp", "Tbsp", "T", "tbs", "Tbs", "tablespoons", "Tablespoons"),
     normalizationLow = 0.334f,
     normalizationHigh = 4f,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("cup")
@@ -178,7 +204,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("cup", "c", "C", "cups"),
     normalizationLow = 0.25f,
     normalizationHigh = Float.POSITIVE_INFINITY,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("pint")
@@ -188,7 +217,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("pt", "pints", "Pint"),
     normalizationLow = 0.5f,
     normalizationHigh = 2f,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("quart")
@@ -198,7 +230,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("qt", "quarts", "Quart"),
     normalizationLow = 0.5f,
     normalizationHigh = 4f,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("gallon")
@@ -208,7 +243,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("gal", "gallons", "Gallon"),
     normalizationLow = 0.25f,
     normalizationHigh = Float.POSITIVE_INFINITY,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("fluid_ounce")
@@ -218,7 +256,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("fl oz"),
     normalizationLow = 0.5f,
     normalizationHigh = 8f,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   // Mass
 
@@ -232,7 +273,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("g", "grams"),
     normalizationLow = 0f,
     normalizationHigh = 1000f,
-  ), MeasurementSystem.Metric
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.Metric
+  }
 
   @Serializable
   @SerialName("kilogram")
@@ -242,7 +286,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("kg", "kilograms"),
     normalizationLow = 0.5f,
     normalizationHigh = Float.POSITIVE_INFINITY,
-  ), MeasurementSystem.Metric
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.Metric
+  }
 
   //// Standard
 
@@ -254,7 +301,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("oz", "ounces", "Ounce"),
     normalizationLow = 0f,
     normalizationHigh = 16f,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   @Serializable
   @SerialName("pound")
@@ -264,7 +314,10 @@ sealed interface MeasurementUnit {
     aliases = listOf("lb", "lbs", "pounds", "Pound"),
     normalizationLow = 0.5f,
     normalizationHigh = Float.POSITIVE_INFINITY,
-  ), MeasurementSystem.UsCustomary
+  ){
+    override val system: MeasurementSystem
+      get() = MeasurementSystem.UsCustomary
+  }
 
   companion object {
     val values: List<MeasurementUnit> by lazy {
@@ -328,3 +381,20 @@ sealed interface MeasurementUnit {
     } ?: None
   }
 }
+
+val MeasurementUnit.baseUnit get() = dimension.baseUnit
+
+infix fun MeasurementUnit.hasSameDimensionAs(other: MeasurementUnit) = dimension == other.dimension
+infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit) = system == other.system
+
+fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
+  val filtered = MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
+  return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr { }
+}
+
+fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
+  val filtered = MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
+  return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr { }
+}
+
+fun MeasurementUnit.isBaseUnit(): Boolean = this == baseUnit

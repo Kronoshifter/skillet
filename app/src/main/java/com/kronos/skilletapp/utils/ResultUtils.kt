@@ -18,7 +18,7 @@ inline infix fun <V, E> Result<V, E>.guard(onGuard: (E) -> Unit): V {
   }
 
   onFailure(onGuard)
-  require(isOk) { "guard can only return Ok, ensure that onGuard stops execution" }
+  check(isOk) { "guard can only return Ok, ensure that onGuard stops execution" }
 
   return value
 }

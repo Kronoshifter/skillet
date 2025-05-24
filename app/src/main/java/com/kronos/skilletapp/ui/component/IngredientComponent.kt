@@ -3,7 +3,6 @@ package com.kronos.skilletapp.ui.component
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -29,13 +28,13 @@ import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.model.measurement.convertTo
 import com.kronos.skilletapp.model.measurement.hasSameDimensionAs
+import com.kronos.skilletapp.model.measurement.normalized
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
-import kotlinx.coroutines.launch
 
 @Composable
 fun IngredientRow(
@@ -240,7 +239,7 @@ fun IngredientPill(
         Box(
           modifier = Modifier
             .onPlaced {
-              minWidth = with(density) {
+              minWidth = density.run {
                 it.size.height.toDp()
               }
             }

@@ -1,14 +1,9 @@
 package com.kronos.skilletapp.model.measurement
 
-import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.expect
-import com.github.michaelbull.result.toResultOr
 import com.kronos.skilletapp.utils.fraction
-import com.kronos.skilletapp.utils.haveSameTypes
 import com.kronos.skilletapp.utils.nearestEighth
-import com.kronos.skilletapp.utils.roundToEighth
 import kotlinx.serialization.Serializable
-import kotlin.math.absoluteValue
 
 @Serializable
 data class Measurement(
@@ -50,35 +45,17 @@ data class Measurement(
     }
   }
 
+  fun scale(factor: Float) = copy(quantity = quantity * factor)
+
   override fun toString(): String {
-    return when (unit) {
+    return when (unit.system) {
       is MeasurementSystem.Metric -> "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
       else -> "${quantity.fraction.roundToNearestFraction().reduce()} ${unit.name}"
     }
   }
 
-  fun scale(factor: Float) = copy(quantity = quantity * factor)
-
-  fun normalized(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
-    var normalized = copy()
-
-    while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
-      with(normalized) {
-        if (quantity <= unit.normalizationLow) {
-          normalized = normalized convertTo unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
-        } else if (quantity >= unit.normalizationHigh) {
-          normalized = normalized convertTo unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
-        }
-      }
-    }
-
-    return normalized
-  }
-
-  fun roundToEighth() = copy(quantity = quantity.nearestEighth)
-
   val displayQuantity
-    get() = when (unit) {
+    get() = when (unit.system) {
       is MeasurementSystem.Metric -> quantity.toString().take(4).removeSuffix(".")
       else -> quantity.fraction.roundToNearestFraction().reduce().toDisplayString()
     }
@@ -88,19 +65,24 @@ data class Measurement(
   }
 }
 
-fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
-  return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr { }
+fun Measurement.roundToEighth() = copy(quantity = quantity.nearestEighth)
+fun Measurement.normalized(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
+  var normalized = copy()
+
+  while (normalized.quantity !in normalized.unit.normalizationLow ..< normalized.unit.normalizationHigh) {
+    with(normalized) {
+      if (quantity <= unit.normalizationLow) {
+        normalized = normalized convertTo unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
+      } else if (quantity >= unit.normalizationHigh) {
+        normalized = normalized convertTo unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
+      }
+    }
+  }
+
+  return normalized
 }
 
-fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
-  val filtered = MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
-  return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr { }
-}
-
-infix fun MeasurementUnit.hasSameDimensionAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementDimension::class.nestedClasses.toTypedArray())
-infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit) = (this to other).haveSameTypes(*MeasurementSystem::class.nestedClasses.toTypedArray())
-infix fun Number.of(unit: MeasurementUnit): Measurement = Measurement(this.toFloat(), unit)
+infix fun Number.of(unit: MeasurementUnit): Measurement = Measurement(toFloat(), unit)
 fun Measurement.isNone() = this == Measurement.None
 fun Measurement.isNotNone() = !isNone()
 
