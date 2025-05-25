@@ -277,7 +277,7 @@ class AddEditRecipeViewModel(
   }
 
   private fun createRecipe() = viewModelScope.launch {
-    createdId = with(_recipeState.value) {
+    createdId = _recipeState.value.run {
       recipeRepository.createRecipe(
         name = name,
         description = description,
@@ -305,7 +305,7 @@ class AddEditRecipeViewModel(
     }
 
     viewModelScope.launch {
-      with(_recipeState.value) {
+      _recipeState.value.run {
         recipeRepository.updateRecipe(
           id = recipeId,
           name = name,
@@ -389,7 +389,7 @@ class AddEditRecipeViewModel(
     }
   }
 
-  private fun validateForm(): Result<RecipeState, InvalidFormError> = with(_recipeState.value) {
+  private fun validateForm(): Result<RecipeState, InvalidFormError> = _recipeState.value.run {
     return when {
       name.isBlank() -> InvalidFormError("Name cannot be blank").err()
       ingredients.isEmpty() -> InvalidFormError("At least one ingredient is required").err()

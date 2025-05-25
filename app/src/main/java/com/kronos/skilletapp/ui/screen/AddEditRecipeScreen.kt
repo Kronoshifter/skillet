@@ -59,6 +59,7 @@ import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.skilletapp.model.measurement.normalized
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.DisableRipple
@@ -1327,7 +1328,7 @@ fun InstructionComponent(
 
           IconButton(
             onClick = {},
-            modifier = with(reorderScope) {
+            modifier = reorderScope.run {
               Modifier
                 .wrapContentWidth(Alignment.End)
                 .draggableHandle(
@@ -1586,7 +1587,7 @@ private fun IngredientQuantity(ingredient: Ingredient) {
   Box(
     modifier = Modifier
       .onPlaced {
-        minWidth = with(density) {
+        minWidth = density.run {
           it.size.height.toDp()
         }
       }
@@ -1710,7 +1711,7 @@ fun IngredientsTabPreview() {
             ingredients.remove(it)
           },
           onMoveIngredient = { from, to ->
-            with(ingredients) {
+            ingredients.run {
               add(to, removeAt(from))
             }
           },

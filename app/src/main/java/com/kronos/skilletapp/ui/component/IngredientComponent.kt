@@ -49,7 +49,7 @@ fun IngredientRow(
   onLongClick: () -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-  val measurement = with(ingredient.measurement.scale(scale)) {
+  val measurement = ingredient.measurement.scale(scale).run {
     selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
   }
 
@@ -220,7 +220,7 @@ fun IngredientPill(
     borderColor = borderColor,
     leadingContent = {
       if (ingredient.measurement.quantity > 0) {
-        val measurement = with(ingredient.measurement.scale(scale)) {
+        val measurement = ingredient.measurement.scale(scale).run {
           selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
         }
 

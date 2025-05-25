@@ -70,7 +70,7 @@ fun Measurement.normalized(filter: ((MeasurementUnit) -> Boolean)? = null): Meas
   var normalized = copy()
 
   while (normalized.quantity !in normalized.unit.normalizationLow ..< normalized.unit.normalizationHigh) {
-    with(normalized) {
+    normalized.run {
       if (quantity <= unit.normalizationLow) {
         normalized = normalized convertTo unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
       } else if (quantity >= unit.normalizationHigh) {

@@ -485,7 +485,7 @@ private fun ScalingControls(
         AnnotatedString("00 servings"),
         style = LocalTextStyle.current
       )
-      val textWidth = with(LocalDensity.current) {
+      val textWidth = LocalDensity.current.run {
         result.size.width.toDp()
       }
 

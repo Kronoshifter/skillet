@@ -125,7 +125,7 @@ infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
         First unit in converter block must measure the same dimension as the measurement to be converted, if necessary chain calls
         Measurement to be converted: $this
         First measurement: ${converter.ratio.left}
-      """.trimIndent()
+    """.trimIndent()
   }
 
   require(to hasSameDimensionAs right) {
@@ -133,7 +133,7 @@ infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
         Second unit in converter block must measure the same dimension unit to be converted to, if necessary chain calls
         Unit to be converted to: $this
         Second measurement: ${converter.ratio.right}
-      """.trimIndent()
+    """.trimIndent()
   }
 
   return if (unit == left && to == right) {
