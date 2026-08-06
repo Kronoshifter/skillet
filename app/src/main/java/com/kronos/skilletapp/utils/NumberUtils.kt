@@ -14,30 +14,16 @@ import kotlin.math.*
 fun Double.roundToEighth() = (this * 8.0).roundToInt() / 8.0
 fun Double.roundToThird() = (this * 3.0).roundToInt() / 3.0
 
-fun Float.roundToEighth() = (this * 8f).roundToInt() / 8f
-fun Float.roundToThird() = (this * 3f).roundToInt() / 3f
+fun Float.roundToNth(n: Number) = (this * n.toFloat()).roundToInt() / n.toFloat()
 
-fun Double.roundToNearestFraction(): Double {
-  val eighthDiff = abs(this - roundToEighth())
-  val thirdDiff = abs(this - roundToThird())
-  return if (eighthDiff < thirdDiff) {
-    roundToEighth()
-  } else {
-    roundToThird()
-  }
-}
+val Float.nearestEighth get() = roundToNth(8)
+val Float.nearestThird get() = roundToNth(3)
 
-fun Double.toFraction(): Fraction {
-  val numerator = (this * 1000).toInt()
-  val denominator = 1000
-  return Fraction(numerator, denominator).reduce()
-}
+val Double.fraction
+  get() = this.toFloat().fraction
 
-fun Float.toFraction(): Fraction {
-  val numerator = (this * 1000).toInt()
-  val denominator = 1000
-  return Fraction(numerator, denominator).reduce()
-}
+val Float.fraction
+  get() = Fraction((this * 1000).toInt(), 1000).reduce()
 
 fun Double.roundToSignificantFigures(places: Int) = toBigDecimal().round(MathContext(places, RoundingMode.HALF_UP)).toDouble()
 

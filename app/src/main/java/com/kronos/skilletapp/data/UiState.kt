@@ -1,5 +1,7 @@
 package com.kronos.skilletapp.data
 
+import com.kronos.skilletapp.model.SkilletError
+
 sealed interface UiState<out T> {
   data object Loading : UiState<Nothing>
   data object Loaded : UiState<Nothing>

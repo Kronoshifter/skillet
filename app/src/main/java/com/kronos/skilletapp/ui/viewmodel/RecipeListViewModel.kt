@@ -8,11 +8,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.navigation.toRoute
+import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.navigation.SharedRecipe
 import com.kronos.skilletapp.data.RecipeRepository
-import com.kronos.skilletapp.data.SkilletError
 import com.kronos.skilletapp.data.UiState
+import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.ui.saverOf
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
@@ -54,7 +55,10 @@ class RecipeListViewModel(
     .map { UiState.LoadedWithData(it) }
     .catch<UiState<List<Recipe>>> {
       Log.e("RecipeListViewModel", "Error loading recipes", it)
-      emit(UiState.Error(SkilletError("Error loading recipes")))
+      val error = when(it) {
+        else -> RecipeCouldNotBeLoadedError("Could not load recipes")
+      }
+      emit(UiState.Error(error))
     }
 
   val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
@@ -69,7 +73,7 @@ class RecipeListViewModel(
           )
         )
 
-        else -> UiState.Error(SkilletError("UiState.Loaded should not be used here"))
+        else -> UiState.Error(UsedLoadedWhereYouShouldntError)
       }
     }
   }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)

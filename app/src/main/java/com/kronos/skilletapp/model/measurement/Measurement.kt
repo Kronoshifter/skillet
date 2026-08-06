@@ -3,9 +3,10 @@ package com.kronos.skilletapp.model.measurement
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.toResultOr
+import com.kronos.skilletapp.utils.fraction
 import com.kronos.skilletapp.utils.haveSameTypes
+import com.kronos.skilletapp.utils.nearestEighth
 import com.kronos.skilletapp.utils.roundToEighth
-import com.kronos.skilletapp.utils.toFraction
 import kotlinx.serialization.Serializable
 import kotlin.math.absoluteValue
 
@@ -52,7 +53,7 @@ data class Measurement(
   override fun toString(): String {
     return when (unit) {
       is MeasurementSystem.Metric -> "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
-      else -> "${quantity.toFraction().roundToNearestFraction().reduce()} ${unit.name}"
+      else -> "${quantity.fraction.roundToNearestFraction().reduce()} ${unit.name}"
     }
   }
 
@@ -74,12 +75,12 @@ data class Measurement(
     return normalized
   }
 
-  fun roundToEighth() = copy(quantity = quantity.roundToEighth())
+  fun roundToEighth() = copy(quantity = quantity.nearestEighth)
 
   val displayQuantity
     get() = when (unit) {
       is MeasurementSystem.Metric -> quantity.toString().take(4).removeSuffix(".")
-      else -> quantity.toFraction().roundToNearestFraction().reduce().toDisplayString()
+      else -> quantity.fraction.roundToNearestFraction().reduce().toDisplayString()
     }
 
   companion object {

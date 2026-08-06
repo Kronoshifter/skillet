@@ -2,6 +2,8 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -30,9 +32,10 @@ import com.kronos.skilletapp.model.measurement.hasSameDimensionAs
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.utils.Fraction
+import com.kronos.skilletapp.utils.fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
-import com.kronos.skilletapp.utils.toFraction
+import kotlinx.coroutines.launch
 
 @Composable
 fun IngredientRow(
@@ -40,6 +43,7 @@ fun IngredientRow(
   modifier: Modifier = Modifier,
   scale: Float = 1f,
   selectedUnit: MeasurementUnit? = null,
+  showSelection: Boolean = true,
   enabled: Boolean = true,
   checked: Boolean = false,
   onClick: () -> Unit = {},
@@ -50,11 +54,16 @@ fun IngredientRow(
     selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
   }
 
+  val transition = updateTransition(checked, label = "Checked")
+
   val bgColor by animateColorAsState(
     targetValue = if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
     animationSpec = if (checked) tween(durationMillis = 220, delayMillis = 120) else tween(durationMillis = 90),
     label = "Background Color"
   )
+
+  val detailBackgroundColor = MaterialTheme.colorScheme.primaryContainer
+  val detailContentColor = contentColorFor(detailBackgroundColor)
 
   ItemRow(
     modifier = Modifier
@@ -64,10 +73,9 @@ fun IngredientRow(
       .clip(MaterialTheme.shapes.medium)
       .then(modifier),
     showDetail = measurement.quantity > 0 || checked,
+    detailBackgroundColor = detailBackgroundColor,
     detail = {
-      AnimatedContent(
-        targetState = checked,
-        label = "Detail Box",
+      transition.AnimatedContent(
         transitionSpec = {
           fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 120)) togetherWith
           fadeOut(animationSpec = tween(durationMillis = 90))
@@ -77,7 +85,7 @@ fun IngredientRow(
           Icon(
             imageVector = Icons.Default.Check,
             contentDescription = "Checked",
-            tint = MaterialTheme.colorScheme.onPrimary,
+            tint = detailContentColor,
           )
         } else {
           val quantity = measurement.displayQuantity
@@ -89,7 +97,7 @@ fun IngredientRow(
           ) {
             Text(
               text = quantity,
-              color = MaterialTheme.colorScheme.onPrimary,
+              color = detailContentColor,
               fontSize = 18.sp,
               modifier = Modifier
                 .applyUnless(measurement.unit is MeasurementUnit.None) {
@@ -100,7 +108,7 @@ fun IngredientRow(
             if (measurement.unit !is MeasurementUnit.None) {
               Text(
                 text = measurement.unit.abbreviation,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = detailContentColor,
                 fontSize = 12.sp
               )
             }
@@ -109,7 +117,7 @@ fun IngredientRow(
       }
 
     },
-    decoration = selectedUnit != null,
+    decoration = selectedUnit != null && showSelection,
     enabled = enabled,
     onClick = onClick,
     onLongClick = onLongClick,
@@ -149,7 +157,7 @@ fun IngredientListItem(
   val measurements = MeasurementUnit.values
     .filter { it hasSameDimensionAs ingredient.measurement.unit }
     .map { ingredient.measurement.convertTo(it).scale(scale) }
-    .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+    .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -200,14 +208,16 @@ fun IngredientPill(
   val measurements = MeasurementUnit.values
     .filter { it hasSameDimensionAs ingredient.measurement.unit }
     .map { ingredient.measurement.convertTo(it).scale(scale) }
-    .filter { it.quantity.toFraction().roundToNearestFraction().reduce() > Fraction(1, 8) }
+    .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
 
-  val borderColor =
-    selectedUnit?.let { MaterialTheme.colorScheme.onSecondaryContainer } ?: MaterialTheme.colorScheme.primary
+  val bgColor = MaterialTheme.colorScheme.primaryContainer
+  val contentColor = contentColorFor(bgColor)
+  val borderColor = selectedUnit?.let { contentColor } ?: bgColor
 
   ItemPill(
     enabled = measurements.isNotEmpty(),
     onClick = { showBottomSheet = true },
+    color = bgColor,
     borderColor = borderColor,
     leadingContent = {
       if (ingredient.measurement.quantity > 0) {
@@ -239,7 +249,6 @@ fun IngredientPill(
         ) {
           Text(
             text = quantity,
-            color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp,
             modifier = Modifier
               .padding(8.dp)

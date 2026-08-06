@@ -1,7 +1,9 @@
 package com.kronos.skilletapp.scraping
 
 import com.github.michaelbull.result.*
-import com.kronos.skilletapp.data.SkilletError
+import com.kronos.skilletapp.model.InvalidHtmlError
+import com.kronos.skilletapp.model.JsonParseError
+import com.kronos.skilletapp.model.RecipeScrapeError
 import it.skrape.core.htmlDocument
 import it.skrape.fetcher.AsyncFetcher
 import it.skrape.fetcher.HttpFetcher
@@ -44,15 +46,15 @@ data class RecipeScrape(
 
 class RecipeScraper {
 
-  suspend fun scrapeRecipe(url: String): Result<RecipeScrape, SkilletError> {
+  suspend fun scrapeRecipe(url: String): Result<RecipeScrape, RecipeScrapeError> {
     return scrapeJsonLd(url)
   }
 
-  private suspend fun scrapeJsonLd(url: String): Result<RecipeScrape, SkilletError> = extractJsonLd(url)
+  private suspend fun scrapeJsonLd(url: String): Result<RecipeScrape, RecipeScrapeError> = extractJsonLd(url)
     .andThen { parseToJson(it) }
     .andThen { parseToScrape(it) }
 
-  private suspend fun extractJsonLd(recipeUrl: String): Result<String, SkilletError> = skrape(AsyncFetcher) {
+  private suspend fun extractJsonLd(recipeUrl: String): Result<String, RecipeScrapeError> = skrape(AsyncFetcher) {
     request {
       url = recipeUrl
     }
@@ -68,21 +70,21 @@ class RecipeScraper {
         }
       }
     }.mapError {
-      SkilletError("Failed to extract JSON-LD from $recipeUrl")
+      InvalidHtmlError("Failed to extract JSON-LD from $recipeUrl")
     }
   }
 
-  private fun parseToJson(input: String): Result<JsonElement, SkilletError> {
+  private fun parseToJson(input: String): Result<JsonElement, RecipeScrapeError> {
     return runCatching {
       Json.parseToJsonElement(input)
     }.mapError {
-      SkilletError("Error parsing JSON: ${it.message}")
+      JsonParseError("Error parsing JSON: ${it.message}")
     }.andThen { element ->
       val recipeJson = element.findJson("Recipe")
       val websiteJson = element.findJson("WebSite")
 
       recipeJson.toResultOr {
-        SkilletError("Failed to find recipe JSON")
+        InvalidHtmlError("Failed to find recipe JSON")
       }.map { recipe ->
         buildJsonObject {
           put("recipe", recipe)
@@ -93,14 +95,11 @@ class RecipeScraper {
   }
 
   private fun JsonElement.findJson(key: String): JsonElement? =
-    if (this is JsonObject && "@type" in this && this.getValue("@type") isOrContains key) {
-      this
-    } else if (this is JsonObject && key !in this) {
-      this.firstNotNullOfOrNull { it.value.findJson(key) }
-    } else if (this is JsonArray) {
-      this.firstNotNullOfOrNull { it.findJson(key) }
-    } else {
-      null
+    when {
+      this is JsonObject && "@type" in this && this.getValue("@type") isOrContains key -> this
+      this is JsonObject && key !in this -> this.firstNotNullOfOrNull { it.value.findJson(key) }
+      this is JsonArray -> this.firstNotNullOfOrNull { it.findJson(key) }
+      else -> null
     }
 
   private infix fun JsonElement.isOrContains(s: String): Boolean = when (this) {
@@ -109,16 +108,16 @@ class RecipeScraper {
     else -> false
   }
 
-  private fun parseToScrape(element: JsonElement): Result<RecipeScrape, SkilletError> {
+  private fun parseToScrape(element: JsonElement): Result<RecipeScrape, RecipeScrapeError> {
     val json = Json { ignoreUnknownKeys = true }
     return runCatching {
       json.decodeFromJsonElement<RecipeScrape>(element)
     }.mapError {
-      SkilletError("Failed to parse JSON-LD: ${it.message}")
+      JsonParseError("Failed to parse JSON-LD: ${it.message}")
     }
   }
 
-  private fun scrapeMicrodata(recipeUrl: String): Result<RecipeHtml, SkilletError> = skrape(HttpFetcher) {
+  private fun scrapeMicrodata(recipeUrl: String): Result<RecipeHtml, RecipeScrapeError> = skrape(HttpFetcher) {
     request {
       url = recipeUrl
     }
@@ -146,6 +145,6 @@ class RecipeScraper {
           )
         }
       }
-    }.mapError { SkilletError("Failed to scrape microdata: ${it.message}") }
+    }.mapError { InvalidHtmlError("Failed to scrape microdata: ${it.message}") }
   }
 }

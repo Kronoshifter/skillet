@@ -5,21 +5,28 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.mapBoth
-import com.kronos.skilletapp.navigation.Route
+import com.github.michaelbull.result.onFailure
+import com.kronos.skilletapp.model.InvalidFormError
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.utils.err
+import com.kronos.skilletapp.utils.ok
+import com.kronos.skilletapp.model.Equipment
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.RecipeScrape
 import com.kronos.skilletapp.scraping.RecipeScraper
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.first
-import kotlin.collections.map
 import kotlin.time.Duration
 
 data class RecipeState(
@@ -31,6 +38,7 @@ data class RecipeState(
   val cookTime: Int = 0,
   val source: String = "",
   val sourceName: String = "",
+  val image: String? = null,
   val ingredients: List<Ingredient> = emptyList(),
   val instructions: List<Instruction> = emptyList(),
   val equipment: List<Equipment> = emptyList(),
@@ -70,10 +78,8 @@ class AddEditRecipeViewModel(
   }
 
   fun saveRecipe() {
-    checkForInvalidForm()?.let { msg ->
-      _recipeState.update {
-        it.copy(userMessage = msg)
-      }
+    validateForm() onFailure { error ->
+      _recipeState.update { it.copy(userMessage = error.message) }
       return
     }
 
@@ -92,56 +98,63 @@ class AddEditRecipeViewModel(
     _recipeState.update {
       it.copy(name = name)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateDescription(description: String) {
     _recipeState.update {
       it.copy(description = description)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateNotes(notes: String) {
     _recipeState.update {
       it.copy(notes = notes)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateServings(servings: Int) {
     _recipeState.update {
       it.copy(servings = servings)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updatePrepTime(prepTime: Int) {
     _recipeState.update {
       it.copy(prepTime = prepTime)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateCookTime(cookTime: Int) {
     _recipeState.update {
       it.copy(cookTime = cookTime)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateSource(source: String) {
     _recipeState.update {
       it.copy(source = source)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateSourceName(sourceName: String) {
     _recipeState.update {
       it.copy(sourceName = sourceName)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
+  }
+
+  fun updateImage(image: String?) {
+    _recipeState.update {
+      it.copy(image = image)
+    }
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateIngredient(ingredient: Ingredient) {
@@ -153,7 +166,7 @@ class AddEditRecipeViewModel(
         }
       )
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun removeIngredient(ingredient: Ingredient) {
@@ -165,7 +178,7 @@ class AddEditRecipeViewModel(
         }
       )
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun moveIngredient(from: Int, to: Int) {
@@ -174,7 +187,7 @@ class AddEditRecipeViewModel(
         ingredients = it.ingredients.move(from, to),
       )
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateInstruction(instruction: Instruction) {
@@ -183,14 +196,14 @@ class AddEditRecipeViewModel(
         instructions = state.instructions.upsert(instruction) { it.id }
       )
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun removeInstruction(instruction: Instruction) {
     _recipeState.update {
       it.copy(instructions = it.instructions - instruction)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun moveInstruction(from: Int, to: Int) {
@@ -199,7 +212,7 @@ class AddEditRecipeViewModel(
         instructions = it.instructions.move(from, to),
       )
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun updateEquipment(equipment: Equipment) {
@@ -208,14 +221,14 @@ class AddEditRecipeViewModel(
         equipment = state.equipment.upsert(equipment) { it.id }
       )
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun removeEquipment(equipment: Equipment) {
     _recipeState.update {
       it.copy(equipment = it.equipment - equipment)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun moveEquipment(from: Int, to: Int) {
@@ -224,38 +237,39 @@ class AddEditRecipeViewModel(
         equipment = it.equipment.move(from, to),
       )
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun showMessage(message: String) {
     _recipeState.update {
       it.copy(userMessage = message)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
   fun userMessageShown() {
     _recipeState.update {
       it.copy(userMessage = null)
     }
-    checkForChanges()
+    _recipeState.checkForChanges(originalRecipeState)
   }
 
-  private fun checkForChanges() {
-    _recipeState.update { state ->
+  private fun MutableStateFlow<RecipeState>.checkForChanges(original: RecipeState) {
+    update { state ->
       state.copy(
         tharBeChanges = state.let {
-          it.name != originalRecipeState.name ||
-              it.description != originalRecipeState.description ||
-              it.notes != originalRecipeState.notes ||
-              it.servings != originalRecipeState.servings ||
-              it.prepTime != originalRecipeState.prepTime ||
-              it.cookTime != originalRecipeState.cookTime ||
-              it.source != originalRecipeState.source ||
-              it.sourceName != originalRecipeState.sourceName ||
-              it.ingredients != originalRecipeState.ingredients ||
-              it.instructions != originalRecipeState.instructions ||
-              it.equipment != originalRecipeState.equipment
+          it.name != original.name ||
+              it.description != original.description ||
+              it.notes != original.notes ||
+              it.servings != original.servings ||
+              it.prepTime != original.prepTime ||
+              it.cookTime != original.cookTime ||
+              it.source != original.source ||
+              it.sourceName != original.sourceName ||
+              it.image != original.image ||
+              it.ingredients != original.ingredients ||
+              it.instructions != original.instructions ||
+              it.equipment != original.equipment
         }
       )
     }
@@ -272,6 +286,7 @@ class AddEditRecipeViewModel(
         cookTime = cookTime,
         source = source,
         sourceName = sourceName,
+        image = image,
         ingredients = ingredients,
         instructions = instructions,
         equipment = equipment
@@ -300,6 +315,7 @@ class AddEditRecipeViewModel(
           cookTime = cookTime,
           source = source,
           sourceName = sourceName,
+          image = image,
           ingredients = ingredients,
           instructions = instructions,
           equipment = equipment
@@ -326,6 +342,7 @@ class AddEditRecipeViewModel(
             cookTime = recipe.time.cooking,
             source = recipe.source.source,
             sourceName = recipe.source.name,
+            image = recipe.cover,
             ingredients = recipe.ingredients,
             instructions = recipe.instructions,
             equipment = recipe.equipment
@@ -342,20 +359,19 @@ class AddEditRecipeViewModel(
     viewModelScope.launch {
       _recipeState.update { state ->
         scraper.scrapeRecipe(url).mapBoth(
-          success = {
+          success = { scrape ->
             RecipeState(
-              name = it.recipe.name,
-              description = it.recipe.description,
-//              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?: 0,
+              name = scrape.recipe.name,
+              description = scrape.recipe.description,
               servings = """\d+""".toRegex().let { regex ->
-                regex.find(it.recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
+                regex.find(scrape.recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
               },
-              prepTime = it.recipe.prepTime.parseMinutes(),
-              cookTime = it.recipe.cookTime.parseMinutes(),
+              prepTime = scrape.recipe.prepTime.parseMinutes(),
+              cookTime = scrape.recipe.cookTime.parseMinutes(),
               source = url,
-              sourceName = it.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
-              ingredients = it.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
-              instructions = it.recipe.instructions.map { Instruction(text = it.text) },
+              sourceName = scrape.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
+              ingredients = scrape.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
+              instructions = scrape.recipe.instructions.map { Instruction(text = it.text) },
               tharBeChanges = true
             )
           },
@@ -372,14 +388,14 @@ class AddEditRecipeViewModel(
     }
   }
 
-  private fun checkForInvalidForm(): String? = with(_recipeState.value) {
+  private fun validateForm(): Result<RecipeState, InvalidFormError> = with(_recipeState.value) {
     return when {
-      name.isBlank() -> "Name cannot be blank"
-      ingredients.isEmpty() -> "At least one ingredient is required"
-      instructions.isEmpty() -> "At least one instruction is required"
-      servings <= 0 -> "Servings must be greater than 0"
-      cookTime <= 0 -> "Cook time must be greater than 0"
-      else -> null
+      name.isBlank() -> InvalidFormError("Name cannot be blank").err()
+      ingredients.isEmpty() -> InvalidFormError("At least one ingredient is required").err()
+      instructions.isEmpty() -> InvalidFormError("At least one instruction is required").err()
+      servings <= 0 -> InvalidFormError("Servings must be greater than 0").err()
+      cookTime <= 0 -> InvalidFormError("Cook time must be greater than 0").err()
+      else -> ok()
     }
   }
 

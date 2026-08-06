@@ -1,12 +1,10 @@
 package com.kronos.skilletapp.navigation
 
 import android.content.Intent
-import androidx.compose.animation.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,8 +28,6 @@ import kotlin.reflect.typeOf
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-private const val baseUrl = "skilletapp://skillet"
-
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 fun SkilletNavGraph(
@@ -54,7 +50,7 @@ fun SkilletNavGraph(
 
       intent.action?.let { intentAction ->
         val json = sharedRecipe?.toJson()
-        val uri = "${baseUrl}/recipeList?sharedRecipe=${json}".toUri()
+        val uri = Route.RecipeList::class.buildUri(json)
 
         //TODO: encapsulate in SkilletNavigationActions
         navController.navigate(
@@ -77,7 +73,7 @@ fun SkilletNavGraph(
       typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)),
       deepLinks = listOf(
         navDeepLink<Route.RecipeList>(
-          basePath = "${baseUrl}/recipeList",
+          basePath = Route.basePath(Route.RecipeList::class),
           typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
         ) {
           action = Intent.ACTION_SEND

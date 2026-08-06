@@ -54,16 +54,20 @@ fun UnitSelectionBottomSheet(
         items(measurements) { measurement ->
           val quantity = measurement.displayQuantity
 
+          val bgColor = MaterialTheme.colorScheme.primaryContainer
+          val contentColor = contentColorFor(bgColor)
+
+          val shape = MaterialTheme.shapes.medium
           Box(
             modifier = Modifier
               .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-              .clip(MaterialTheme.shapes.medium)
-              .background(MaterialTheme.colorScheme.primary)
+              .clip(shape)
+              .background(bgColor, shape)
               .applyIf(selectedUnit == measurement.unit) {
                 border(
                   width = 2.dp,
-                  color = MaterialTheme.colorScheme.onPrimaryContainer,
-                  shape = MaterialTheme.shapes.medium
+                  color = contentColor,
+                  shape = shape
                 )
               }
               .clickable { onUnitSelect(measurement.unit) }
@@ -78,14 +82,14 @@ fun UnitSelectionBottomSheet(
             ) {
               Text(
                 text = quantity,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = contentColor,
                 fontSize = 18.sp,
                 modifier = Modifier.offset(y = 4.dp)
               )
 
               Text(
                 text = measurement.unit.abbreviation,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = contentColor,
                 fontSize = 12.sp
               )
             }

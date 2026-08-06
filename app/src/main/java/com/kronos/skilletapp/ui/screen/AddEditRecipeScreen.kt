@@ -1,11 +1,16 @@
 package com.kronos.skilletapp.ui.screen
 
+import android.content.Intent
+import android.util.Log
 import android.view.HapticFeedbackConstants
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.*
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,10 +18,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -24,33 +27,40 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
-import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.model.Equipment
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.measurement.Measurement
 import com.kronos.skilletapp.model.measurement.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
+import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.LoadingContent
@@ -88,6 +98,14 @@ fun AddEditRecipeScreen(
   var showDiscardChangesDialog by remember { mutableStateOf(false) }
 
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+
+  BackHandler {
+    if (recipeState.tharBeChanges) {
+      showDiscardChangesDialog = true
+    } else {
+      onBack()
+    }
+  }
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
@@ -128,7 +146,6 @@ fun AddEditRecipeScreen(
         .fillMaxSize()
         .padding(paddingValues),
     ) {
-
       AddEditRecipeContent(
         name = recipeState.name,
         description = recipeState.description,
@@ -138,6 +155,7 @@ fun AddEditRecipeScreen(
         cookTime = recipeState.cookTime,
         source = recipeState.source,
         sourceName = recipeState.sourceName,
+        image = recipeState.image,
         ingredients = recipeState.ingredients,
         instructions = recipeState.instructions,
         equipment = recipeState.equipment,
@@ -148,6 +166,7 @@ fun AddEditRecipeScreen(
         onCookTimeChanged = vm::updateCookTime,
         onSourceChanged = vm::updateSource,
         onSourceNameChanged = vm::updateSourceName,
+        onImageChanged = vm::updateImage,
         onNotesChanged = vm::updateNotes,
         onIngredientChanged = vm::updateIngredient,
         onRemoveIngredient = vm::removeIngredient,
@@ -215,6 +234,7 @@ fun AddEditRecipeContent(
   cookTime: Int,
   source: String,
   sourceName: String,
+  image: String?,
   ingredients: List<Ingredient>,
   instructions: List<Instruction>,
   equipment: List<Equipment>,
@@ -226,6 +246,7 @@ fun AddEditRecipeContent(
   onCookTimeChanged: (Int) -> Unit,
   onSourceChanged: (String) -> Unit,
   onSourceNameChanged: (String) -> Unit,
+  onImageChanged: (String?) -> Unit,
   onIngredientChanged: (Ingredient) -> Unit,
   onRemoveIngredient: (Ingredient) -> Unit,
   onMoveIngredient: (Int, Int) -> Unit,
@@ -300,6 +321,7 @@ fun AddEditRecipeContent(
               name = name,
               source = source,
               sourceName = sourceName,
+              image = image,
               description = description,
               servings = servings,
               prepTime = prepTime,
@@ -308,6 +330,7 @@ fun AddEditRecipeContent(
               onNameChanged = onNameChanged,
               onSourceChanged = onSourceChanged,
               onSourceNameChanged = onSourceNameChanged,
+              onImageChanged = onImageChanged,
               onDescriptionChanged = onDescriptionChanged,
               onServingsChanged = onServingsChanged,
               onPrepTimeChanged = onPrepTimeChanged,
@@ -340,12 +363,14 @@ fun AddEditRecipeContent(
   }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @ExperimentalMaterial3Api
 @Composable
 private fun RecipeInfoContent(
   name: String,
   source: String,
   sourceName: String,
+  image: String?,
   description: String,
   servings: Int,
   prepTime: Int,
@@ -354,6 +379,7 @@ private fun RecipeInfoContent(
   onNameChanged: (String) -> Unit,
   onSourceChanged: (String) -> Unit,
   onSourceNameChanged: (String) -> Unit,
+  onImageChanged: (String?) -> Unit,
   onDescriptionChanged: (String) -> Unit,
   onServingsChanged: (Int) -> Unit,
   onPrepTimeChanged: (Int) -> Unit,
@@ -378,7 +404,9 @@ private fun RecipeInfoContent(
       value = name,
       onValueChange = onNameChanged,
       placeholder = { Text(text = "The name of your recipe") },
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier
+        .widthIn(max = 488.dp)
+        .fillMaxWidth(),
       singleLine = true,
       keyboardOptions = KeyboardOptions(
         capitalization = KeyboardCapitalization.Words,
@@ -412,7 +440,7 @@ private fun RecipeInfoContent(
         )
       }
 
-      if (source.isNotBlank()) {
+      if (source.isNotBlank() && source != sourceName) {
         Text(
           text = source,
           style = MaterialTheme.typography.bodySmall,
@@ -485,6 +513,164 @@ private fun RecipeInfoContent(
 
     HorizontalDivider()
 
+    SharedTransitionLayout {
+      Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
+        val context = LocalContext.current
+        val pickPhoto = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+          if (uri != null) {
+            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(uri, flag)
+            onImageChanged(uri.toString())
+          } else {
+            Log.d("PhotoPicker", "No media selected")
+          }
+        }
+
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween,
+          modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+        ) {
+          Text(
+            text = "Image",
+            style = MaterialTheme.typography.titleLarge,
+          )
+
+          // ImageControls()
+          AnimatedVisibility(
+            visible = image != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.End,
+            ) {
+              IconButton(
+                onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
+              ) {
+                Icon(
+                  imageVector = Icons.Filled.ImageSearch,
+                  contentDescription = "Choose new image from gallery",
+                  tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-gallery"),
+                      animatedVisibilityScope = this@AnimatedVisibility
+                    )
+                )
+              }
+
+              IconButton(
+                onClick = { /*TODO*/ },
+              ) {
+                Icon(
+                  imageVector = Icons.Filled.PhotoCamera,
+                  contentDescription = "Take a new photo",
+                  tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-camera"),
+                      animatedVisibilityScope = this@AnimatedVisibility
+                    )
+                )
+              }
+
+              IconButton(
+                onClick = { onImageChanged(null) },
+              ) {
+                Icon(
+                  imageVector = Icons.Filled.Delete,
+                  contentDescription = "Delete Image",
+                  tint = MaterialTheme.colorScheme.error
+                )
+              }
+            }
+          }
+        }
+
+        AnimatedContent(
+          targetState = image,
+          transitionSpec = {
+            fadeIn() togetherWith fadeOut()
+          },
+          modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 256.dp)
+            .aspectRatio(ratio = 2f)
+        ) { imageUri ->
+          imageUri?.let {
+            AsyncImage(
+              model = it,
+              contentDescription = "Recipe Image",
+              contentScale = ContentScale.Crop,
+              modifier = Modifier
+                .clip(MaterialTheme.shapes.medium)
+                .clickable { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
+            )
+          } ?: Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            SquareIconButton(
+              modifier = Modifier.fillMaxHeight(0.95f),
+              onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.ImageSearch,
+                  contentDescription = "Choose from gallery",
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-gallery"),
+                      animatedVisibilityScope = this@AnimatedContent
+                    )
+                )
+              },
+              text = {
+                Text(
+                  text = "Choose from gallery",
+                  textAlign = TextAlign.Center
+                )
+              },
+            )
+
+            Spacer(modifier = Modifier.widthIn(min = 8.dp))
+
+            SquareIconButton(
+              modifier = Modifier.fillMaxHeight(0.95f),
+              onClick = { /*TODO*/ },
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.PhotoCamera,
+                  contentDescription = "Take a photo",
+                  modifier = Modifier
+                    .sharedElement(
+                      state = rememberSharedContentState(key = "image-controls-camera"),
+                      animatedVisibilityScope = this@AnimatedContent
+                    )
+                )
+              },
+              text = {
+                Text(
+                  text = "Take a photo",
+                  textAlign = TextAlign.Center
+                )
+              },
+            )
+          }
+        }
+      }
+
+
+    }
+
+    HorizontalDivider()
+
 //    Text(
 //      text = "Description",
 //      style = MaterialTheme.typography.titleLarge
@@ -523,7 +709,8 @@ private fun RecipeInfoContent(
         onClick = {
           showServingsPicker = true
           servingsSelect = servings
-        }) {
+        }
+      ) {
         Text(
           text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings" },
           style = MaterialTheme.typography.titleMedium
@@ -673,7 +860,9 @@ private fun RecipeInfoContent(
     OutlinedTextField(
       value = notes,
       onValueChange = onNotesChanged,
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier
+        .widthIn(max = 488.dp)
+        .fillMaxWidth(),
       placeholder = { Text("Any additional notes about the recipe") },
       minLines = 3,
       keyboardOptions = KeyboardOptions(
@@ -685,6 +874,41 @@ private fun RecipeInfoContent(
   }
 }
 
+@Composable
+private fun SquareIconButton(
+  onClick: () -> Unit,
+  icon: @Composable () -> Unit,
+  text: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+  shape: Shape = MaterialTheme.shapes.medium,
+  contentColor: Color = MaterialTheme.colorScheme.primary,
+) {
+  Box(
+    modifier = modifier
+      .widthIn(min = 64.dp, max = 256.dp)
+      .aspectRatio(ratio = 1f, matchHeightConstraintsFirst = true)
+      .clip(shape)
+      .border(width = 2.dp, color = contentColor, shape = shape)
+      .clickable(
+        onClick = onClick,
+        indication = LocalIndication.current,
+        interactionSource = null
+      ),
+    contentAlignment = Alignment.Center
+  ) {
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      modifier = Modifier.padding(16.dp)
+    ) {
+      CompositionLocalProvider(LocalContentColor provides contentColor) {
+        icon()
+        Spacer(modifier = Modifier.height(8.dp))
+        text()
+      }
+    }
+  }
+}
+
 @ExperimentalFoundationApi
 @Composable
 private fun IngredientsContent(
@@ -693,7 +917,7 @@ private fun IngredientsContent(
   onRemoveIngredient: (Ingredient) -> Unit,
   onMoveIngredient: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
-  parser: IngredientParser = koinInject()
+  parser: IngredientParser = koinInject() //TODO: move this into the viewmodel
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
   val view = LocalView.current
@@ -749,6 +973,8 @@ private fun IngredientsContent(
               if (!isEditing) {
                 IngredientRow(
                   ingredient = ingredient,
+                  selectedUnit = ingredient.measurement.unit,
+                  showSelection = false,
                   onClick = {
                     editing = true
                   },
@@ -1443,6 +1669,7 @@ fun AddEditRecipeContentPreview() {
           equipment = recipe.equipment,
           source = recipe.source.source,
           sourceName = recipe.source.name,
+          image = recipe.cover,
           servings = recipe.servings,
           prepTime = recipe.time.preparation,
           cookTime = recipe.time.cooking,
@@ -1459,6 +1686,7 @@ fun AddEditRecipeContentPreview() {
           onNotesChanged = {},
           onSourceChanged = {},
           onSourceNameChanged = {},
+          onImageChanged = {},
           onRemoveInstruction = {},
           onRemoveEquipment = {},
           onEquipmentChanged = {},
@@ -1567,6 +1795,30 @@ fun InstructionsTabPreview() {
           onUserMessage = {}
         )
       }
+    }
+  }
+}
+
+@Preview
+@Composable
+private fun SquareIconButtonPreview() {
+  SkilletAppTheme {
+    Surface {
+      SquareIconButton(
+        onClick = {},
+        icon = {
+          Icon(
+            imageVector = Icons.Filled.ImageSearch,
+            contentDescription = "Choose from gallery",
+          )
+        },
+        text = {
+          Text(
+            text = "Choose from gallery",
+            textAlign = TextAlign.Center
+          )
+        },
+      )
     }
   }
 }

@@ -1,12 +1,16 @@
 package com.kronos.skilletapp.ui.screen.recipelist
 
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.webkit.URLUtil.isValidUrl
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -20,30 +24,32 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kronos.skilletapp.data.RecipeRepository
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
 import com.kronos.skilletapp.model.Recipe
-import com.kronos.skilletapp.ui.DisableRipple
-import com.kronos.skilletapp.ui.FabPadding
-import com.kronos.skilletapp.ui.KoinPreview
-import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.*
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
-import com.kronos.skilletapp.ui.dismiss
+import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.utils.isNotNullOrBlank
-import com.leinardi.android.speeddial.compose.FabWithLabel
 import com.leinardi.android.speeddial.compose.SpeedDial
 import com.leinardi.android.speeddial.compose.SpeedDialOverlay
 import com.leinardi.android.speeddial.compose.SpeedDialState
-import kotlinx.coroutines.runBlocking
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -82,39 +88,50 @@ fun RecipeListScreen(
     floatingActionButton = {
       SpeedDial(
         state = speedDialState,
+        reverseAnimationOnClose = true,
         onFabClick = {
           overlayVisible = !it
           speedDialState = speedDialState.toggle()
         },
         fabClosedContent = {
-          Icon(imageVector = Icons.Default.Add, contentDescription = "Open Speed Dial")
+          Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options")
         },
         fabOpenedContent = {
-          Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+          Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options")
         },
       ) {
         item {
-          FabWithLabel(
+          Button(
             onClick = {
               onNewRecipe()
               overlayVisible = false
               speedDialState = speedDialState.toggle()
             },
-            labelContent = { Text(text = "Create new recipe") }
+            colors = ButtonDefaults.buttonColors(
+              containerColor = MaterialTheme.colorScheme.primaryContainer,
+              contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ),
           ) {
+            Text(text = "Create new recipe")
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(imageVector = Icons.Default.Add, contentDescription = "Create new recipe")
           }
         }
 
         item {
-          FabWithLabel(
+          Button(
             onClick = {
               showImportRecipeBottomSheet = true
               overlayVisible = false
               speedDialState = speedDialState.toggle()
             },
-            labelContent = { Text(text = "Import from URL") }
+            colors = ButtonDefaults.buttonColors(
+              containerColor = MaterialTheme.colorScheme.primaryContainer,
+              contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ),
           ) {
+            Text(text = "Import from URL")
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(imageVector = Icons.Default.Link, contentDescription = "Import from URL")
           }
         }
@@ -128,14 +145,12 @@ fun RecipeListScreen(
       state = uiState,
       modifier = Modifier
         .fillMaxSize()
-//        .padding(padding)
     ) { data ->
       RecipeListContent(
         recipes = data.recipes,
         onRecipeClick = onRecipeClick,
         modifier = Modifier
           .fillMaxSize(),
-//          .padding(padding)
         gridPadding = PaddingValues(
           start = 8.dp,
           end = 8.dp,
@@ -238,14 +253,18 @@ private fun RecipeListContent(
     return
   }
 
-  LazyVerticalGrid(
-    columns = GridCells.Fixed(2),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
+  LazyVerticalStaggeredGrid(
+    columns = StaggeredGridCells.Fixed(2),
+//    verticalArrangement = Arrangement.spacedBy(8.dp),
+    verticalItemSpacing = 8.dp,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     contentPadding = gridPadding,
     modifier = modifier
   ) {
-    items(recipes) { recipe ->
+    items(
+      items = recipes,
+      key = { it.id },
+    ) { recipe ->
       RecipeCard(
         recipe = recipe,
         onClick = { onRecipeClick(recipe.id) },
@@ -265,15 +284,49 @@ fun RecipeCard(
     onClick = onClick,
     modifier = modifier
   ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-      Text(
-        text = recipe.name.first().uppercase(),
-        style = MaterialTheme.typography.titleLarge,
-        fontSize = 192.sp,
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+    val labelBackgroundColor = MaterialTheme.colorScheme.primary
+
+    Box(
+      modifier = Modifier
+        .sizeIn(minWidth = 128.dp, minHeight = 128.dp)
+        .fillMaxSize()
+    ) {
+      recipe.cover?.let { imageUri ->
+        val painter = rememberAsyncImagePainter(
+          model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUri)
+            .build(),
+          imageLoader = koinInject(),
+        )
+
+        Image(
+          painter = painter,
+          contentDescription = recipe.name,
+          contentScale = ContentScale.Crop,
+          modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 1.dp)
+            .align(Alignment.Center)
+        )
+      } ?: Canvas(
         modifier = Modifier
-          .align(Alignment.Center)
-      )
+          .height(192.dp)
+          .fillMaxWidth()
+      ) {
+        drawIntoCanvas { canvas ->
+          val paint = Paint().apply {
+            textSize = 192.sp.toPx()
+            typeface = Typeface.DEFAULT
+            textAlign = Paint.Align.CENTER
+            color = labelBackgroundColor.copy(alpha = 0.5f).toArgb()
+          }
+
+          val x = center.x
+          val y = (size.height * 3f / 4f) + 4.dp.toPx()
+
+          canvas.nativeCanvas.drawText(recipe.name.first().uppercase(), x, y, paint)
+        }
+      }
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -282,13 +335,14 @@ fun RecipeCard(
           .height(IntrinsicSize.Max)
           .fillMaxWidth()
           .clip(CardDefaults.shape)
-          .background(MaterialTheme.colorScheme.primary)
+          .background(labelBackgroundColor, shape = CardDefaults.shape)
           .align(Alignment.BottomCenter)
       ) {
         Text(
           text = recipe.name,
           style = MaterialTheme.typography.titleSmall,
-          color = MaterialTheme.colorScheme.onPrimary,
+          color = contentColorFor(labelBackgroundColor),
+          textAlign = TextAlign.Center,
           overflow = TextOverflow.Ellipsis,
           maxLines = 2,
           modifier = Modifier
@@ -305,20 +359,20 @@ fun RecipeCard(
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-@Preview
+@Preview(widthDp = 200)
 @Composable
 fun RecipeCardPreview() {
   KoinPreview {
+    val recipe = koinInject<Recipe>()
 
-    val repository = koinInject<RecipeRepository>()
-    val recipe = runBlocking { repository.fetchRecipe("test") }
-
-    RecipeCard(
-      recipe = recipe,
-      onClick = { },
-      modifier = Modifier
-        .aspectRatio(1f)
-    )
+    SkilletAppTheme() {
+      RecipeCard(
+        recipe = recipe,
+        onClick = { },
+        modifier = Modifier
+          .aspectRatio(1f)
+      )
+    }
   }
 }
 
@@ -326,18 +380,18 @@ fun RecipeCardPreview() {
 @Composable
 fun RecipeListPreview() {
   KoinPreview {
+    val recipes = List(10) { koinInject<Recipe>().copy(name = "Recipe $it", id = "test-$it") }
 
-    val repository = koinInject<RecipeRepository>()
-    val recipes = runBlocking { repository.fetchRecipes() }
-
-    Surface {
-      RecipeListContent(
-        recipes = recipes,
-        onRecipeClick = { },
-        modifier = Modifier
-          .fillMaxSize(),
-        gridPadding = PaddingValues(8.dp)
-      )
+    SkilletAppTheme(true) {
+      Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        RecipeListContent(
+          recipes = recipes,
+          onRecipeClick = { },
+          modifier = Modifier
+            .fillMaxSize(),
+          gridPadding = PaddingValues(8.dp)
+        )
+      }
     }
   }
 }

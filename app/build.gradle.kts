@@ -1,16 +1,17 @@
 plugins {
-  id("com.android.application")
-  id("org.jetbrains.kotlin.android")
-  kotlin("plugin.serialization")
-  id("kotlin-parcelize")
-  id("com.google.devtools.ksp")
-  id("org.jetbrains.kotlin.plugin.compose")
-  id("androidx.room")
+  alias(libs.plugins.android.application)
+  alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.kotlin.parcelize)
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.androidx.room)
+
 }
 
 android {
   namespace = "com.kronos.skilletapp"
-  compileSdk = 34
+  compileSdk = 35
 
   defaultConfig {
     applicationId = "com.kronos.skilletapp"
@@ -67,50 +68,48 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
-  val nav_version = "2.8.0-beta05"
-  val koin_version = "4.0.0"
-  val room_version = "2.6.1"
+  // AndroidX
+  implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.lifecycle.runtime)
+  implementation(libs.androidx.lifecycle.viewmodel.compose)
+  implementation(libs.androidx.activity.compose)
 
-  implementation("androidx.core:core-ktx:1.13.1")
-  implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
-  implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
-  implementation("androidx.activity:activity-compose:1.9.0")
-  implementation(platform("androidx.compose:compose-bom:2024.06.00"))
-  implementation("androidx.compose.ui:ui")
-  implementation("androidx.compose.ui:ui-graphics")
-  implementation("androidx.compose.ui:ui-tooling-preview")
-  implementation("androidx.compose.material3:material3:1.3.1")
-  implementation("androidx.compose.material:material-icons-extended:1.7.8")
-  implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
-  implementation("androidx.navigation:navigation-compose:$nav_version")
+  // Compose
+  implementation(platform(libs.compose.bom))
+  implementation(libs.bundles.compose)
+
+  // Navigation
+  implementation(libs.navigation.ui.ktx)
+  implementation(libs.navigation.compose)
 
   // Koin
-  implementation(platform("io.insert-koin:koin-bom:$koin_version"))
-  implementation("io.insert-koin:koin-androidx-compose")
-  implementation("io.insert-koin:koin-androidx-compose-navigation")
+  implementation(platform(libs.koin.bom))
+  implementation(libs.bundles.koin)
 
   // Utils
-  implementation("com.leinardi.android:speed-dial.compose:2.0.0-alpha01") //Speed Dial Composable
-  implementation("org.antlr:antlr4:4.13.0")
-  implementation("sh.calvin.reorderable:reorderable:2.3.1")
-  implementation("it.skrape:skrapeit:1.2.2")
+  implementation(libs.speed.dial.compose) //Speed Dial Composable
+  implementation(libs.antlr)
+  implementation(libs.reorderable)
+  implementation(libs.skrapeit)
+  implementation(libs.kotlin.reflect)
+  implementation(libs.kotlin.result)
+  implementation(libs.kotlinx.serialization.json)
 
   // Android Room
-  implementation("androidx.room:room-runtime:$room_version")
-  ksp("androidx.room:room-compiler:$room_version")
-  implementation("androidx.room:room-ktx:$room_version")
+  implementation(libs.bundles.room)
+  ksp(libs.room.compiler)
 
-  testImplementation("junit:junit:4.13.2")
-  testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-  testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-  testImplementation("io.kotest:kotest-property:5.9.1")
-  androidTestImplementation("androidx.test.ext:junit:1.2.1")
-  androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-  androidTestImplementation(platform("androidx.compose:compose-bom:2024.06.00"))
-  androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-  debugImplementation("androidx.compose.ui:ui-tooling")
-  debugImplementation("androidx.compose.ui:ui-test-manifest")
-  implementation(kotlin("reflect"))
-  implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+  // Coil
+  implementation(libs.bundles.coil)
+
+  // Testing
+  testImplementation(libs.junit)
+  testImplementation(libs.bundles.kotest)
+  androidTestImplementation(libs.androidx.test.ext)
+  androidTestImplementation(libs.espresso.core)
+  androidTestImplementation(platform(libs.compose.bom))
+  androidTestImplementation(libs.compose.ui.test)
+  debugImplementation(libs.compose.ui.tooling)
+  debugImplementation(libs.compose.ui.test.manifest)
 }
+

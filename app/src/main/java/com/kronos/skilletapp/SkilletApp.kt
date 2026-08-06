@@ -2,6 +2,8 @@ package com.kronos.skilletapp
 
 import android.app.Application
 import androidx.room.Room
+import coil3.ImageLoader
+import coil3.request.crossfade
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.database.RecipeDatabase
@@ -33,15 +35,19 @@ class SkilletApp : Application() {
 val appModule = module {
 //  single { IngredientAiParser(androidContext()) }
 
-  single<RecipeDatabase>(createdAtStart = true) {
+  single {
     Room.databaseBuilder(
       context = androidContext(),
       klass = RecipeDatabase::class.java,
       name = "recipes.db"
     ).build()
+  } withOptions {
+    createdAtStart()
   }
 
-  single<RecipeDao>(createdAtStart = true) { (get<RecipeDatabase>().recipeDao()) }
+  single { get<RecipeDatabase>().recipeDao() } withOptions {
+    createdAtStart()
+  }
 
   singleOf(::RecipeRepository) {
     createdAtStart()
@@ -49,6 +55,13 @@ val appModule = module {
 
   singleOf(::IngredientParser)
   factoryOf(::RecipeScraper)
+  single<ImageLoader> {
+    ImageLoader.Builder(androidContext())
+      .crossfade(true)
+      .build()
+  } withOptions {
+    createdAtStart()
+  }
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)
