@@ -1,6 +1,7 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.kotlin.parcelize)
   alias(libs.plugins.ksp)
@@ -11,7 +12,7 @@ plugins {
 
 android {
   namespace = "com.kronos.skilletapp"
-  compileSdk = 35
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "com.kronos.skilletapp"
@@ -33,11 +34,8 @@ android {
     }
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-  }
-  kotlinOptions {
-    jvmTarget = "1.8"
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
   }
   buildFeatures {
     compose = true
@@ -57,10 +55,16 @@ android {
       it.useJUnitPlatform()
     }
   }
+}
 
-  room {
-    schemaDirectory("$projectDir/schemas")
+kotlin {
+  compilerOptions {
+    languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
   }
+}
+
+room {
+  schemaDirectory("$projectDir/schemas")
 }
 
 tasks.withType<Test>().configureEach {
