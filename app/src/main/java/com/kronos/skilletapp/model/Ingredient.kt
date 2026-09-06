@@ -1,9 +1,9 @@
 package com.kronos.skilletapp.model
 
 import com.kronos.skilletapp.model.measurement.Measurement
-import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlinx.serialization.Serializable
 
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
@@ -21,5 +21,5 @@ data class Ingredient(
 
 enum class IngredientType {
   Wet,
-  Dry
+  Dry,
 }

@@ -10,13 +10,12 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 fun <T> T.ok() = Ok(this)
+
 fun <T> T.err() = Err(this)
 
 @OptIn(ExperimentalContracts::class, UnsafeResultValueAccess::class)
 inline infix fun <V, E> Result<V, E>.guard(onGuard: (E) -> Unit): V {
-  contract {
-    callsInPlace(onGuard, InvocationKind.AT_MOST_ONCE)
-  }
+  contract { callsInPlace(onGuard, InvocationKind.AT_MOST_ONCE) }
 
   onErr(onGuard)
   require(isOk) { "guard can only return Ok, ensure that onGuard stops execution" }

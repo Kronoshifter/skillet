@@ -71,20 +71,18 @@ fun RecipeListScreen(
       TopAppBar(
         title = { Text(text = "Recipes") },
         actions = {
-          //TODO: Implement search
-//          IconButton(onClick = { /*TODO*/ }) {
-//            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
-//          }
+          // TODO: Implement search
+          //          IconButton(onClick = { /*TODO*/ }) {
+          //            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+          //          }
 
           IconButton(onClick = { /*TODO*/ }) {
             Icon(Icons.Default.MoreVert, contentDescription = "More Options")
           }
-        }
+        },
       )
     },
-    bottomBar = {
-      SkilletBottomNavigationBar()
-    },
+    bottomBar = { SkilletBottomNavigationBar() },
     floatingActionButton = {
       SpeedDial(
         state = speedDialState,
@@ -107,10 +105,11 @@ fun RecipeListScreen(
               overlayVisible = false
               speedDialState = speedDialState.toggle()
             },
-            colors = ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.primaryContainer,
-              contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ),
+            colors =
+              ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+              ),
           ) {
             Text(text = "Create new recipe")
             Spacer(modifier = Modifier.width(8.dp))
@@ -125,10 +124,11 @@ fun RecipeListScreen(
               overlayVisible = false
               speedDialState = speedDialState.toggle()
             },
-            colors = ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.colorScheme.primaryContainer,
-              contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ),
+            colors =
+              ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+              ),
           ) {
             Text(text = "Import from URL")
             Spacer(modifier = Modifier.width(8.dp))
@@ -143,20 +143,19 @@ fun RecipeListScreen(
 
     LoadingContent(
       state = uiState,
-      modifier = Modifier
-        .fillMaxSize()
+      modifier = Modifier.fillMaxSize(),
     ) { data ->
       RecipeListContent(
         recipes = data.recipes,
         onRecipeClick = onRecipeClick,
-        modifier = Modifier
-          .fillMaxSize(),
-        gridPadding = PaddingValues(
-          start = 8.dp,
-          end = 8.dp,
-          top = padding.calculateTopPadding() + 8.dp,
-          bottom = padding.calculateBottomPadding() + FabPadding
-        )
+        modifier = Modifier.fillMaxSize(),
+        gridPadding =
+          PaddingValues(
+            start = 8.dp,
+            end = 8.dp,
+            top = padding.calculateTopPadding() + 8.dp,
+            bottom = padding.calculateBottomPadding() + FabPadding,
+          ),
       )
 
       DisableRipple {
@@ -175,16 +174,16 @@ fun RecipeListScreen(
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
-      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "") }
+      var url by remember {
+        mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "")
+      }
 
       if (showImportRecipeBottomSheet) {
         var isValidUrl = isValidUrl(url)
 
         ActionBottomSheet(
           sheetState = sheetState,
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
+          modifier = Modifier.fillMaxWidth().padding(8.dp),
           onDismissRequest = {
             url = ""
             vm.showSharedUrl = false
@@ -199,7 +198,7 @@ fun RecipeListScreen(
                 vm.showSharedUrl = false
                 sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
               },
-              enabled = isValidUrl
+              enabled = isValidUrl,
             ) {
               Text(text = "Import")
             }
@@ -212,26 +211,28 @@ fun RecipeListScreen(
             onValueChange = { url = it },
             label = { Text(text = "URL") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
-            keyboardActions = KeyboardActions(
-              onDone = {
-                if (isValidUrl) {
-                  onNewRecipeByUrl(url)
-                  url = ""
-                  vm.showSharedUrl = false
-                  sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-                }
+            keyboardOptions =
+              KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
+            keyboardActions =
+              KeyboardActions(
+                onDone = {
+                  if (isValidUrl) {
+                    onNewRecipeByUrl(url)
+                    url = ""
+                    vm.showSharedUrl = false
+                    sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
+                  }
 
-                keyboard?.hide()
-              }
-            ),
+                  keyboard?.hide()
+                }
+              ),
             singleLine = true,
             isError = !isValidUrl && url.isNotBlank(),
             supportingText = {
               if (!isValidUrl && url.isNotBlank()) {
                 Text(text = "Invalid URL")
               }
-            }
+            },
           )
         }
       }
@@ -255,11 +256,11 @@ private fun RecipeListContent(
 
   LazyVerticalStaggeredGrid(
     columns = StaggeredGridCells.Fixed(2),
-//    verticalArrangement = Arrangement.spacedBy(8.dp),
+    //    verticalArrangement = Arrangement.spacedBy(8.dp),
     verticalItemSpacing = 8.dp,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     contentPadding = gridPadding,
-    modifier = modifier
+    modifier = modifier,
   ) {
     items(
       items = recipes,
@@ -268,7 +269,7 @@ private fun RecipeListContent(
       RecipeCard(
         recipe = recipe,
         onClick = { onRecipeClick(recipe.id) },
-        modifier = Modifier
+        modifier = Modifier,
       )
     }
   }
@@ -282,61 +283,52 @@ fun RecipeCard(
 ) {
   Card(
     onClick = onClick,
-    modifier = modifier
+    modifier = modifier,
   ) {
     val labelBackgroundColor = MaterialTheme.colorScheme.primary
 
-    Box(
-      modifier = Modifier
-        .sizeIn(minWidth = 128.dp, minHeight = 128.dp)
-        .fillMaxSize()
-    ) {
+    Box(modifier = Modifier.sizeIn(minWidth = 128.dp, minHeight = 128.dp).fillMaxSize()) {
       recipe.cover?.let { imageUri ->
-        val painter = rememberAsyncImagePainter(
-          model = ImageRequest.Builder(LocalContext.current)
-            .data(imageUri)
-            .build(),
-          imageLoader = koinInject(),
-        )
+        val painter =
+          rememberAsyncImagePainter(
+            model = ImageRequest.Builder(LocalContext.current).data(imageUri).build(),
+            imageLoader = koinInject(),
+          )
 
         Image(
           painter = painter,
           contentDescription = recipe.name,
           contentScale = ContentScale.Crop,
-          modifier = Modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 1.dp)
-            .align(Alignment.Center)
+          modifier =
+            Modifier.fillMaxWidth().defaultMinSize(minHeight = 1.dp).align(Alignment.Center),
         )
-      } ?: Canvas(
-        modifier = Modifier
-          .height(192.dp)
-          .fillMaxWidth()
-      ) {
-        drawIntoCanvas { canvas ->
-          val paint = Paint().apply {
-            textSize = 192.sp.toPx()
-            typeface = Typeface.DEFAULT
-            textAlign = Paint.Align.CENTER
-            color = labelBackgroundColor.copy(alpha = 0.5f).toArgb()
-          }
-
-          val x = center.x
-          val y = (size.height * 3f / 4f) + 4.dp.toPx()
-
-          canvas.nativeCanvas.drawText(recipe.name.first().uppercase(), x, y, paint)
-        }
       }
+        ?: Canvas(modifier = Modifier.height(192.dp).fillMaxWidth()) {
+          drawIntoCanvas { canvas ->
+            val paint =
+              Paint().apply {
+                textSize = 192.sp.toPx()
+                typeface = Typeface.DEFAULT
+                textAlign = Paint.Align.CENTER
+                color = labelBackgroundColor.copy(alpha = 0.5f).toArgb()
+              }
+
+            val x = center.x
+            val y = (size.height * 3f / 4f) + 4.dp.toPx()
+
+            canvas.nativeCanvas.drawText(recipe.name.first().uppercase(), x, y, paint)
+          }
+        }
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
-        modifier = Modifier
-          .height(IntrinsicSize.Max)
-          .fillMaxWidth()
-          .clip(CardDefaults.shape)
-          .background(labelBackgroundColor, shape = CardDefaults.shape)
-          .align(Alignment.BottomCenter)
+        modifier =
+          Modifier.height(IntrinsicSize.Max)
+            .fillMaxWidth()
+            .clip(CardDefaults.shape)
+            .background(labelBackgroundColor, shape = CardDefaults.shape)
+            .align(Alignment.BottomCenter),
       ) {
         Text(
           text = recipe.name,
@@ -345,8 +337,7 @@ fun RecipeCard(
           textAlign = TextAlign.Center,
           overflow = TextOverflow.Ellipsis,
           maxLines = 2,
-          modifier = Modifier
-            .padding(8.dp)
+          modifier = Modifier.padding(8.dp),
         )
       }
     }
@@ -368,9 +359,8 @@ fun RecipeCardPreview() {
     SkilletAppTheme() {
       RecipeCard(
         recipe = recipe,
-        onClick = { },
-        modifier = Modifier
-          .aspectRatio(1f)
+        onClick = {},
+        modifier = Modifier.aspectRatio(1f),
       )
     }
   }
@@ -386,10 +376,9 @@ fun RecipeListPreview() {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         RecipeListContent(
           recipes = recipes,
-          onRecipeClick = { },
-          modifier = Modifier
-            .fillMaxSize(),
-          gridPadding = PaddingValues(8.dp)
+          onRecipeClick = {},
+          modifier = Modifier.fillMaxSize(),
+          gridPadding = PaddingValues(8.dp),
         )
       }
     }

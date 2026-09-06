@@ -19,34 +19,23 @@ fun ActionBottomSheet(
   modifier: Modifier = Modifier,
   title: @Composable () -> Unit,
   action: @Composable () -> Unit,
-  content: @Composable () -> Unit
+  content: @Composable () -> Unit,
 ) {
   ModalBottomSheet(
     sheetState = sheetState,
-    onDismissRequest = onDismissRequest
+    onDismissRequest = onDismissRequest,
   ) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = modifier
+      modifier = modifier,
     ) {
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
-      ) {
+      Box(modifier = Modifier.fillMaxWidth()) {
         CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.titleLarge) {
-          Box(
-            modifier = Modifier.align(Alignment.Center)
-          ) {
-            title()
-          }
+          Box(modifier = Modifier.align(Alignment.Center)) { title() }
         }
 
-        Box(
-          modifier = Modifier.align(Alignment.CenterEnd)
-        ) {
-          action()
-        }
+        Box(modifier = Modifier.align(Alignment.CenterEnd)) { action() }
       }
 
       content()

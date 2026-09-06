@@ -1,4 +1,7 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.ncorti.ktfmt.gradle.TrailingCommaManagementStrategy
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.extensions.FailOnSeverity
+
 
 plugins {
   alias(libs.plugins.android.application)
@@ -7,7 +10,8 @@ plugins {
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.androidx.room)
-
+  alias(libs.plugins.detekt)
+  alias(libs.plugins.ktfmt)
 }
 
 android {
@@ -17,7 +21,7 @@ android {
   defaultConfig {
     applicationId = "com.kronos.skilletapp"
     minSdk = 30
-    targetSdk = 34
+    targetSdk = 37
     versionCode = 1
     versionName = "1.0"
 
@@ -59,7 +63,8 @@ android {
 
 kotlin {
   compilerOptions {
-    languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
+    languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_4
+    jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
   }
 }
 
@@ -67,8 +72,29 @@ room {
   schemaDirectory("$projectDir/schemas")
 }
 
+detekt {
+  config.setFrom("$rootDir/detekt.yml")
+  buildUponDefaultConfig = false
+  allRules = false
+  source.setFrom("src/main/kotlin", "src/main/java")
+  failOnSeverity = FailOnSeverity.Error
+}
+
+ktfmt {
+  googleStyle()
+  removeUnusedImports = true
+  maxWidth = 100
+  trailingCommaManagementStrategy = TrailingCommaManagementStrategy.COMPLETE
+}
+
 tasks.withType<Test>().configureEach {
   useJUnitPlatform()
+}
+
+tasks.withType<Detekt>().configureEach {
+  exclude("**/generated/**")
+  exclude("**/test/**")
+  exclude("**/androidTest/**")
 }
 
 dependencies {

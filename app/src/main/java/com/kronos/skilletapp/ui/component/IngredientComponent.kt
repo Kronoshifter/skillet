@@ -3,7 +3,6 @@ package com.kronos.skilletapp.ui.component
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -35,7 +34,6 @@ import com.kronos.skilletapp.utils.Fraction
 import com.kronos.skilletapp.utils.fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
-import kotlinx.coroutines.launch
 
 @Composable
 fun IngredientRow(
@@ -50,35 +48,39 @@ fun IngredientRow(
   onLongClick: () -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-  val measurement = with(ingredient.measurement.scale(scale)) {
-    selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
-  }
+  val measurement =
+    with(ingredient.measurement.scale(scale)) {
+      selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
+    }
 
   val transition = updateTransition(checked, label = "Checked")
 
-  val bgColor by animateColorAsState(
-    targetValue = if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
-    animationSpec = if (checked) tween(durationMillis = 220, delayMillis = 120) else tween(durationMillis = 90),
-    label = "Background Color"
-  )
+  val bgColor by
+    animateColorAsState(
+      targetValue =
+        if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
+      animationSpec =
+        if (checked) tween(durationMillis = 220, delayMillis = 120) else tween(durationMillis = 90),
+      label = "Background Color",
+    )
 
   val detailBackgroundColor = MaterialTheme.colorScheme.primaryContainer
   val detailContentColor = contentColorFor(detailBackgroundColor)
 
   ItemRow(
-    modifier = Modifier
-      .fillMaxWidth()
-      .height(IntrinsicSize.Min)
-      .background(bgColor, MaterialTheme.shapes.medium)
-      .clip(MaterialTheme.shapes.medium)
-      .then(modifier),
+    modifier =
+      Modifier.fillMaxWidth()
+        .height(IntrinsicSize.Min)
+        .background(bgColor, MaterialTheme.shapes.medium)
+        .clip(MaterialTheme.shapes.medium)
+        .then(modifier),
     showDetail = measurement.quantity > 0 || checked,
     detailBackgroundColor = detailBackgroundColor,
     detail = {
       transition.AnimatedContent(
         transitionSpec = {
           fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 120)) togetherWith
-          fadeOut(animationSpec = tween(durationMillis = 90))
+            fadeOut(animationSpec = tween(durationMillis = 90))
         }
       ) { isChecked ->
         if (isChecked) {
@@ -93,35 +95,32 @@ fun IngredientRow(
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround,
-            modifier = Modifier.align(Alignment.Center)
+            modifier = Modifier.align(Alignment.Center),
           ) {
             Text(
               text = quantity,
               color = detailContentColor,
               fontSize = 18.sp,
-              modifier = Modifier
-                .applyUnless(measurement.unit is MeasurementUnit.None) {
-                  offset(y = 4.dp)
-                }
+              modifier =
+                Modifier.applyUnless(measurement.unit is MeasurementUnit.None) { offset(y = 4.dp) },
             )
 
             if (measurement.unit !is MeasurementUnit.None) {
               Text(
                 text = measurement.unit.abbreviation,
                 color = detailContentColor,
-                fontSize = 12.sp
+                fontSize = 12.sp,
               )
             }
           }
         }
       }
-
     },
     decoration = selectedUnit != null && showSelection,
     enabled = enabled,
     onClick = onClick,
     onLongClick = onLongClick,
-    trailingIcon = trailingIcon
+    trailingIcon = trailingIcon,
   ) {
     Column {
       Text(
@@ -135,7 +134,7 @@ fun IngredientRow(
           text = it.lowercase(),
           color = MaterialTheme.colorScheme.secondary,
           fontSize = 14.sp,
-          textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None
+          textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
         )
       }
     }
@@ -154,10 +153,11 @@ fun IngredientListItem(
   onCheckedChange: (Boolean) -> Unit = {},
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-  val measurements = MeasurementUnit.values
-    .filter { it hasSameDimensionAs ingredient.measurement.unit }
-    .map { ingredient.measurement.convertTo(it).scale(scale) }
-    .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
+  val measurements =
+    MeasurementUnit.values
+      .filter { it hasSameDimensionAs ingredient.measurement.unit }
+      .map { ingredient.measurement.convertTo(it).scale(scale) }
+      .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -173,7 +173,7 @@ fun IngredientListItem(
         showBottomSheet = true
       }
     },
-    trailingIcon = trailingIcon
+    trailingIcon = trailingIcon,
   )
 
   val sheetState = rememberModalBottomSheetState()
@@ -189,7 +189,7 @@ fun IngredientListItem(
       ingredient = ingredient,
       measurements = measurements,
       selectedUnit = selectedUnit,
-      sheetState = sheetState
+      sheetState = sheetState,
     )
   }
 }
@@ -199,16 +199,17 @@ fun IngredientListItem(
 fun IngredientPill(
   ingredient: Ingredient,
   scale: Float = 1f,
-//  selectedUnits: Map<Ingredient, MeasurementUnit?> = mapOf(),
+  //  selectedUnits: Map<Ingredient, MeasurementUnit?> = mapOf(),
   selectedUnit: MeasurementUnit? = null,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit = { _, _ -> },
 ) {
   var showBottomSheet by remember { mutableStateOf(false) }
 
-  val measurements = MeasurementUnit.values
-    .filter { it hasSameDimensionAs ingredient.measurement.unit }
-    .map { ingredient.measurement.convertTo(it).scale(scale) }
-    .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
+  val measurements =
+    MeasurementUnit.values
+      .filter { it hasSameDimensionAs ingredient.measurement.unit }
+      .map { ingredient.measurement.convertTo(it).scale(scale) }
+      .filter { it.quantity.fraction.roundToNearestFraction().reduce() > Fraction(1, 8) }
 
   val bgColor = MaterialTheme.colorScheme.primaryContainer
   val contentColor = contentColorFor(bgColor)
@@ -221,50 +222,44 @@ fun IngredientPill(
     borderColor = borderColor,
     leadingContent = {
       if (ingredient.measurement.quantity > 0) {
-        val measurement = with(ingredient.measurement.scale(scale)) {
-          selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
-        }
-
-        val quantity = measurement.displayQuantity.let {
-          if (measurement.unit !is MeasurementUnit.None) {
-            "$it ${measurement.unit.abbreviation}"
-          } else {
-            it
+        val measurement =
+          with(ingredient.measurement.scale(scale)) {
+            selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
           }
-        }
+
+        val quantity =
+          measurement.displayQuantity.let {
+            if (measurement.unit !is MeasurementUnit.None) {
+              "$it ${measurement.unit.abbreviation}"
+            } else {
+              it
+            }
+          }
 
         // TODO: this works for now, but it should use a custom layout to avoid recomposition
         var minWidth by remember { mutableStateOf(Dp.Unspecified) }
         val density = LocalDensity.current
 
         Box(
-          modifier = Modifier
-            .onPlaced {
-              minWidth = with(density) {
-                it.size.height.toDp()
-              }
-            }
-            .widthIn(min = minWidth)
-            .fillMaxHeight()
+          modifier =
+            Modifier.onPlaced { minWidth = with(density) { it.size.height.toDp() } }
+              .widthIn(min = minWidth)
+              .fillMaxHeight()
         ) {
           Text(
             text = quantity,
             fontSize = 18.sp,
-            modifier = Modifier
-              .padding(8.dp)
-              .align(Alignment.Center)
+            modifier = Modifier.padding(8.dp).align(Alignment.Center),
           )
         }
       }
-    }
+    },
   ) {
     Text(
       text = ingredient.name,
-      modifier = Modifier
-        .applyIf(ingredient.measurement.quantity <= 0) {
-          padding(start = 8.dp)
-        }
-        .padding(vertical = 8.dp)
+      modifier =
+        Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }
+          .padding(vertical = 8.dp),
     )
   }
 
@@ -281,20 +276,20 @@ fun IngredientPill(
       ingredient = ingredient,
       measurements = measurements,
       selectedUnit = selectedUnit,
-      sheetState = sheetState
+      sheetState = sheetState,
     )
   }
 }
 
-
 @Preview
 @Composable
 private fun IngredientRowPreview() {
-  val ingredient = Ingredient(
-    name = "Pasta",
-    measurement = Measurement(8f, MeasurementUnit.Ounce),
-    raw = "8 oz Pasta",
-  )
+  val ingredient =
+    Ingredient(
+      name = "Pasta",
+      measurement = Measurement(8f, MeasurementUnit.Ounce),
+      raw = "8 oz Pasta",
+    )
   SkilletAppTheme {
     Surface {
       IngredientRow(
@@ -304,7 +299,7 @@ private fun IngredientRowPreview() {
           IconButton(onClick = {}) {
             Icon(imageVector = Icons.Default.DragHandle, contentDescription = "Dragging")
           }
-        }
+        },
       )
     }
   }
@@ -313,11 +308,12 @@ private fun IngredientRowPreview() {
 @Preview
 @Composable
 fun IngredientRowCheckablePreview() {
-  val ingredient = Ingredient(
-    name = "Pasta",
-    measurement = Measurement(8f, MeasurementUnit.Ounce),
-    raw = "8 oz Pasta",
-  )
+  val ingredient =
+    Ingredient(
+      name = "Pasta",
+      measurement = Measurement(8f, MeasurementUnit.Ounce),
+      raw = "8 oz Pasta",
+    )
 
   var checked by remember { mutableStateOf(false) }
 
@@ -330,9 +326,9 @@ fun IngredientRowCheckablePreview() {
         trailingIcon = {
           Checkbox(
             checked = checked,
-            onCheckedChange = { checked = it }
+            onCheckedChange = { checked = it },
           )
-        }
+        },
       )
     }
   }
@@ -341,11 +337,12 @@ fun IngredientRowCheckablePreview() {
 @Preview
 @Composable
 fun IngredientListItemPreview() {
-  val ingredient = Ingredient(
-    name = "Pasta",
-    measurement = Measurement(8f, MeasurementUnit.Ounce),
-    raw = "8 oz Pasta",
-  )
+  val ingredient =
+    Ingredient(
+      name = "Pasta",
+      measurement = Measurement(8f, MeasurementUnit.Ounce),
+      raw = "8 oz Pasta",
+    )
 
   SkilletAppTheme {
     Surface {
@@ -358,7 +355,7 @@ fun IngredientListItemPreview() {
           IconButton(onClick = {}) {
             Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More Options")
           }
-        }
+        },
       )
     }
   }
@@ -367,11 +364,12 @@ fun IngredientListItemPreview() {
 @Preview
 @Composable
 private fun IngredientPillPreview() {
-  val ingredient = Ingredient(
-    name = "Pasta",
-    measurement = Measurement(8f, MeasurementUnit.Ounce),
-    raw = "8 oz Pasta",
-  )
+  val ingredient =
+    Ingredient(
+      name = "Pasta",
+      measurement = Measurement(8f, MeasurementUnit.Ounce),
+      raw = "8 oz Pasta",
+    )
 
   SkilletAppTheme {
     Surface {
@@ -386,12 +384,13 @@ private fun IngredientPillPreview() {
 @Preview
 @Composable
 fun IngredientPillNoQuantityPreview() {
-  val ingredient = Ingredient(
-    name = "Salt",
-    measurement = Measurement(0f, MeasurementUnit.None),
-    raw = "Salt, to taste",
-    comment = "to taste"
-  )
+  val ingredient =
+    Ingredient(
+      name = "Salt",
+      measurement = Measurement(0f, MeasurementUnit.None),
+      raw = "Salt, to taste",
+      comment = "to taste",
+    )
 
   SkilletAppTheme {
     Surface {
@@ -406,11 +405,12 @@ fun IngredientPillNoQuantityPreview() {
 @Preview
 @Composable
 fun IngredientPillNoMeasurementPreview() {
-  val ingredient = Ingredient(
-    name = "Pepe",
-    measurement = Measurement(1f, MeasurementUnit.None),
-    raw = "Pepe",
-  )
+  val ingredient =
+    Ingredient(
+      name = "Pepe",
+      measurement = Measurement(1f, MeasurementUnit.None),
+      raw = "Pepe",
+    )
 
   SkilletAppTheme {
     Surface {

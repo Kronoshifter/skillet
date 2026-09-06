@@ -8,34 +8,28 @@ import org.antlr.v4.runtime.CommonTokenStream
 
 class IngredientParser {
 
-  fun parseIngredient(text: String): Ingredient = IngredientVisitor().visitIngredient(
-    IngredientGrammarParser(
-      CommonTokenStream(
-        IngredientGrammarLexer(
-          CharStreams.fromString(
-            "$text\n"
+  fun parseIngredient(text: String): Ingredient =
+    IngredientVisitor()
+      .visitIngredient(
+        IngredientGrammarParser(
+            CommonTokenStream(IngredientGrammarLexer(CharStreams.fromString("$text\n")))
           )
-        )
+          .ingredient()
       )
-    ).ingredient()
-  )
 
-  fun parseIngredients(text: String): List<Ingredient> = IngredientVisitor().visitIngredients(
-    IngredientGrammarParser(
-      CommonTokenStream(
-        IngredientGrammarLexer(
-          CharStreams.fromString(
-            "$text\n"
+  fun parseIngredients(text: String): List<Ingredient> =
+    IngredientVisitor()
+      .visitIngredients(
+        IngredientGrammarParser(
+            CommonTokenStream(IngredientGrammarLexer(CharStreams.fromString("$text\n")))
           )
-        )
+          .recipe()
       )
-    ).recipe()
-  )
 }
 
-//TODO: investigate using Chaquopy to use ingredient-parser-nlp
+// TODO: investigate using Chaquopy to use ingredient-parser-nlp
 
-//>>> ingredient = {
+// >>> ingredient = {
 //  ... "name": parsed.name.text,
 //  ... "raw": parsed.sentence,
 //  ... "comment": parsed.comment,

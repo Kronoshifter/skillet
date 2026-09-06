@@ -22,10 +22,10 @@ data class Recipe(
   @Embedded val source: RecipeSource,
   val ingredients: List<Ingredient>, // TODO: convert to ingredient sections
   val instructions: List<Instruction>, // TODO: convert to instruction sections
-  val equipment: List<Equipment>
+  val equipment: List<Equipment>,
 ) {
-//  val allIngredients by lazy { ingredients.flatMap { it.ingredients } }
-//  val allInstructions by lazy { instructions.flatMap { it.instructions } }
+  //  val allIngredients by lazy { ingredients.flatMap { it.ingredients } }
+  //  val allInstructions by lazy { instructions.flatMap { it.instructions } }
 }
 
 @Serializable
@@ -41,5 +41,5 @@ data class RecipeTime(
 @Serializable
 data class RecipeSource(
   @ColumnInfo(name = "source_name") val name: String = "",
-  @ColumnInfo(name = "source_url") val source: String = ""
+  @ColumnInfo(name = "source_url") val source: String = "",
 )

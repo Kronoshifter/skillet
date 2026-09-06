@@ -26,10 +26,7 @@ data class RecipeHtml(
   @Serializable(with = StringListWrappingSerializer::class) val recipeYield: List<String>,
 )
 
-@Serializable
-data class InstructionHtml(
-  val text: String,
-)
+@Serializable data class InstructionHtml(val text: String)
 
 @Serializable
 data class WebSiteHtml(
@@ -50,48 +47,45 @@ class RecipeScraper {
     return scrapeJsonLd(url)
   }
 
-  private suspend fun scrapeJsonLd(url: String): Result<RecipeScrape, RecipeScrapeError> = extractJsonLd(url)
-    .andThen { parseToJson(it) }
-    .andThen { parseToScrape(it) }
+  private suspend fun scrapeJsonLd(url: String): Result<RecipeScrape, RecipeScrapeError> =
+    extractJsonLd(url).andThen { parseToJson(it) }.andThen { parseToScrape(it) }
 
-  private suspend fun extractJsonLd(recipeUrl: String): Result<String, RecipeScrapeError> = skrape(AsyncFetcher) {
-    request {
-      url = recipeUrl
-    }
+  private suspend fun extractJsonLd(recipeUrl: String): Result<String, RecipeScrapeError> =
+    skrape(AsyncFetcher) {
+      request { url = recipeUrl }
 
-    runCatching {
-      response {
-        htmlDocument {
-          relaxed = true
-          script {
-            withAttribute = "type" to "application/ld+json"
-            findFirst { html }
+      runCatching {
+        response {
+          htmlDocument {
+            relaxed = true
+            script {
+              withAttribute = "type" to "application/ld+json"
+              findFirst { html }
+            }
           }
         }
       }
-    }.mapError {
-      InvalidHtmlError("Failed to extract JSON-LD from $recipeUrl")
+        .mapError { InvalidHtmlError("Failed to extract JSON-LD from $recipeUrl") }
     }
-  }
 
   private fun parseToJson(input: String): Result<JsonElement, RecipeScrapeError> {
     return runCatching {
       Json.parseToJsonElement(input)
-    }.mapError {
-      JsonParseError("Error parsing JSON: ${it.message}")
-    }.andThen { element ->
-      val recipeJson = element.findJson("Recipe")
-      val websiteJson = element.findJson("WebSite")
-
-      recipeJson.toResultOr {
-        InvalidHtmlError("Failed to find recipe JSON")
-      }.map { recipe ->
-        buildJsonObject {
-          put("recipe", recipe)
-          websiteJson?.let { put("website", it) }
-        }
-      }
     }
+      .mapError { JsonParseError("Error parsing JSON: ${it.message}") }
+      .andThen { element ->
+        val recipeJson = element.findJson("Recipe")
+        val websiteJson = element.findJson("WebSite")
+
+        recipeJson
+          .toResultOr { InvalidHtmlError("Failed to find recipe JSON") }
+          .map { recipe ->
+            buildJsonObject {
+              put("recipe", recipe)
+              websiteJson?.let { put("website", it) }
+            }
+          }
+      }
   }
 
   private fun JsonElement.findJson(key: String): JsonElement? =
@@ -102,49 +96,45 @@ class RecipeScraper {
       else -> null
     }
 
-  private infix fun JsonElement.isOrContains(s: String): Boolean = when (this) {
-    is JsonPrimitive -> this.content == s
-    is JsonArray -> this.any { it.jsonPrimitive.content == s }
-    else -> false
-  }
+  private infix fun JsonElement.isOrContains(s: String): Boolean =
+    when (this) {
+      is JsonPrimitive -> this.content == s
+      is JsonArray -> this.any { it.jsonPrimitive.content == s }
+      else -> false
+    }
 
   private fun parseToScrape(element: JsonElement): Result<RecipeScrape, RecipeScrapeError> {
     val json = Json { ignoreUnknownKeys = true }
     return runCatching {
       json.decodeFromJsonElement<RecipeScrape>(element)
-    }.mapError {
-      JsonParseError("Failed to parse JSON-LD: ${it.message}")
     }
+      .mapError { JsonParseError("Failed to parse JSON-LD: ${it.message}") }
   }
 
-  private fun scrapeMicrodata(recipeUrl: String): Result<RecipeHtml, RecipeScrapeError> = skrape(HttpFetcher) {
-    request {
-      url = recipeUrl
-    }
+  private fun scrapeMicrodata(recipeUrl: String): Result<RecipeHtml, RecipeScrapeError> =
+    skrape(HttpFetcher) {
+      request { url = recipeUrl }
 
-    runCatching {
-      response {
-        htmlDocument {
-          relaxed = true
+      runCatching {
+        response {
+          htmlDocument {
+            relaxed = true
 
-          val name = "[itemprop=name]" {
-            findFirst { text }
+            val name = "[itemprop=name]" { findFirst { text } }
+
+            val ingredients = "[itemprop=recipeIngredient]" { findAll { eachText } }
+
+            RecipeHtml(
+              name = name,
+              ingredients = ingredients,
+              instructions = listOf(),
+              recipeYield = listOf(),
+              prepTime = "",
+              cookTime = "",
+            )
           }
-
-          val ingredients = "[itemprop=recipeIngredient]" {
-            findAll { eachText }
-          }
-
-          RecipeHtml(
-            name = name,
-            ingredients = ingredients,
-            instructions = listOf(),
-            recipeYield = listOf(),
-            prepTime = "",
-            cookTime = ""
-          )
         }
       }
-    }.mapError { InvalidHtmlError("Failed to scrape microdata: ${it.message}") }
-  }
+        .mapError { InvalidHtmlError("Failed to scrape microdata: ${it.message}") }
+    }
 }

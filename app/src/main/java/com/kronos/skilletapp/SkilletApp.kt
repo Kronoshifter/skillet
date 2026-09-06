@@ -5,19 +5,18 @@ import androidx.room.Room
 import coil3.ImageLoader
 import coil3.request.crossfade
 import com.kronos.skilletapp.data.RecipeRepository
-import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.database.RecipeDatabase
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.RecipeScraper
-import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
-import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
+import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
+import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
-import org.koin.dsl.module
 import org.koin.core.module.dsl.*
+import org.koin.dsl.module
 
 class SkilletApp : Application() {
 
@@ -33,35 +32,27 @@ class SkilletApp : Application() {
 }
 
 val appModule = module {
-//  single { IngredientAiParser(androidContext()) }
+  //  single { IngredientAiParser(androidContext()) }
 
   single {
     Room.databaseBuilder(
-      context = androidContext(),
-      klass = RecipeDatabase::class.java,
-      name = "recipes.db"
-    ).build()
-  } withOptions {
-    createdAtStart()
-  }
+        context = androidContext(),
+        klass = RecipeDatabase::class.java,
+        name = "recipes.db",
+      )
+      .build()
+  } withOptions { createdAtStart() }
 
-  single { get<RecipeDatabase>().recipeDao() } withOptions {
-    createdAtStart()
-  }
+  single { get<RecipeDatabase>().recipeDao() } withOptions { createdAtStart() }
 
-  singleOf(::RecipeRepository) {
-    createdAtStart()
-  }
+  singleOf(::RecipeRepository) { createdAtStart() }
 
   singleOf(::IngredientParser)
   factoryOf(::RecipeScraper)
-  single<ImageLoader> {
-    ImageLoader.Builder(androidContext())
-      .crossfade(true)
-      .build()
-  } withOptions {
-    createdAtStart()
-  }
+  single<ImageLoader> { ImageLoader.Builder(androidContext()).crossfade(true).build() } withOptions
+    {
+      createdAtStart()
+    }
 
   viewModelOf(::RecipeListViewModel)
   viewModelOf(::RecipeViewModel)

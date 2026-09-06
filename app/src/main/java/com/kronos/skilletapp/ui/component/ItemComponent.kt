@@ -25,7 +25,7 @@ import com.kronos.skilletapp.utils.modifier.applyIf
 fun ItemRow(
   modifier: Modifier = Modifier,
   showDetail: Boolean,
-  detailBackgroundColor : Color = MaterialTheme.colorScheme.primaryContainer,
+  detailBackgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
   detailContentColor: Color = contentColorFor(detailBackgroundColor),
   detail: @Composable BoxScope.() -> Unit,
   decoration: Boolean = false,
@@ -38,12 +38,12 @@ fun ItemRow(
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = modifier
-      .combinedClickable(
+    modifier =
+      modifier.combinedClickable(
         enabled = enabled,
         onClick = onClick,
-        onLongClick = onLongClick
-      )
+        onLongClick = onLongClick,
+      ),
   ) {
     val boxSize = 56.dp
 
@@ -52,24 +52,20 @@ fun ItemRow(
       label = "Show Detail",
       transitionSpec = {
         fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 120)) togetherWith
-        fadeOut(animationSpec = tween(durationMillis = 90))
-      }
+          fadeOut(animationSpec = tween(durationMillis = 90))
+      },
     ) { showRowDetail ->
       if (showRowDetail) {
-        CompositionLocalProvider(
-          LocalContentColor provides detailContentColor
-        ) {
+        CompositionLocalProvider(LocalContentColor provides detailContentColor) {
           val shape = MaterialTheme.shapes.medium
           Box(
-            modifier = Modifier
-              .sizeIn(minWidth = boxSize, minHeight = boxSize)
-              .clip(shape)
-              .background(detailBackgroundColor, shape)
-              .applyIf(decoration) {
-                border(2.dp, detailContentColor, shape)
-              },
+            modifier =
+              Modifier.sizeIn(minWidth = boxSize, minHeight = boxSize)
+                .clip(shape)
+                .background(detailBackgroundColor, shape)
+                .applyIf(decoration) { border(2.dp, detailContentColor, shape) },
             contentAlignment = Alignment.Center,
-            content = detail
+            content = detail,
           )
         }
       } else {
@@ -77,10 +73,7 @@ fun ItemRow(
       }
     }
 
-
-    Box(modifier = Modifier.weight(1f),) {
-      content()
-    }
+    Box(modifier = Modifier.weight(1f)) { content() }
 
     trailingIcon?.invoke()
   }
@@ -96,33 +89,29 @@ fun ItemPill(
   leadingContentColor: Color = contentColorFor(color),
   leadingContent: @Composable RowScope.() -> Unit,
   trailingIcon: @Composable (() -> Unit)? = null,
-  content: @Composable () -> Unit
+  content: @Composable () -> Unit,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = modifier
-      .width(IntrinsicSize.Max)
-      .height(IntrinsicSize.Min)
-      .clip(CircleShape)
-      .border(width = 2.dp, color = borderColor, shape = CircleShape)
-      .clickable(enabled = enabled, onClick = onClick),
+    modifier =
+      modifier
+        .width(IntrinsicSize.Max)
+        .height(IntrinsicSize.Min)
+        .clip(CircleShape)
+        .border(width = 2.dp, color = borderColor, shape = CircleShape)
+        .clickable(enabled = enabled, onClick = onClick),
   ) {
     CompositionLocalProvider(LocalContentColor provides leadingContentColor) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-          .fillMaxHeight()
-          .clip(CircleShape)
-          .background(color),
-        content = leadingContent
+        modifier = Modifier.fillMaxHeight().clip(CircleShape).background(color),
+        content = leadingContent,
       )
     }
 
-    Box(modifier = Modifier.weight(1f),) {
-      content()
-    }
+    Box(modifier = Modifier.weight(1f)) { content() }
 
     trailingIcon?.invoke() ?: Spacer(modifier = Modifier.width(8.dp))
   }
@@ -139,10 +128,12 @@ fun ItemPillPreview() {
             text = "Pasta",
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(8.dp),
           )
         },
-        trailingIcon = { IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) } },
+        trailingIcon = {
+          IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) }
+        },
       ) {
         Text(text = "Pasta")
       }

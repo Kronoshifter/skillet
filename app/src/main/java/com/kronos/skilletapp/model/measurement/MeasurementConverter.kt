@@ -1,20 +1,22 @@
 package com.kronos.skilletapp.model.measurement
 
 import com.kronos.skilletapp.model.measurement.MeasurementUnit.None.baseUnit
-import com.kronos.skilletapp.utils.mutateIf
 import com.kronos.skilletapp.utils.mutateUnless
 import kotlin.div
 
-class MeasurementConverter(
-  val ratio: MeasurementRatio
-) {
+class MeasurementConverter(val ratio: MeasurementRatio) {
   fun convert(quantity: Float): Measurement = convert(quantity, ratio)
+
   fun reverse(quantity: Float): Measurement = convert(quantity, ratio.invert())
 
-  private fun convert(quantity: Float, ratio: MeasurementRatio) = with(ratio) { Measurement(quantity * decimal, right.unit) }
+  private fun convert(quantity: Float, ratio: MeasurementRatio) =
+    with(ratio) { Measurement(quantity * decimal, right.unit) }
 
-  val from get() = ratio.left.unit
-  val to get() = ratio.right.unit
+  val from
+    get() = ratio.left.unit
+
+  val to
+    get() = ratio.right.unit
 
   @MeasurementUnitConverterDsl
   class Builder {
@@ -42,25 +44,29 @@ class MeasurementConverter(
   }
 
   companion object {
-    val baseConverters = listOf(
-      MeasurementUnit.Liter.baseConverter(1000),
-      MeasurementUnit.Pinch.baseConverter(0.3080575),
-      MeasurementUnit.Dash.baseConverter(0.616115),
-      MeasurementUnit.Teaspoon.baseConverter(4.92892),
-      MeasurementUnit.Tablespoon.baseConverter(14.7868),
-      MeasurementUnit.FluidOunce.baseConverter(29.5735),
-      MeasurementUnit.Cup.baseConverter(236.588),
-      MeasurementUnit.Pint.baseConverter(473.176),
-      MeasurementUnit.Quart.baseConverter(946.353),
-      MeasurementUnit.Gallon.baseConverter(3785.41),
-      MeasurementUnit.Kilogram.baseConverter(1000),
-      MeasurementUnit.Ounce.baseConverter(28.3495),
-      MeasurementUnit.Pound.baseConverter(453.592),
-    )
+    val baseConverters =
+      listOf(
+        MeasurementUnit.Liter.baseConverter(1000),
+        MeasurementUnit.Pinch.baseConverter(0.3080575),
+        MeasurementUnit.Dash.baseConverter(0.616115),
+        MeasurementUnit.Teaspoon.baseConverter(4.92892),
+        MeasurementUnit.Tablespoon.baseConverter(14.7868),
+        MeasurementUnit.FluidOunce.baseConverter(29.5735),
+        MeasurementUnit.Cup.baseConverter(236.588),
+        MeasurementUnit.Pint.baseConverter(473.176),
+        MeasurementUnit.Quart.baseConverter(946.353),
+        MeasurementUnit.Gallon.baseConverter(3785.41),
+        MeasurementUnit.Kilogram.baseConverter(1000),
+        MeasurementUnit.Ounce.baseConverter(28.3495),
+        MeasurementUnit.Pound.baseConverter(453.592),
+      )
   }
 }
 
-private fun MeasurementUnit.baseConverter(baseUnitQuantity: Number): MeasurementConverter = converter { (1 of this@baseConverter) to (baseUnitQuantity of baseUnit) }
+private fun MeasurementUnit.baseConverter(baseUnitQuantity: Number): MeasurementConverter =
+  converter {
+    (1 of this@baseConverter) to (baseUnitQuantity of baseUnit)
+  }
 
 fun MeasurementUnit.isBaseUnit(): Boolean = this == baseUnit
 
@@ -68,11 +74,17 @@ fun converter(builder: MeasurementConverter.Builder.() -> Unit): MeasurementConv
   return MeasurementConverter.Builder().apply(builder).build()
 }
 
-fun withConverter(converter: MeasurementConverter, block: MeasurementConversionScope.() -> Measurement): Measurement {
+fun withConverter(
+  converter: MeasurementConverter,
+  block: MeasurementConversionScope.() -> Measurement,
+): Measurement {
   return MeasurementConversionScopeImpl(converter).block()
 }
 
-fun withConverter(builder: MeasurementConverter.Builder.() -> Unit, block: MeasurementConversionScope.() -> Measurement): Measurement {
+fun withConverter(
+  builder: MeasurementConverter.Builder.() -> Unit,
+  block: MeasurementConversionScope.() -> Measurement,
+): Measurement {
   return withConverter(converter(builder), block)
 }
 
@@ -83,43 +95,35 @@ infix fun Measurement.convertTo(to: MeasurementUnit): Measurement {
 
   if (to.isBaseUnit()) return convertToBaseUnit()
 
-  return withConverter(
-    converter { unit to to }
-  ) {
-    this@convertTo convertTo to
-  }
+  return withConverter(converter { unit to to }) { this@convertTo convertTo to }
 }
 
 fun Measurement.convertToBaseUnit(): Measurement {
   if (unit.isBaseUnit()) return this
 
-  val converter = requireNotNull(MeasurementConverter.baseConverters.find { it.from == unit }) {
-    "No base unit converter found for ${unit.name}"
-  }
+  val converter =
+    requireNotNull(MeasurementConverter.baseConverters.find { it.from == unit }) {
+      "No base unit converter found for ${unit.name}"
+    }
 
-  return withConverter(converter) {
-    this@convertToBaseUnit convertTo unit.baseUnit
-  }
+  return withConverter(converter) { this@convertToBaseUnit convertTo unit.baseUnit }
 }
 
 infix fun Measurement.convertTo(to: Measurement): Measurement {
-  val converter = if (unit hasSameDimensionAs to.unit) {
-    converter { unit to to.unit }
-  } else {
-    converter { this@convertTo to to }
-  }
+  val converter =
+    if (unit hasSameDimensionAs to.unit) {
+      converter { unit to to.unit }
+    } else {
+      converter { this@convertTo to to }
+    }
 
-  return withConverter(converter) {
-    this@convertTo convertTo to.unit
-  }
+  return withConverter(converter) { this@convertTo convertTo to.unit }
 }
 
 infix fun Measurement.convertBy(block: MeasurementConverter.Builder.() -> Unit): Measurement {
   val converter = converter(block)
 
-  return withConverter(converter) {
-    this@convertBy convertTo converter.ratio.right.unit
-  }
+  return withConverter(converter) { this@convertBy convertTo converter.ratio.right.unit }
 }
 
 @MeasurementUnitConverterDsl
@@ -141,7 +145,9 @@ class RatioBuilder {
   }
 
   fun build(): MeasurementRatio {
-    check(ratio != MeasurementRatio.None) { "Ratio must be initialized, did you call ratio with an empty block?" }
+    check(ratio != MeasurementRatio.None) {
+      "Ratio must be initialized, did you call ratio with an empty block?"
+    }
     return ratio
   }
 }
@@ -153,11 +159,15 @@ sealed interface MeasurementRatio {
   val right: Measurement
 
   fun invert(): MeasurementRatio
-  fun checkMeasurementsAreSet() = check(left.isNotNone() && right.isNotNone()) { "Measurements must be initialized before getting the ratio" }
+
+  fun checkMeasurementsAreSet() =
+    check(left.isNotNone() && right.isNotNone()) {
+      "Measurements must be initialized before getting the ratio"
+    }
 
   data class Unit(
     override val left: Measurement = Measurement.None,
-    override val right: Measurement = Measurement.None
+    override val right: Measurement = Measurement.None,
   ) : MeasurementRatio {
     override val decimal: Float
       get() {
@@ -173,7 +183,7 @@ sealed interface MeasurementRatio {
 
   data class Quantity(
     override val left: Measurement = Measurement.None,
-    override val right: Measurement = Measurement.None
+    override val right: Measurement = Measurement.None,
   ) : MeasurementRatio {
     override val decimal: Float
       get() {
@@ -187,8 +197,10 @@ sealed interface MeasurementRatio {
   object None : MeasurementRatio {
     override val decimal: Float
       get() = 0f
+
     override val left: Measurement
       get() = Measurement.None
+
     override val right: Measurement
       get() = Measurement.None
 
@@ -201,14 +213,16 @@ interface MeasurementConversionScope {
   infix fun Measurement.convertTo(to: MeasurementUnit): Measurement
 }
 
-private class MeasurementConversionScopeImpl(val converter: MeasurementConverter) : MeasurementConversionScope {
+private class MeasurementConversionScopeImpl(val converter: MeasurementConverter) :
+  MeasurementConversionScope {
   override fun Measurement.convertTo(to: MeasurementUnit): Measurement {
     require(unit hasSameDimensionAs converter.ratio.left.unit) {
       """
         First unit in converter block must measure the same dimension as the measurement to be converted, if necessary chain calls
         Measurement to be converted: $this
         First measurement: ${converter.ratio.left}
-      """.trimIndent()
+      """
+        .trimIndent()
     }
 
     require(to hasSameDimensionAs converter.ratio.right.unit) {
@@ -216,7 +230,8 @@ private class MeasurementConversionScopeImpl(val converter: MeasurementConverter
         Second unit in converter block must measure the same dimension unit to be converted to, if necessary chain calls
         Unit to be converted to: $this
         Second measurement: ${converter.ratio.right}
-      """.trimIndent()
+      """
+        .trimIndent()
     }
 
     val left = converter.ratio.left.unit
@@ -229,9 +244,11 @@ private class MeasurementConversionScopeImpl(val converter: MeasurementConverter
     }
   }
 
-  private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
-  private infix fun Measurement.reverseWith(converter: MeasurementConverter) = converter.reverse(quantity)
+  private infix fun Measurement.convertWith(converter: MeasurementConverter) =
+    converter.convert(quantity)
+
+  private infix fun Measurement.reverseWith(converter: MeasurementConverter) =
+    converter.reverse(quantity)
 }
 
-@DslMarker
-annotation class MeasurementUnitConverterDsl
+@DslMarker annotation class MeasurementUnitConverterDsl
