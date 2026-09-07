@@ -55,7 +55,6 @@ fun KClass<out Route>.toRouteString(): String {
         var count = 0
 
         nonNullableProperties.forEach { property -> append("/${count++}") }
-
         nullableProperties.forEach { property -> append("?${property.name}={${count++}}") }
       }
   }

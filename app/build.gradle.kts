@@ -2,7 +2,6 @@ import com.ncorti.ktfmt.gradle.TrailingCommaManagementStrategy
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.extensions.FailOnSeverity
 
-
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.serialization)
@@ -26,9 +25,7 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    vectorDrawables {
-      useSupportLibrary = true
-    }
+    vectorDrawables { useSupportLibrary = true }
   }
 
   buildTypes {
@@ -41,9 +38,7 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
-  buildFeatures {
-    compose = true
-  }
+  buildFeatures { compose = true }
   packaging {
     resources {
       excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -51,14 +46,9 @@ android {
 
       pickFirsts += "mozilla/public-suffix-list.txt"
     }
-
   }
 
-  testOptions {
-    unitTests.all {
-      it.useJUnitPlatform()
-    }
-  }
+  testOptions { unitTests.all { it.useJUnitPlatform() } }
 }
 
 kotlin {
@@ -68,9 +58,7 @@ kotlin {
   }
 }
 
-room {
-  schemaDirectory("$projectDir/schemas")
-}
+room { schemaDirectory("$projectDir/schemas") }
 
 detekt {
   config.setFrom("$rootDir/detekt.yml")
@@ -87,9 +75,7 @@ ktfmt {
   trailingCommaManagementStrategy = TrailingCommaManagementStrategy.COMPLETE
 }
 
-tasks.withType<Test>().configureEach {
-  useJUnitPlatform()
-}
+tasks.withType<Test>().configureEach { useJUnitPlatform() }
 
 tasks.withType<Detekt>().configureEach {
   exclude("**/generated/**")
@@ -117,7 +103,7 @@ dependencies {
   implementation(libs.bundles.koin)
 
   // Utils
-  implementation(libs.speed.dial.compose) //Speed Dial Composable
+  implementation(libs.speed.dial.compose) // Speed Dial Composable
   implementation(libs.antlr)
   implementation(libs.reorderable)
   implementation(libs.skrapeit)
@@ -142,4 +128,3 @@ dependencies {
   debugImplementation(libs.compose.ui.tooling)
   debugImplementation(libs.compose.ui.test.manifest)
 }
-

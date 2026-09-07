@@ -26,3 +26,4 @@ demos
 *.db
 .beads-credential-key
 .beads/proxieddb/
+.opencode/speculation.md
