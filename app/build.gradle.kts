@@ -62,10 +62,11 @@ room { schemaDirectory("$projectDir/schemas") }
 
 detekt {
   config.setFrom("$rootDir/detekt.yml")
-  buildUponDefaultConfig = false
+  buildUponDefaultConfig = true
   allRules = false
   source.setFrom("src/main/kotlin", "src/main/java")
   failOnSeverity = FailOnSeverity.Error
+  baseline = file("$rootDir/detekt-baseline.xml")
 }
 
 ktfmt {

@@ -26,4 +26,7 @@ demos
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# My own OpenCode workflow files
 .opencode/speculation.md
+openspec/speculation.md

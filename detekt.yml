@@ -21,11 +21,52 @@ console-reports:
     - 'IssuesReport'
     - 'FileBasedIssuesReport'
 
+style:
+  UnusedImport:
+    active: true
+  UnusedPrivateFunction:
+    active: true
+    allowedNames: ''
+  UnusedPrivateProperty:
+    active: true
+    allowedNames: 'ignored|expected|serialVersionUID'
+  UnusedPrivateClass:
+    active: false
+  UnusedParameter:
+    active: false
+  ForbiddenComment:
+    active: true
+    comments:
+      - reason: 'Forbidden FIXME todo marker in comment, please fix the problem.'
+        value: 'FIXME:'
+      - reason: 'Forbidden STOPSHIP todo marker in comment, please do the changes.'
+        value: 'STOPSHIP:'
+      - reason: 'Forbidden TODO todo marker in comment, please do the changes.'
+        value: 'TODO:'
+  MagicNumber:
+    active: true
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+    ignoreHashCodeFunction: true
+    ignorePropertyDeclaration: true
+    ignoreLocalVariableDeclaration: true
+    ignoreConstantDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: false
+    ignoreNamedArgument: true
+    ignoreEnums: false
+    ignoreRanges: true
+    ignoreExtensionFunctions: true
+  ThrowsCount:
+    active: false
+
 naming:
-  active: true
   FunctionNaming:
     active: true
-    functionPattern: '[a-z][a-zA-Z0-9]*'
+    functionPattern: '[a-zA-Z][a-zA-Z0-9]*'
     excludeClassPattern: '$^'
   ClassNaming:
     active: true
@@ -33,19 +74,17 @@ naming:
     active: true
   VariableNaming:
     active: true
+  TopLevelPropertyNaming:
+    active: true
+    propertyPattern: '[A-Za-z][A-Za-z0-9_]*'
 
 potential-bugs:
-  active: true
   DoubleMutabilityForCollection:
     active: true
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
 
-comments:
-  active: true
-
 exceptions:
-  active: true
   ExceptionRaisedInUnexpectedLocation:
     active: true
     methodNames:
@@ -53,8 +92,17 @@ exceptions:
       - 'finalize'
       - 'hashCode'
       - 'toString'
+  SwallowedException:
+    active: false
+  TooGenericExceptionCaught:
+    active: false
 
-style:
-  active: true
-  UnusedImport:
-    active: true
+complexity:
+  CyclomaticComplexMethod:
+    active: false
+  LongMethod:
+    active: false
+  LongParameterList:
+    active: false
+  TooManyFunctions:
+    active: false
