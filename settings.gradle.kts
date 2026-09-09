@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "SkilletApp"
 include(":app")
+include(":utils")
+include(":measurement")
