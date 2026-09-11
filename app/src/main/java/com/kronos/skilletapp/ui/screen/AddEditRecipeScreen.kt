@@ -57,8 +57,8 @@ import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.DisableRipple

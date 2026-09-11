@@ -1,7 +1,7 @@
-package com.kronos.skilletapp.model.measurement
+package com.kronos.measurement.model
 
-import com.kronos.skilletapp.model.measurement.MeasurementUnit.None.baseUnit
-import com.kronos.skilletapp.utils.mutateUnless
+import com.kronos.measurement.model.MeasurementUnit.None.baseUnit
+import com.kronos.utils.mutateUnless
 import kotlin.div
 
 class MeasurementConverter(val ratio: MeasurementRatio) {

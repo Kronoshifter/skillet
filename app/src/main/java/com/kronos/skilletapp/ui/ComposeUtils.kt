@@ -30,12 +30,12 @@ import coil3.compose.AsyncImagePainter.State
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.SkilletError
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.RecipeScraper
-import com.kronos.skilletapp.utils.fromJson
-import com.kronos.skilletapp.utils.toJson
+import com.kronos.utils.fromJson
+import com.kronos.utils.toJson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext

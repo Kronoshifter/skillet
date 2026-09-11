@@ -1,7 +1,4 @@
-package com.kronos.skilletapp.model.measurement
-
-import com.kronos.skilletapp.model.IngredientType.Dry
-import com.kronos.skilletapp.model.IngredientType.Wet
+package com.kronos.measurement.model
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -337,29 +334,6 @@ sealed interface MeasurementUnit {
           )
         )
     }
-
-    private val wet = listOf(Wet)
-    private val dry = listOf(Dry)
-    private val either = listOf(Wet, Dry)
-
-    val allowedIngredientTypes =
-      mapOf(
-        Milliliter to either,
-        Liter to either,
-        Pinch to dry,
-        Dash to wet,
-        Teaspoon to either,
-        Tablespoon to either,
-        FluidOunce to wet,
-        Cup to either,
-        Pint to either,
-        Quart to either,
-        Gallon to either,
-        Gram to either,
-        Kilogram to either,
-        Ounce to either,
-        Pound to either,
-      )
 
     fun fromName(unit: String?) =
       unit?.let {

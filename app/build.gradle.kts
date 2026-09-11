@@ -112,6 +112,10 @@ dependencies {
   implementation(libs.kotlin.result)
   implementation(libs.kotlinx.serialization.json)
 
+  // Internal modules
+  implementation(project(":measurement"))
+  implementation(project(":utils"))
+
   // Android Room
   implementation(libs.bundles.room)
   ksp(libs.room.compiler)
@@ -124,6 +128,7 @@ dependencies {
   testImplementation(libs.bundles.kotest)
   androidTestImplementation(libs.androidx.test.ext)
   androidTestImplementation(libs.espresso.core)
+  androidTestImplementation(platform(libs.compose.bom))
   androidTestImplementation(libs.compose.ui.test)
   debugImplementation(libs.compose.ui.tooling)
   debugImplementation(libs.compose.ui.test.manifest)

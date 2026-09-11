@@ -18,7 +18,7 @@ import com.kronos.skilletapp.ui.screen.recipe.RecipeScreen
 import com.kronos.skilletapp.ui.screen.recipelist.RecipeListScreen
 import com.kronos.skilletapp.utils.navDeepLinkRequest
 import com.kronos.skilletapp.utils.navTypeOf
-import com.kronos.skilletapp.utils.toJson
+import com.kronos.utils.toJson
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf

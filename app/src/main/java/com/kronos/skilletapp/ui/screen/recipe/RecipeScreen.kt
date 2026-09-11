@@ -66,8 +66,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.kronos.skilletapp.model.*
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
 import com.kronos.skilletapp.ui.KoinPreview
@@ -79,8 +79,8 @@ import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
-import com.kronos.skilletapp.utils.fraction
-import com.kronos.skilletapp.utils.mutateUnless
+import com.kronos.utils.fraction
+import com.kronos.utils.mutateUnless
 import kotlin.collections.set
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch

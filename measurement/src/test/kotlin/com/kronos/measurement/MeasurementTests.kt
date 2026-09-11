@@ -1,6 +1,6 @@
-package com.kronos.skilletapp
+package com.kronos.measurement
 
-import com.kronos.skilletapp.model.measurement.*
+import com.kronos.measurement.model.*
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.floats.plusOrMinus

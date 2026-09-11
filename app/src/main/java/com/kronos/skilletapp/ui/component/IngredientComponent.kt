@@ -24,14 +24,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
-import com.kronos.skilletapp.model.measurement.convertTo
-import com.kronos.skilletapp.model.measurement.hasSameDimensionAs
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
+import com.kronos.measurement.model.convertTo
+import com.kronos.measurement.model.hasSameDimensionAs
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
-import com.kronos.skilletapp.utils.Fraction
-import com.kronos.skilletapp.utils.fraction
+import com.kronos.utils.Fraction
+import com.kronos.utils.fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
 

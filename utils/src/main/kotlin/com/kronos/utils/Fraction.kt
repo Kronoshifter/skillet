@@ -1,4 +1,4 @@
-package com.kronos.skilletapp.utils
+package com.kronos.utils
 
 import kotlin.math.abs
 import kotlin.math.roundToInt

@@ -12,7 +12,7 @@
 
 ## Architecture
 
-- **Single module**: `app/` (namespace `com.kronos.skilletapp`)
+- **Multi-module**: `app/` (Android library, namespace `com.kronos.skilletapp`) depends on `:utils` and `:measurement`
 - **Stack**: Kotlin 2.4, Compose (BOM 2026.06), Koin 4 DI, Room 2.8, Navigation Compose 2.9, Coil3, ANTLR4 parser, skrape.it scraper
 - **Min SDK**: 30 | **Compile SDK**: 37 | **JVM**: 11
 
@@ -21,7 +21,6 @@
 | Package | Role |
 |---------|------|
 | `model/` | Data classes: `Recipe`, `Ingredient`, `Instruction`, `Equipment`, `SkilletError` |
-| `model/measurement/` | Measurement system: `Measurement`, `MeasurementUnit` (sealed hierarchy), `MeasurementConverter` DSL |
 | `database/` | Room: `RecipeDatabase`, `RecipeDao`, `RecipeConverters` (JSON type converters) |
 | `data/` | `RecipeRepository` — **doubles as domain layer** (persistence + business logic) |
 | `parser/` | ANTLR-generated lexer/parser/visitor in `parser/grammar/`; `IngredientVisitor` transforms parse tree |
@@ -31,6 +30,21 @@
 | `ui/viewmodel/` | 4 ViewModels — all use `koinViewModel()`, `combine`+`stateIn(WhileSubscribed(5000L))` pattern |
 | `ui/component/` | Reusable composables: bottom nav, dialogs, ingredient pills, pickers, bottom sheets |
 | `ui/` | `ComposeUtils`: `LoadingContent`, `KoinPreview`, `AsyncImage` wrapper |
+| `utils/` | App-local utilities: `ListUtils`, `NavDeepLinkRequestBuilder`, `NavigationUtils`, `ResultUtils`, `StringUtils`, `modifier/` |
+
+### Module structure
+
+The project has been split into three Gradle modules:
+
+| Module | Type | Dependencies | Contents |
+|--------|------|-------------|----------|
+| `:app` | Android library | `:utils`, `:measurement` | UI, DI, persistence, parsing, scraping, navigation |
+| `:utils` | Pure Kotlin JVM | *(none)* | Shared utilities: `Fraction`, `NumberUtils`, `MiscUtils` |
+| `:measurement` | Pure Kotlin JVM | `:utils` | Measurement types: `Measurement`, `MeasurementUnit` (sealed hierarchy), `MeasurementConverter` DSL |
+
+- `utils/` is a pure Kotlin JVM library (not Android), depended on by both `:app` and `:measurement`
+- `measurement/` is a pure Kotlin JVM library (not Android), depends on `:utils`
+- The old `app/src/main/java/com/kronos/skilletapp/model/measurement/` directory has been removed; measurement code now lives in `measurement/src/main/kotlin/com/kronos/measurement/model/`
 
 ### Entry points
 

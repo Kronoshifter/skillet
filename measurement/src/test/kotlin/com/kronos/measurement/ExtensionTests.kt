@@ -1,7 +1,7 @@
-package com.kronos.skilletapp
+package com.kronos.measurement
 
-import com.kronos.skilletapp.utils.gcd
-import com.kronos.skilletapp.utils.roundToEighth
+import com.kronos.utils.gcd
+import com.kronos.utils.roundToEighth
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe

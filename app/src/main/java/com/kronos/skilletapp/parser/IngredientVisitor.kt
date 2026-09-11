@@ -1,11 +1,11 @@
 package com.kronos.skilletapp.parser
 
 import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.grammar.IngredientGrammarBaseVisitor
 import com.kronos.skilletapp.parser.grammar.IngredientGrammarParser
-import com.kronos.skilletapp.utils.Fraction
+import com.kronos.utils.Fraction
 import com.kronos.skilletapp.utils.removePunctuation
 
 class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {

@@ -1,11 +1,11 @@
-package com.kronos.skilletapp.model.measurement
+package com.kronos.measurement.model
 
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.toResultOr
-import com.kronos.skilletapp.utils.fraction
-import com.kronos.skilletapp.utils.haveSameTypes
-import com.kronos.skilletapp.utils.nearestEighth
+import com.kronos.utils.fraction
+import com.kronos.utils.haveSameTypes
+import com.kronos.utils.nearestEighth
 import kotlinx.serialization.Serializable
 
 @Serializable

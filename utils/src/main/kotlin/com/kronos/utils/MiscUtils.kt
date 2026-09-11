@@ -1,4 +1,4 @@
-package com.kronos.skilletapp.utils
+package com.kronos.utils
 
 import kotlin.reflect.KClass
 import kotlinx.serialization.encodeToString

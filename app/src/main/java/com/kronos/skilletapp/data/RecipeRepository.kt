@@ -2,8 +2,8 @@ package com.kronos.skilletapp.data
 
 import com.kronos.skilletapp.database.RecipeDao
 import com.kronos.skilletapp.model.*
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

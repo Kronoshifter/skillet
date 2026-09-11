@@ -11,7 +11,7 @@ import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
 import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.navigation.Route
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

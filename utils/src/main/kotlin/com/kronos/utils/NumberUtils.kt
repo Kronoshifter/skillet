@@ -1,4 +1,4 @@
-package com.kronos.skilletapp.utils
+package com.kronos.utils
 
 import java.math.BigDecimal
 import java.math.MathContext

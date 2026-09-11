@@ -1,6 +1,6 @@
 package com.kronos.skilletapp
 
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.plusOrMinus
@@ -15,13 +15,13 @@ class ParserTests :
         test("1 cup") {
           val ingredient = parser.parseIngredient("1 cup butter\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.Cup
-          ingredient.measurement.quantity shouldBe (1.0 plusOrMinus 0.01)
+          ingredient.measurement.quantity.toDouble() shouldBe (1.0 plusOrMinus 0.01)
         }
 
         test("1.5 cup") {
           val ingredient = parser.parseIngredient("1.5 cup butter\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.Cup
-          ingredient.measurement.quantity shouldBe (1.5 plusOrMinus 0.01)
+          ingredient.measurement.quantity.toDouble() shouldBe (1.5 plusOrMinus 0.01)
         }
       }
 
@@ -29,19 +29,19 @@ class ParserTests :
         test("1/2 cup") {
           val ingredient = parser.parseIngredient("1/2 cup butter\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.Cup
-          ingredient.measurement.quantity shouldBe (0.5 plusOrMinus 0.01)
+          ingredient.measurement.quantity.toDouble() shouldBe (0.5 plusOrMinus 0.01)
         }
 
         test("3/4 cup") {
           val ingredient = parser.parseIngredient("1/4 cup butter\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.Cup
-          ingredient.measurement.quantity shouldBe (0.25 plusOrMinus 0.01)
+          ingredient.measurement.quantity.toDouble() shouldBe (0.25 plusOrMinus 0.01)
         }
 
         test("1 1/2 cup") {
           val ingredient = parser.parseIngredient("1 1/2 cup butter\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.Cup
-          ingredient.measurement.quantity shouldBe (1.5 plusOrMinus 0.01)
+          ingredient.measurement.quantity.toDouble() shouldBe (1.5 plusOrMinus 0.01)
         }
       }
 
@@ -49,19 +49,19 @@ class ParserTests :
         test("Decimal") {
           val ingredient = parser.parseIngredient("1 onion\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.None
-          ingredient.measurement.quantity shouldBe 1.0
+          ingredient.measurement.quantity shouldBe 1.0f
         }
 
         test("Fractional") {
           val ingredient = parser.parseIngredient("1/2 onion\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.None
-          ingredient.measurement.quantity shouldBe 0.5
+          ingredient.measurement.quantity shouldBe 0.5f
         }
 
         test("No Quantity") {
           val ingredient = parser.parseIngredient("salt\n")
           ingredient.measurement.unit shouldBe MeasurementUnit.None
-          ingredient.measurement.quantity shouldBe 0.0
+          ingredient.measurement.quantity shouldBe 0.0f
         }
       }
 
