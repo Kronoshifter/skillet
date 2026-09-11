@@ -4,6 +4,11 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
+java {
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+}
+
 kotlin {
   compilerOptions {
     languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_4
@@ -11,10 +16,7 @@ kotlin {
   }
 }
 
-java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
-}
+tasks.withType<Test>().configureEach { useJUnitPlatform() }
 
 dependencies {
   api(libs.kotlinx.serialization.json)
