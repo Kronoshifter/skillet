@@ -1,7 +1,5 @@
-package com.kronos.measurement
+package com.kronos.utils
 
-import com.kronos.utils.Fraction
-import com.kronos.utils.fraction
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe

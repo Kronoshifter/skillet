@@ -30,3 +30,4 @@ demos
 # My own OpenCode workflow files
 .opencode/speculation.md
 openspec/speculation.md
+.kotlin/

@@ -1,7 +1,5 @@
-package com.kronos.measurement
+package com.kronos.utils
 
-import com.kronos.utils.gcd
-import com.kronos.utils.roundToEighth
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe

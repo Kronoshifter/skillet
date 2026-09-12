@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:Fraction.kt:Fraction$3</ID>
+    <ID>MagicNumber:Fraction.kt:Fraction$4</ID>
+    <ID>MagicNumber:Fraction.kt:Fraction$5</ID>
+    <ID>MagicNumber:Fraction.kt:Fraction$6</ID>
+    <ID>MagicNumber:Fraction.kt:Fraction$7</ID>
+    <ID>MagicNumber:Fraction.kt:Fraction$8</ID>
+    <ID>MagicNumber:NumberUtils.kt:3.0</ID>
+    <ID>MagicNumber:NumberUtils.kt:8.0</ID>
+    <ID>WildcardImport:NumberUtils.kt:import kotlin.math.*</ID>
+  </CurrentIssues>
+</SmellBaseline>
