@@ -10,6 +10,7 @@ compose-material3 = "1.4.0"
 compose-material-icons = "1.7.8"
 navigation = "2.9.8"
 koin = "4.2.2"
+koin-plugin = "1.2.1"
 room = "2.8.4"
 coil = "3.5.0"
 speed-dial = "2.0.0-alpha01"
@@ -85,6 +86,7 @@ kotlin-parcelize = { id = "kotlin-parcelize" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 androidx-room = { id = "androidx.room", version.ref = "room" }
+koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

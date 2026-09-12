@@ -9,6 +9,7 @@ plugins {
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.androidx.room)
+  alias(libs.plugins.koin.compiler)
   alias(libs.plugins.detekt)
   alias(libs.plugins.ktfmt)
 }
