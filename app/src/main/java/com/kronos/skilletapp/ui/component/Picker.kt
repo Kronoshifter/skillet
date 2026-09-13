@@ -30,15 +30,11 @@ fun <T> InfiniteScrollingPicker(
   visibleItemCount: Int = 3,
   itemHeight: Dp = 40.dp,
   divider: @Composable (offset: Dp) -> Unit = {
-    HorizontalDivider(
-      modifier = Modifier.offset(y = it),
-    )
+    HorizontalDivider(modifier = Modifier.offset(y = it))
   },
   optionContent: @Composable BoxScope.(T) -> Unit = { Text(text = it.toString()) },
 ) {
-  require(visibleItemCount % 2 == 1) {
-    "visibleItemCount must be an odd number"
-  }
+  require(visibleItemCount % 2 == 1) { "visibleItemCount must be an odd number" }
 
   val center = visibleItemCount / 2
   val scrollCount = Int.MAX_VALUE
@@ -54,21 +50,16 @@ fun <T> InfiniteScrollingPicker(
       horizontalAlignment = Alignment.CenterHorizontally,
       state = listState,
       flingBehavior = flingBehavior,
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(visibleItemCount * itemHeight)
-        .verticalFadingEdge(),
+      modifier = Modifier.fillMaxWidth().height(visibleItemCount * itemHeight).verticalFadingEdge(),
     ) {
-      items(scrollCount) { index -> 
+      items(scrollCount) { index ->
         DisableRipple {
           Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-              .height(itemHeight)
-              .fillMaxWidth()
-              .clickable {
+            modifier =
+              Modifier.height(itemHeight).fillMaxWidth().clickable {
                 scope.launch { listState.animateScrollToItem(index = index - center) }
-              }
+              },
           ) {
             optionContent(options[index % options.size])
           }
@@ -101,7 +92,7 @@ fun PickerPreview() {
           options = options.toList(),
           selected = selected,
           onSelect = { selected = it },
-          visibleItemCount = 3
+          visibleItemCount = 3,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -129,14 +120,14 @@ fun DoublePickerPreview() {
             options = numberPickerOptions,
             selected = numberPickerSelected,
             onSelect = { numberPickerSelected = it },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
           )
 
           InfiniteScrollingPicker(
             options = unitPickerOptions,
             selected = unitPickerSelected,
             onSelect = { unitPickerSelected = it },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
           )
         }
 

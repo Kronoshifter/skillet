@@ -8,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -29,18 +28,18 @@ import com.kronos.skilletapp.navigation.LocalNavController
 import com.kronos.skilletapp.navigation.LocalNavigationActions
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.navigation.SkilletNavigationActions
-import kotlin.collections.find
 
 enum class BottomNavigationBarVisibility {
   Hidden,
   Visible;
 
   fun isVisible() = this == Visible
+
   fun isHidden() = this == Hidden
 }
 
 class SkilletBottomNavigationBarState(
-  initialVisibility: BottomNavigationBarVisibility = BottomNavigationBarVisibility.Visible,
+  initialVisibility: BottomNavigationBarVisibility = BottomNavigationBarVisibility.Visible
 ) {
   var visibility by mutableStateOf(initialVisibility)
     private set
@@ -53,14 +52,18 @@ class SkilletBottomNavigationBarState(
     visibility = BottomNavigationBarVisibility.Visible
   }
 
-  val isVisible get() = visibility.isVisible()
-  val isHidden get() = visibility.isHidden()
+  val isVisible
+    get() = visibility.isVisible()
+
+  val isHidden
+    get() = visibility.isHidden()
 
   companion object {
-    val Saver = Saver<SkilletBottomNavigationBarState, BottomNavigationBarVisibility>(
-      save = { it.visibility },
-      restore = { SkilletBottomNavigationBarState(initialVisibility = it) }
-    )
+    val Saver =
+      Saver<SkilletBottomNavigationBarState, BottomNavigationBarVisibility>(
+        save = { it.visibility },
+        restore = { SkilletBottomNavigationBarState(initialVisibility = it) },
+      )
   }
 }
 
@@ -70,12 +73,20 @@ fun rememberBottomNavigationBarState(
 ): SkilletBottomNavigationBarState {
   return rememberSaveable(
     initialVisibility,
-    saver = SkilletBottomNavigationBarState.Saver
-  ) { SkilletBottomNavigationBarState(initialVisibility) }
+    saver = SkilletBottomNavigationBarState.Saver,
+  ) {
+    SkilletBottomNavigationBarState(initialVisibility)
+  }
 }
 
-val LocalSkilletBottomNavigationBarVisibility = compositionLocalOf<BottomNavigationBarVisibility> { error("No BottomNavigationBarVisibility provided")}
-val LocalSkilletBottomNavigationBarState = compositionLocalOf<SkilletBottomNavigationBarState> { error("No BottomNavigationBarState provided")}
+val LocalSkilletBottomNavigationBarVisibility =
+  compositionLocalOf<BottomNavigationBarVisibility> {
+    error("No BottomNavigationBarVisibility provided")
+  }
+val LocalSkilletBottomNavigationBarState =
+  compositionLocalOf<SkilletBottomNavigationBarState> {
+    error("No BottomNavigationBarState provided")
+  }
 
 @Composable
 fun SkilletBottomNavigationBar(
@@ -86,24 +97,25 @@ fun SkilletBottomNavigationBar(
 ) {
   if (state.isVisible) {
     NavigationBar {
-      var selectedScreen by remember { mutableStateOf<SkilletBottomNavigationBarItems<*>>(SkilletBottomNavigationBarItems.RecipeList) }
+      var selectedScreen by remember {
+        mutableStateOf<SkilletBottomNavigationBarItems<*>>(
+          SkilletBottomNavigationBarItems.RecipeList
+        )
+      }
 
       val navBackStackEntry by navController.currentBackStackEntryAsState()
       val currentDestination = navBackStackEntry?.destination
 
       screens.forEach { screen ->
-//        val isSelected = screen == selectedScreen
-        val isSelected = currentDestination?.hierarchy?.any { it.hasRoute(screen.route::class) } == true
+        //        val isSelected = screen == selectedScreen
+        val isSelected =
+          currentDestination?.hierarchy?.any { it.hasRoute(screen.route::class) } == true
         NavigationBarItem(
-          icon = {
-            screen.SelectableIcon(isSelected)
-          },
-          label = {
-            Text(text = screen.label)
-          },
+          icon = { screen.SelectableIcon(isSelected) },
+          label = { Text(text = screen.label) },
           selected = isSelected,
           onClick = {
-//            selectedScreen = screen
+            //            selectedScreen = screen
             navActions.navigateViaBottomNav(screen.route)
           },
         )
@@ -122,9 +134,7 @@ sealed class SkilletBottomNavigationBarItems<T : Route>(
   fun SelectableIcon(isSelected: Boolean) {
     AnimatedContent(
       targetState = isSelected,
-      transitionSpec = {
-        fadeIn() togetherWith fadeOut()
-      }
+      transitionSpec = { fadeIn() togetherWith fadeOut() },
     ) {
       if (it) {
         Icon(imageVector = selectedIcon, contentDescription = null)
@@ -134,18 +144,15 @@ sealed class SkilletBottomNavigationBarItems<T : Route>(
     }
   }
 
-  data object RecipeList : SkilletBottomNavigationBarItems<Route.RecipeList>(
-    label = "Recipes",
-    route = Route.RecipeList(),
-    icon = Icons.AutoMirrored.Outlined.ListAlt,
-    selectedIcon = Icons.AutoMirrored.Filled.ListAlt
-  )
+  data object RecipeList :
+    SkilletBottomNavigationBarItems<Route.RecipeList>(
+      label = "Recipes",
+      route = Route.RecipeList(),
+      icon = Icons.AutoMirrored.Outlined.ListAlt,
+      selectedIcon = Icons.AutoMirrored.Filled.ListAlt,
+    )
 
   companion object {
-    val values by lazy {
-      listOf(
-        RecipeList,
-      )
-    }
+    val values by lazy { listOf(RecipeList) }
   }
 }

@@ -22,17 +22,11 @@ fun TimeSelectBottomSheet(
   ActionBottomSheet(
     sheetState = sheetState,
     onDismissRequest = onDismissRequest,
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(8.dp),
+    modifier = Modifier.fillMaxWidth().padding(8.dp),
     title = title,
     action = {
-      TextButton(
-        onClick = { onTimeSelect(hours * 60 + minutes) },
-      ) {
-        Text(text = "Save")
-      }
-    }
+      TextButton(onClick = { onTimeSelect(hours * 60 + minutes) }) { Text(text = "Save") }
+    },
   ) {
     Row(modifier = Modifier.fillMaxWidth()) {
       val hoursOptions = (0..23).toList()
@@ -42,7 +36,7 @@ fun TimeSelectBottomSheet(
         options = hoursOptions,
         selected = hours,
         onSelect = { hours = it },
-        modifier = Modifier.weight(1f)
+        modifier = Modifier.weight(1f),
       ) { i ->
         Text(text = if (i > 0) "$i hour".pluralize(i) { "${it}s" } else "-")
       }
@@ -51,7 +45,7 @@ fun TimeSelectBottomSheet(
         options = minutesOptions,
         selected = minutes,
         onSelect = { minutes = it },
-        modifier = Modifier.weight(1f)
+        modifier = Modifier.weight(1f),
       ) { i ->
         Text(text = if (i > 0) "$i minute".pluralize(i) { "${it}s" } else "-")
       }

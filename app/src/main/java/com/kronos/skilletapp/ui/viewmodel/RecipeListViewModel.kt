@@ -8,75 +8,78 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.navigation.toRoute
-import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
-import com.kronos.skilletapp.navigation.Route
-import com.kronos.skilletapp.navigation.SharedRecipe
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
+import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
+import com.kronos.skilletapp.navigation.Route
+import com.kronos.skilletapp.navigation.SharedRecipe
 import com.kronos.skilletapp.ui.saverOf
 import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
 import com.kronos.skilletapp.utils.navTypeOf
-import kotlinx.coroutines.flow.*
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
+import kotlinx.coroutines.flow.*
 
-data class RecipeListState(
-  val recipes: List<Recipe>,
-)
+data class RecipeListState(val recipes: List<Recipe>)
 
 class RecipeListViewModel(
   private val recipeRepository: RecipeRepository,
-  private val handle: SavedStateHandle
+  private val handle: SavedStateHandle,
 ) : ViewModel() {
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
-  private val args = handle.toRoute<Route.RecipeList>(typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)))
+  private val args =
+    handle.toRoute<Route.RecipeList>(
+      typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
+    )
 
   @OptIn(SavedStateHandleSaveableApi::class)
-  var sharedRecipe by handle.saveable(stateSaver = saverOf<SharedRecipe?>()) {
-    mutableStateOf<SharedRecipe?>(args.sharedRecipe?.let {
-      it.copy(
-        url = URLDecoder.decode(it.url, StandardCharsets.UTF_8.toString())
+  var sharedRecipe by
+    handle.saveable(stateSaver = saverOf<SharedRecipe?>()) {
+      mutableStateOf<SharedRecipe?>(
+        args.sharedRecipe?.let {
+          it.copy(url = URLDecoder.decode(it.url, StandardCharsets.UTF_8.toString()))
+        }
       )
-    })
-  }
+    }
 
   @OptIn(SavedStateHandleSaveableApi::class)
-  var showSharedUrl by handle.saveable {
-    mutableStateOf(true)
-  }
+  var showSharedUrl by handle.saveable { mutableStateOf(true) }
 
   private val _isLoading = MutableStateFlow(false)
-  private val _recipesAsync = recipeRepository.observeRecipes()
-    .distinctUntilChanged()
-    .map { UiState.LoadedWithData(it) }
-    .catch<UiState<List<Recipe>>> {
-      Log.e("RecipeListViewModel", "Error loading recipes", it)
-      val error = when(it) {
-        else -> RecipeCouldNotBeLoadedError("Could not load recipes")
+  private val _recipesAsync =
+    recipeRepository
+      .observeRecipes()
+      .distinctUntilChanged()
+      .map { UiState.LoadedWithData(it) }
+      .catch<UiState<List<Recipe>>> {
+        Log.e("RecipeListViewModel", "Error loading recipes", it)
+        val error =
+          when (it) {
+            else -> RecipeCouldNotBeLoadedError("Could not load recipes")
+          }
+        emit(UiState.Error(error))
       }
-      emit(UiState.Error(error))
-    }
 
-  val uiState = combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
-    when {
-      isLoading -> UiState.Loading
-      else -> when (recipesAsync) {
-        UiState.Loading -> UiState.Loading
-        is UiState.Error -> UiState.Error(recipesAsync.error)
-        is UiState.LoadedWithData -> UiState.LoadedWithData(
-          RecipeListState(
-            recipes = recipesAsync.data,
-          )
-        )
+  val uiState =
+    combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
+        when {
+          isLoading -> UiState.Loading
+          else ->
+            when (recipesAsync) {
+              UiState.Loading -> UiState.Loading
+              is UiState.Error -> UiState.Error(recipesAsync.error)
+              is UiState.LoadedWithData ->
+                UiState.LoadedWithData(RecipeListState(recipes = recipesAsync.data))
 
-        else -> UiState.Error(UsedLoadedWhereYouShouldntError)
+              else -> UiState.Error(UsedLoadedWhereYouShouldntError)
+            }
+        }
       }
-    }
-  }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
 }
 
 const val RECIPES_SORT_TYPE_KEY = "RECIPES_SORT_TYPE_KEY"

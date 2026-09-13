@@ -37,14 +37,13 @@ class MainActivity : ComponentActivity() {
           Surface {
             CompositionLocalProvider(
               LocalNavigationActions provides navActions,
-              LocalNavController provides navController
+              LocalNavController provides navController,
             ) {
               SkilletNavGraph(
                 intentFlow = intentFlow,
-                modifier = Modifier
-                  .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 navController = navController,
-                navActions = navActions
+                navActions = navActions,
               )
             }
           }

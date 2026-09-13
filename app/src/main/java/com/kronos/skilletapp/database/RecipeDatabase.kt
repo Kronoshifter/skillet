@@ -17,24 +17,17 @@ abstract class RecipeDatabase : RoomDatabase() {
 @Dao
 interface RecipeDao {
 
-  @Query("SELECT * FROM recipe")
-  suspend fun getAll(): List<Recipe>
+  @Query("SELECT * FROM recipe") suspend fun getAll(): List<Recipe>
 
-  @Query("SELECT * FROM recipe")
-  fun observeAll(): Flow<List<Recipe>>
+  @Query("SELECT * FROM recipe") fun observeAll(): Flow<List<Recipe>>
 
-  @Query("SELECT * FROM recipe WHERE id = :id")
-  suspend fun getById(id: String): Recipe
+  @Query("SELECT * FROM recipe WHERE id = :id") suspend fun getById(id: String): Recipe
 
-  @Query("SELECT * FROM recipe WHERE id = :id")
-  fun observeById(id: String): Flow<Recipe>
+  @Query("SELECT * FROM recipe WHERE id = :id") fun observeById(id: String): Flow<Recipe>
 
-  @Query("SELECT * FROM recipe WHERE name LIKE :name LIMIT 1")
-  fun getByName(name: String): Recipe
+  @Query("SELECT * FROM recipe WHERE name LIKE :name LIMIT 1") fun getByName(name: String): Recipe
 
-  @Upsert(entity = Recipe::class)
-  suspend fun upsert(recipe: Recipe)
+  @Upsert(entity = Recipe::class) suspend fun upsert(recipe: Recipe)
 
-  @Delete
-  suspend fun delete(recipe: Recipe)
+  @Delete suspend fun delete(recipe: Recipe)
 }

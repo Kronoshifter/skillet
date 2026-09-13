@@ -8,14 +8,15 @@ fun <T, R : Comparable<R>> List<T>.update(
 fun <T, R : Comparable<R>> List<T>.upsert(
   item: T,
   selector: (T) -> R,
-) = if (any { selector(it) == selector(item) }) {
-  map { if (selector(it) == selector(item)) item else it }
-} else {
-  this + item
-}
+) =
+  if (any { selector(it) == selector(item) }) {
+    map { if (selector(it) == selector(item)) item else it }
+  } else {
+    this + item
+  }
 
-fun <T> List<T>.move(from: Int, to: Int): List<T> = toMutableList().apply { add(to, removeAt(from)) }.toList()
+fun <T> List<T>.move(from: Int, to: Int): List<T> =
+  toMutableList().apply { add(to, removeAt(from)) }.toList()
 
-fun <K, V, NK, NV> Map<K, V>.mapEntries(
-  transform: (Map.Entry<K, V>) -> Pair<NK, NV>
-): Map<NK, NV> = entries.associate(transform)
+fun <K, V, NK, NV> Map<K, V>.mapEntries(transform: (Map.Entry<K, V>) -> Pair<NK, NV>): Map<NK, NV> =
+  entries.associate(transform)

@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ForbiddenComment:MeasurementUnit.kt:MeasurementUnit$// TODO: potentially replace aliases here with lookup table</ID>
+    <ID>LargeClass:MeasurementTests.kt:MeasurementTests : FunSpec</ID>
+    <ID>MagicNumber:Measurement.kt:Measurement$4</ID>
+    <ID>WildcardImport:MeasurementTests.kt:import com.kronos.measurement.model.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

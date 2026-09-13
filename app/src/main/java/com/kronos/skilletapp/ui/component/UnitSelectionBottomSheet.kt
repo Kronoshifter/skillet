@@ -15,8 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kronos.skilletapp.model.Ingredient
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.utils.modifier.applyIf
 
 @Composable
@@ -36,9 +36,7 @@ fun UnitSelectionBottomSheet(
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(8.dp),
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(8.dp)
+      modifier = Modifier.fillMaxWidth().padding(8.dp),
     ) {
       Text(
         text = ingredient.name,
@@ -59,38 +57,35 @@ fun UnitSelectionBottomSheet(
 
           val shape = MaterialTheme.shapes.medium
           Box(
-            modifier = Modifier
-              .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-              .clip(shape)
-              .background(bgColor, shape)
-              .applyIf(selectedUnit == measurement.unit) {
-                border(
-                  width = 2.dp,
-                  color = contentColor,
-                  shape = shape
-                )
-              }
-              .clickable { onUnitSelect(measurement.unit) }
+            modifier =
+              Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .clip(shape)
+                .background(bgColor, shape)
+                .applyIf(selectedUnit == measurement.unit) {
+                  border(
+                    width = 2.dp,
+                    color = contentColor,
+                    shape = shape,
+                  )
+                }
+                .clickable { onUnitSelect(measurement.unit) }
           ) {
-
             Column(
               horizontalAlignment = Alignment.CenterHorizontally,
               verticalArrangement = Arrangement.SpaceAround,
-              modifier = Modifier
-                .align(Alignment.Center)
-                .padding(4.dp)
+              modifier = Modifier.align(Alignment.Center).padding(4.dp),
             ) {
               Text(
                 text = quantity,
                 color = contentColor,
                 fontSize = 18.sp,
-                modifier = Modifier.offset(y = 4.dp)
+                modifier = Modifier.offset(y = 4.dp),
               )
 
               Text(
                 text = measurement.unit.abbreviation,
                 color = contentColor,
-                fontSize = 12.sp
+                fontSize = 12.sp,
               )
             }
           }

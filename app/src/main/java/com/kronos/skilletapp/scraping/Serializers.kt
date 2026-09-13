@@ -15,12 +15,15 @@ object StringListUnwrappingSerializer : JsonTransformingSerializer<String>(Strin
   }
 }
 
-object StringListWrappingSerializer : JsonTransformingSerializer<List<String>>(serializer<List<String>>()) {
-  override fun transformDeserialize(element: JsonElement): JsonElement = element as? JsonArray ?: buildJsonArray { add(element) }
+object StringListWrappingSerializer :
+  JsonTransformingSerializer<List<String>>(serializer<List<String>>()) {
+  override fun transformDeserialize(element: JsonElement): JsonElement =
+    element as? JsonArray ?: buildJsonArray { add(element) }
 }
 
-inline fun <reified T: Any> listUnwrappingSerializer(): JsonTransformingSerializer<T> {
+inline fun <reified T : Any> listUnwrappingSerializer(): JsonTransformingSerializer<T> {
   return object : JsonTransformingSerializer<T>(serializer()) {
-    override fun transformDeserialize(element: JsonElement): JsonElement = if (element is JsonArray) element.first() else element
+    override fun transformDeserialize(element: JsonElement): JsonElement =
+      if (element is JsonArray) element.first() else element
   }
 }

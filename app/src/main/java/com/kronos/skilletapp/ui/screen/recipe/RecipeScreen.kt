@@ -1,7 +1,6 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
 import android.R.attr.onClick
-import android.webkit.URLUtil
 import android.webkit.URLUtil.isValidUrl
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -11,21 +10,17 @@ import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.expandIn
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -49,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -72,30 +66,30 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.kronos.skilletapp.model.*
-import com.kronos.skilletapp.model.measurement.Measurement
-import com.kronos.skilletapp.model.measurement.MeasurementUnit
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
-import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.KoinPreview
+import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientListItem
-import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.component.IngredientPill
+import com.kronos.skilletapp.ui.component.IngredientRow
 import com.kronos.skilletapp.ui.icon.SkilletIcons
 import com.kronos.skilletapp.ui.icon.filled.Skillet
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
-import com.kronos.skilletapp.utils.fraction
-import com.kronos.skilletapp.utils.mutateUnless
+import com.kronos.utils.fraction
+import com.kronos.utils.mutateUnless
+import kotlin.collections.set
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import kotlin.collections.set
-import kotlin.math.roundToInt
 
 private enum class RecipeContentTab {
   Ingredients,
-  Instructions
+  Instructions,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,7 +97,7 @@ private enum class RecipeContentTab {
 fun RecipeScreen(
   onBack: () -> Unit,
   onEdit: () -> Unit,
-  onCook: (scale: Float) -> Unit,
+  onCook: (currentServings: Int) -> Unit,
   vm: RecipeViewModel = koinViewModel(),
 ) {
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
@@ -115,7 +109,10 @@ fun RecipeScreen(
   val fabTransitionState = remember { MutableTransitionState(false).apply { targetState = true } }
   val fabTransition = rememberTransition(fabTransitionState, "Fab transition")
 
-  LaunchedEffect(pagerState.isScrollInProgress, fabTransitionState.targetState == fabTransitionState.currentState) {
+  LaunchedEffect(
+    pagerState.isScrollInProgress,
+    fabTransitionState.targetState == fabTransitionState.currentState,
+  ) {
     fabTransitionState.targetState = !pagerState.isScrollInProgress
   }
 
@@ -124,8 +121,12 @@ fun RecipeScreen(
 
   val isFabExpanded by remember {
     derivedStateOf {
-      (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal && (ingredientListState.firstVisibleItemIndex == 0 || !ingredientListState.canScrollForward)) ||
-          (pagerState.currentPage == RecipeContentTab.Instructions.ordinal && (instructionsListState.firstVisibleItemIndex == 0 || !instructionsListState.canScrollForward))
+      (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal &&
+        (ingredientListState.firstVisibleItemIndex == 0 ||
+          !ingredientListState.canScrollForward)) ||
+        (pagerState.currentPage == RecipeContentTab.Instructions.ordinal &&
+          (instructionsListState.firstVisibleItemIndex == 0 ||
+            !instructionsListState.canScrollForward))
     }
   }
 
@@ -141,9 +142,7 @@ fun RecipeScreen(
           }
         },
         actions = {
-          IconButton(onClick = onEdit) {
-            Icon(Icons.Filled.Edit, contentDescription = "Edit")
-          }
+          IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
 
           IconButton(onClick = { /*TODO*/ }) {
             Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
@@ -157,38 +156,39 @@ fun RecipeScreen(
         visible = { isVisible -> isVisible },
         enter = scaleIn(),
         exit = scaleOut(),
-        modifier = Modifier
-          .clip(if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape else FloatingActionButtonDefaults.shape)
+        modifier =
+          Modifier.clip(
+            if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape
+            else FloatingActionButtonDefaults.shape
+          ),
       ) {
         ExtendedFloatingActionButton(
           text = { Text("Cook") },
           icon = { Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook") },
-          onClick = { onCook(uiState.scale) },
-          expanded = isFabExpanded
+          onClick = { onCook(uiState.currentServings) },
+          expanded = isFabExpanded,
         )
       }
     },
   ) { paddingValues ->
     LoadingContent(
       state = recipeState,
-      modifier = Modifier
-        .fillMaxSize()
-        .padding(paddingValues),
+      modifier = Modifier.fillMaxSize().padding(paddingValues),
     ) { recipe ->
-      RecipeContent(
-        recipe = recipe,
-        scale = uiState.scale,
-        servings = uiState.servings,
-        selectedUnits = uiState.selectedUnits,
-        onScalingChanged = vm::setScaling,
-        onUnitSelect = vm::selectUnit,
-        pagerState = pagerState,
-        ingredientListState = ingredientListState,
-        instructionsListState = instructionsListState,
-        topAppBarScrollBehavior = scrollBehavior,
-        modifier = Modifier
-          .fillMaxSize()
-      )
+        RecipeContent(
+          recipe = recipe,
+          currentServings = uiState.currentServings,
+          selectedUnits = uiState.selectedUnits,
+          onScalingChanged = vm::setScaling,
+          onUnitSelect = vm::selectUnit,
+          scaledIngredients = uiState.scaledIngredients,
+          originalIngredients = uiState.originalRecipe?.ingredients ?: emptyList(),
+          pagerState = pagerState,
+          ingredientListState = ingredientListState,
+          instructionsListState = instructionsListState,
+          topAppBarScrollBehavior = scrollBehavior,
+          modifier = Modifier.fillMaxSize(),
+        )
     }
   }
 }
@@ -197,24 +197,28 @@ fun RecipeScreen(
 @Composable
 private fun RecipeContent(
   recipe: Recipe,
-  scale: Float,
-  servings: Int,
+  currentServings: Int,
   modifier: Modifier = Modifier,
   selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
-  onScalingChanged: (scale: Float, servings: Int) -> Unit,
+  onScalingChanged: (currentServings: Int) -> Unit,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  scaledIngredients: List<Ingredient> = emptyList(),
+  originalIngredients: List<Ingredient> = emptyList(),
   pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size },
   ingredientListState: LazyListState = rememberLazyListState(),
   instructionsListState: LazyListState = rememberLazyListState(),
-  topAppBarScrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
+  topAppBarScrollBehavior: TopAppBarScrollBehavior =
+    TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
 ) {
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
 
-  Column(
-    modifier = modifier
-  ) {
-    //TODO: add notes
-    val expanded by remember { derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f } }
+  val scale = currentServings / recipe.servings.toFloat()
+
+  Column(modifier = modifier) {
+    // TODO: add notes
+    val expanded by remember {
+      derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f }
+    }
 
     RecipeContentHeader(
       expanded = expanded,
@@ -223,14 +227,11 @@ private fun RecipeContent(
       time = recipe.time,
       image = recipe.cover,
       topAppBarScrollBehavior = topAppBarScrollBehavior,
-      modifier = Modifier
-        .padding(horizontal = 8.dp)
-        .fillMaxWidth()
+      modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth(),
     )
 
     ScalingControls(
-      scale = scale,
-      servings = servings,
+      currentServings = currentServings,
       baseServings = recipe.servings,
       onScalingChanged = onScalingChanged,
       scaleOptions = listOf(0.5f, 1f, 2f),
@@ -240,64 +241,61 @@ private fun RecipeContent(
 
     PrimaryTabRow(
       selectedTabIndex = tab.ordinal,
-      modifier = Modifier.fillMaxWidth()
+      modifier = Modifier.fillMaxWidth(),
     ) {
       Tab(
         selected = tab == RecipeContentTab.Ingredients,
         onClick = { tab = RecipeContentTab.Ingredients },
         text = { Text(text = "Ingredients") },
-        modifier = Modifier
+        modifier = Modifier,
       )
 
       Tab(
         selected = tab == RecipeContentTab.Instructions,
         onClick = { tab = RecipeContentTab.Instructions },
         text = { Text(text = "Instructions") },
-        modifier = Modifier
+        modifier = Modifier,
       )
     }
 
-    LaunchedEffect(tab) {
-      pagerState.animateScrollToPage(tab.ordinal)
-    }
+    LaunchedEffect(tab) { pagerState.animateScrollToPage(tab.ordinal) }
 
-    LaunchedEffect(pagerState.targetPage) {
-      tab = RecipeContentTab.entries[pagerState.targetPage]
-    }
+    LaunchedEffect(pagerState.targetPage) { tab = RecipeContentTab.entries[pagerState.targetPage] }
 
     HorizontalPager(
       state = pagerState,
-      modifier = Modifier.fillMaxWidth()
+      modifier = Modifier.fillMaxWidth(),
     ) {
       val page = RecipeContentTab.entries[it]
       Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
       ) {
         when (page) {
-          RecipeContentTab.Ingredients -> IngredientsList(
-            ingredients = recipe.ingredients,
-            scale = scale,
-            selectedUnits = selectedUnits,
-            onUnitSelect = onUnitSelect,
-            listState = ingredientListState,
-            listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
-            modifier = Modifier
-              .fillMaxSize()
-              .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection)
-          )
+          RecipeContentTab.Ingredients ->
+            IngredientsList(
+              scaledIngredients = scaledIngredients,
+              originalIngredients = originalIngredients,
+              selectedUnits = selectedUnits,
+              onUnitSelect = onUnitSelect,
+              listState = ingredientListState,
+              listPadding =
+                PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
+              modifier =
+                Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+            )
 
-          RecipeContentTab.Instructions -> InstructionsList(
-            instructions = recipe.instructions,
-            scale = scale,
-            selectedUnits = selectedUnits,
-            onUnitSelect = onUnitSelect,
-            listState = instructionsListState,
-            listPadding = PaddingValues(top = 8.dp, bottom = FabPadding),
-            modifier = Modifier
-              .fillMaxSize()
-              .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection)
-          )
+          RecipeContentTab.Instructions ->
+            InstructionsList(
+              instructions = recipe.instructions,
+              scale = scale,
+              selectedUnits = selectedUnits,
+              onUnitSelect = onUnitSelect,
+              listState = instructionsListState,
+              listPadding = PaddingValues(top = 8.dp, bottom = FabPadding),
+              modifier =
+                Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+            )
         }
       }
     }
@@ -322,14 +320,14 @@ private fun RecipeContentHeader(
 
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = modifier
-      .pointerInput(Unit) {
+    modifier =
+      modifier.pointerInput(Unit) {
         detectVerticalDragGestures(
           onDragEnd = {
             coroutineScope.launch {
               topAppBarScrollBehavior.nestedScrollConnection.onPostFling(
                 consumed = Velocity.Zero,
-                available = Velocity(0f, dragState * 2f)
+                available = Velocity(0f, dragState * 2f),
               )
             }
           },
@@ -338,37 +336,46 @@ private fun RecipeContentHeader(
             dragState = dragAmount
 
             val scrollDelta = Offset(0f, dragAmount * 0.6f)
-            val preConsumed = topAppBarScrollBehavior.nestedScrollConnection.onPreScroll(
-              available = scrollDelta,
-              source = NestedScrollSource.UserInput
-            )
+            val preConsumed =
+              topAppBarScrollBehavior.nestedScrollConnection.onPreScroll(
+                available = scrollDelta,
+                source = NestedScrollSource.UserInput,
+              )
             val remaining = scrollDelta - preConsumed
             topAppBarScrollBehavior.nestedScrollConnection.onPostScroll(
               consumed = preConsumed,
               available = remaining,
-              source = NestedScrollSource.UserInput
+              source = NestedScrollSource.UserInput,
             )
-          }
+          },
         )
-      }
+      },
   ) {
     image?.let { imageUri ->
-      val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
-      val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
+      val slideSpec =
+        spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
+      val scaleSpec =
+        spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
 
       transition.AnimatedVisibility(
         visible = { isExpanded -> isExpanded },
-        enter = slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) + expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
-        exit = slideOutVertically(animationSpec = slideSpec,targetOffsetY = { -it }) + shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
+        enter =
+          slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) +
+            expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
+        exit =
+          slideOutVertically(animationSpec = slideSpec, targetOffsetY = { -it }) +
+            shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
       ) {
         AsyncImage(
           model = imageUri,
           contentDescription = "Recipe image",
           contentScale = ContentScale.FillWidth,
-          modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(2f, matchHeightConstraintsFirst = true)
-            .clip(MaterialTheme.shapes.large)//.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
+          modifier =
+            Modifier.fillMaxWidth()
+              .aspectRatio(2f, matchHeightConstraintsFirst = true)
+              .clip(
+                MaterialTheme.shapes.large
+              ), // .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
         )
       }
     }
@@ -380,43 +387,47 @@ private fun RecipeContentHeader(
     ) {
       Row(
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
       ) {
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
           Text(
-            text = buildAnnotatedString {
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                append("Prep: ")
+            text =
+              buildAnnotatedString {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
+                  append("Prep: ")
+                }
+                withStyle(
+                  SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                ) {
+                  append("${time.preparation} min")
+                }
               }
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                append("${time.preparation} min")
-              }
-            },
           )
 
           Text(
-            text = buildAnnotatedString {
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                append("Cook: ")
+            text =
+              buildAnnotatedString {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
+                  append("Cook: ")
+                }
+                withStyle(
+                  SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                ) {
+                  append("${time.cooking} min")
+                }
               }
-              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                append("${time.cooking} min")
-              }
-            },
           )
         }
 
-        //TODO: make this clickable to open source in browser, if source is a url
-        Column(
-          verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        // TODO: make this clickable to open source in browser, if source is a url
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
           Text(
             text = source.name,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
           )
-          if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
+          if (
+            source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)
+          ) {
             Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
           }
         }
@@ -437,19 +448,17 @@ private fun RecipeContentHeader(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ScalingControls(
-  scale: Float,
-  servings: Int,
+  currentServings: Int,
   baseServings: Int,
-  onScalingChanged: (scale: Float, servings: Int) -> Unit,
+  onScalingChanged: (currentServings: Int) -> Unit,
   scaleOptions: List<Float> = listOf(1f, 2f, 3f),
 ) {
+  val scale = currentServings / baseServings.toFloat()
+
   Row(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier
-      .padding(8.dp)
-      .fillMaxWidth()
-      .height(IntrinsicSize.Min)
+    modifier = Modifier.padding(8.dp).fillMaxWidth().height(IntrinsicSize.Min),
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
@@ -457,75 +466,67 @@ private fun ScalingControls(
     ) {
       OutlinedIconButton(
         onClick = {
-          val newServings = (servings - 1).coerceAtLeast(1)
-          val newScale = newServings / baseServings.toFloat()
-          onScalingChanged(newScale, newServings)
+          val newServings = (currentServings - 1).coerceAtLeast(1)
+          onScalingChanged(newServings)
         },
-        enabled = servings > 1,
+        enabled = currentServings > 1,
       ) {
         Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
       }
 
       val textMeasurer = rememberTextMeasurer()
-      val result = textMeasurer.measure(
-        AnnotatedString("00 servings"),
-        style = LocalTextStyle.current
-      )
-      val textWidth = with(LocalDensity.current) {
-        result.size.width.toDp()
-      }
+      val result =
+        textMeasurer.measure(
+          AnnotatedString("00 servings"),
+          style = LocalTextStyle.current,
+        )
+      val textWidth = with(LocalDensity.current) { result.size.width.toDp() }
 
       Text(
-        text = "$servings servings",
+        text = "$currentServings servings",
         maxLines = 1,
         textAlign = TextAlign.Center,
-        modifier = Modifier
-          .width(textWidth)
+        modifier = Modifier.width(textWidth),
       )
 
       OutlinedIconButton(
         onClick = {
-          val newServings = servings + 1
-          val newScale = newServings / baseServings.toFloat()
-          onScalingChanged(newScale, newServings)
-        },
-//        modifier = Modifier.weight(1f)
+          val newServings = currentServings + 1
+          onScalingChanged(newServings)
+        }
+        //        modifier = Modifier.weight(1f)
       ) {
         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
       }
     }
 
-    SingleChoiceSegmentedButtonRow(
-      modifier = Modifier
-        .width(IntrinsicSize.Min)
-        .weight(1f)
-    ) {
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.width(IntrinsicSize.Min).weight(1f)) {
       scaleOptions.forEach { option ->
-        val selected = scale == option
-        val enabled = (option * baseServings) >= 1
+        val targetServings = (baseServings * option).roundToInt()
+        val selected = currentServings == targetServings
+        val enabled = targetServings >= 1
         SegmentedButton(
           selected = selected,
           enabled = enabled,
-          onClick = {
-            val newScale = option
-            val newServings = (baseServings * newScale).roundToInt()
-            onScalingChanged(newScale, newServings)
-          },
-          shape = when (option) {
-            scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
-            scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
-            else -> RectangleShape
-          },
-          icon = {} // this is silly, why isn't this nullable?
+          onClick = { onScalingChanged(targetServings) },
+          shape =
+            when (option) {
+              scaleOptions.first() ->
+                RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
+              scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
+              else -> RectangleShape
+            },
+          icon = {}, // this is silly, why isn't this nullable?
         ) {
           Text(
-            text = buildAnnotatedString {
-              append(option.fraction.toDisplayString())
-              if (option.fraction.denominator != 1) {
-                append(" ")
-              }
-              append("x")
-            },
+            text =
+              buildAnnotatedString {
+                append(option.fraction.toDisplayString())
+                if (option.fraction.denominator != 1) {
+                  append(" ")
+                }
+                append("x")
+              },
             fontSize = 16.sp,
             color = LocalContentColor.current.mutateUnless(enabled) { copy(alpha = 0.5f) },
           )
@@ -538,39 +539,40 @@ private fun ScalingControls(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun IngredientsList(
-  ingredients: List<Ingredient>,
-  scale: Float,
+  scaledIngredients: List<Ingredient>,
+  originalIngredients: List<Ingredient>,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
   listState: LazyListState = rememberLazyListState(),
   listPadding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
 ) {
-  if (ingredients.isEmpty()) {
+  if (scaledIngredients.isEmpty()) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
       Text(text = "No Ingredients", color = MaterialTheme.colorScheme.secondary)
     }
     return
   }
 
-  //TODO: sort ingredients so that quantity-based ingredients come first
+  val originalById = originalIngredients.associateBy { it.id }
 
   LazyColumn(
     state = listState,
     modifier = modifier,
     contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
+    horizontalAlignment = Alignment.CenterHorizontally,
   ) {
     items(
-      items = ingredients,
-      key = { it.id }
+      items = scaledIngredients,
+      key = { it.id },
     ) { ingredient ->
+      val originalIngredient = originalById[ingredient.id] ?: ingredient
       IngredientListItem(
         ingredient = ingredient,
-        scale = scale,
-        selectedUnit = selectedUnits[ingredient],
-        onUnitSelect = onUnitSelect,
+        scale = 1f,
+        selectedUnit = selectedUnits[originalIngredient],
+        onUnitSelect = { _, unit -> onUnitSelect(originalIngredient, unit) },
       )
     }
   }
@@ -585,7 +587,7 @@ private fun InstructionsList(
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
   listState: LazyListState = rememberLazyListState(),
-  listPadding: PaddingValues = PaddingValues(vertical = 8.dp)
+  listPadding: PaddingValues = PaddingValues(vertical = 8.dp),
 ) {
   if (instructions.isEmpty()) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -599,7 +601,7 @@ private fun InstructionsList(
     modifier = modifier,
     contentPadding = listPadding,
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
+    horizontalAlignment = Alignment.CenterHorizontally,
   ) {
     itemsIndexed(instructions) { index, instruction ->
       InstructionComponent(
@@ -607,7 +609,7 @@ private fun InstructionsList(
         instruction = instruction,
         scale = scale,
         selectedUnits = selectedUnits,
-        onUnitSelect = onUnitSelect
+        onUnitSelect = onUnitSelect,
       )
 
       if (instruction != instructions.last()) {
@@ -628,29 +630,25 @@ private fun InstructionComponent(
 ) {
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+    modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
   ) {
     Text(
       text = "Step $step",
       style = MaterialTheme.typography.titleLarge,
       fontWeight = FontWeight.Bold,
-      modifier = Modifier
-        .fillMaxWidth()
+      modifier = Modifier.fillMaxWidth(),
     )
 
     Text(
       text = instruction.text,
-      modifier = Modifier
+      modifier = Modifier,
     )
 
     if (instruction.ingredients.isNotEmpty()) {
       FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-          .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
       ) {
         instruction.ingredients.forEach { ingredient ->
           key(ingredient.id) {
@@ -658,7 +656,7 @@ private fun InstructionComponent(
               ingredient = ingredient,
               scale = scale,
               selectedUnit = selectedUnits[ingredient],
-              onUnitSelect = onUnitSelect
+              onUnitSelect = onUnitSelect,
             )
           }
         }
@@ -682,22 +680,19 @@ private fun RecipeContentPreview() {
 
     val selectedUnits = remember { mutableStateMapOf<Ingredient, MeasurementUnit?>() }
 
-    var scale by remember { mutableFloatStateOf(1f) }
-    var servings by remember { mutableIntStateOf(recipe.servings) }
+    var currentServings by remember { mutableIntStateOf(recipe.servings) }
 
     SkilletAppTheme {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         RecipeContent(
           recipe = recipe,
-          scale = scale,
-          servings = servings,
+          currentServings = currentServings,
           selectedUnits = selectedUnits,
-          onScalingChanged = { newScale, newServings ->
-            scale = newScale
-            servings = newServings
+          onScalingChanged = { newServings ->
+            currentServings = newServings
           },
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
-//          topAppBarScrollBehavior = scrollBehavior
+          //          topAppBarScrollBehavior = scrollBehavior
         )
       }
     }
@@ -713,10 +708,10 @@ private fun IngredientsListEmptyPreview() {
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       IngredientsList(
-        ingredients = ingredients,
-        scale = 1f,
+        scaledIngredients = ingredients,
+        originalIngredients = ingredients,
         selectedUnits = selectedUnits,
-        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
       )
     }
   }
@@ -732,10 +727,10 @@ private fun IngredientListPreview() {
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
       IngredientsList(
-        ingredients = ingredients,
-        scale = 1f,
+        scaledIngredients = ingredients,
+        originalIngredients = ingredients,
         selectedUnits = selectedUnits,
-        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+        onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
       )
     }
   }
@@ -745,7 +740,11 @@ private fun IngredientListPreview() {
 @Composable
 private fun IngredientComponentPreview() {
   val ingredient =
-    Ingredient("Mini Shells Pasta", measurement = Measurement(8f, MeasurementUnit.Ounce), raw = "8 oz Mini Shells Pasta")
+    Ingredient(
+      "Mini Shells Pasta",
+      measurement = Measurement(8f, MeasurementUnit.Ounce),
+      raw = "8 oz Mini Shells Pasta",
+    )
 
   Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     IngredientRow(
@@ -753,7 +752,7 @@ private fun IngredientComponentPreview() {
       scale = 1f,
       selectedUnit = null,
       enabled = false,
-      onClick = {}
+      onClick = {},
     )
   }
 }
@@ -763,7 +762,12 @@ private fun IngredientComponentPreview() {
 private fun InstructionsListEmptyPreview() {
   SkilletAppTheme {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-      InstructionsList(instructions = emptyList(), scale = 1f, selectedUnits = emptyMap(), onUnitSelect = { _, _ -> })
+      InstructionsList(
+        instructions = emptyList(),
+        scale = 1f,
+        selectedUnits = emptyMap(),
+        onUnitSelect = { _, _ -> },
+      )
     }
   }
 }
@@ -782,7 +786,7 @@ private fun InstructionsListPreview() {
           instructions = instructions,
           scale = 1f,
           selectedUnits = selectedUnits,
-          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+          onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
         )
       }
     }
@@ -806,7 +810,7 @@ private fun InstructionComponentPreview() {
             instruction = instructions.first(),
             scale = 1f,
             selectedUnits = selectedUnits,
-            onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit }
+            onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
           )
         }
       }

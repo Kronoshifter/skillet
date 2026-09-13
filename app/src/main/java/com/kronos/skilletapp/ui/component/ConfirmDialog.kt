@@ -20,21 +20,11 @@ fun ConfirmDialog(
 ) {
   AlertDialog(
     onDismissRequest = onDismissRequest,
-    confirmButton = {
-      TextButton(onClick = onConfirm) {
-        Text("Confirm")
-      }
-    },
-    dismissButton = {
-      onDismiss?.let {
-        TextButton(onClick = it) {
-          Text("Cancel")
-        }
-      }
-    },
+    confirmButton = { TextButton(onClick = onConfirm) { Text("Confirm") } },
+    dismissButton = { onDismiss?.let { TextButton(onClick = it) { Text("Cancel") } } },
     modifier = modifier,
     title = { title?.let { Text(it) } },
     text = { text?.let { Text(it) } },
-    icon = { icon?.let { Icon(it, contentDescription = "Dialog Icon") } }
+    icon = { icon?.let { Icon(it, contentDescription = "Dialog Icon") } },
   )
 }

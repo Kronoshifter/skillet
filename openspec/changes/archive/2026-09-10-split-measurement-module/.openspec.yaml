@@ -1,0 +1,3 @@
+name: split-measurement-module
+description: Extract measurement system into standalone Kotlin JVM library module
+prerequisite-changes: []
