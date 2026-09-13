@@ -33,7 +33,7 @@ import com.kronos.skilletapp.model.SkilletError
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
-import com.kronos.skilletapp.scraping.RecipeScraper
+import com.kronos.skilletapp.scraping.DefaultRecipeScraper
 import com.kronos.utils.fromJson
 import com.kronos.utils.toJson
 import kotlinx.coroutines.CoroutineScope
@@ -198,7 +198,7 @@ fun KoinPreview(content: @Composable () -> Unit) {
     }
 
     singleOf(::IngredientParser)
-    factoryOf(::RecipeScraper)
+    factoryOf(::DefaultRecipeScraper)
   }
 
   KoinApplication(

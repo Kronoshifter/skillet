@@ -78,14 +78,15 @@ fun CookingScreen(
         )
       }
     ) { paddingValues ->
-      CookingContent(
-        recipe = recipe,
-        scale = uiState.scale,
-        selectedUnits = uiState.selectedUnits,
-        onUnitSelect = vm::selectUnit,
-        onBack = onBack,
-        modifier = Modifier.fillMaxSize().padding(paddingValues),
-      )
+        CookingContent(
+          recipe = recipe,
+          scaledIngredients = uiState.scaledIngredients,
+          originalIngredients = uiState.originalRecipe?.ingredients ?: emptyList(),
+          selectedUnits = uiState.selectedUnits,
+          onUnitSelect = vm::selectUnit,
+          onBack = onBack,
+          modifier = Modifier.fillMaxSize().padding(paddingValues),
+        )
     }
   }
 }
@@ -94,7 +95,8 @@ fun CookingScreen(
 @Composable
 fun CookingContent(
   recipe: Recipe,
-  scale: Float,
+  scaledIngredients: List<Ingredient>,
+  originalIngredients: List<Ingredient>,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   onBack: () -> Unit,
@@ -153,7 +155,8 @@ fun CookingContent(
             CookingContentTab.Overview ->
               OverviewTabContent(
                 recipe = recipe,
-                scale = scale,
+                scaledIngredients = scaledIngredients,
+                originalIngredients = originalIngredients,
                 selectedUnits = selectedUnits,
                 onUnitSelect = onUnitSelect,
               )
@@ -162,7 +165,8 @@ fun CookingContent(
               InstructionTabContent(
                 index = page.instruction,
                 instruction = recipe.instructions[page.instruction],
-                scale = scale,
+                scaledIngredients = scaledIngredients,
+                originalIngredients = originalIngredients,
                 selectedUnits = selectedUnits,
                 onUnitSelect = onUnitSelect,
               )
@@ -184,11 +188,14 @@ fun CookingContent(
 @Composable
 fun OverviewTabContent(
   recipe: Recipe,
-  scale: Float,
+  scaledIngredients: List<Ingredient>,
+  originalIngredients: List<Ingredient>,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val originalById = originalIngredients.associateBy { it.id }
+
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
@@ -204,7 +211,7 @@ fun OverviewTabContent(
       verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier.fillMaxWidth(),
     ) {
-      if (recipe.ingredients.isNotEmpty()) {
+      if (scaledIngredients.isNotEmpty()) {
         stickyHeader {
           Text(
             text = "Gather your ingredients",
@@ -214,16 +221,17 @@ fun OverviewTabContent(
         }
 
         items(
-          items = recipe.ingredients,
+          items = scaledIngredients,
           key = { it.id },
         ) { ingredient ->
+          val originalIngredient = originalById[ingredient.id] ?: ingredient
           var checked by rememberSaveable { mutableStateOf(false) }
 
           IngredientListItem(
             ingredient = ingredient,
-            scale = scale,
-            selectedUnit = selectedUnits[ingredient],
-            onUnitSelect = onUnitSelect,
+            scale = 1f,
+            selectedUnit = selectedUnits[originalIngredient],
+            onUnitSelect = { _, unit -> onUnitSelect(originalIngredient, unit) },
             checked = checked,
             onCheckedChange = { checked = it },
           )
@@ -254,11 +262,15 @@ fun OverviewTabContent(
 fun InstructionTabContent(
   index: Int,
   instruction: Instruction,
-  scale: Float,
+  scaledIngredients: List<Ingredient>,
+  originalIngredients: List<Ingredient>,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val scaledById = scaledIngredients.associateBy { it.id }
+  val originalById = originalIngredients.associateBy { it.id }
+
   LazyColumn(
     verticalArrangement = Arrangement.spacedBy(8.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
@@ -290,13 +302,15 @@ fun InstructionTabContent(
         items = instruction.ingredients,
         key = { it.id },
       ) { ingredient ->
+        val scaledIngredient = scaledById[ingredient.id] ?: ingredient
+        val originalIngredient = originalById[ingredient.id] ?: ingredient
         var checked by rememberSaveable { mutableStateOf(false) }
 
         IngredientListItem(
-          ingredient = ingredient,
-          scale = scale,
-          selectedUnit = selectedUnits[ingredient],
-          onUnitSelect = onUnitSelect,
+          ingredient = scaledIngredient,
+          scale = 1f,
+          selectedUnit = selectedUnits[originalIngredient],
+          onUnitSelect = { _, unit -> onUnitSelect(originalIngredient, unit) },
           checked = checked,
           onCheckedChange = { checked = it },
         )
@@ -336,11 +350,11 @@ fun CompleteTabContent(
   }
 }
 
-/////////////////////////////////////////////////////
-/////////////////////////////////////////////////////
-//////////////////// PREVIEWS ///////////////////////
-/////////////////////////////////////////////////////
-/////////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+////////////////// PREVIEWS ///////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
 
 @Preview
 @Composable
@@ -354,7 +368,8 @@ fun OverviewContentPreview() {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         OverviewTabContent(
           recipe = recipe,
-          scale = 1f,
+          scaledIngredients = recipe.ingredients,
+          originalIngredients = recipe.ingredients,
           selectedUnits = selectedUnits,
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
         )
@@ -376,7 +391,8 @@ fun InstructionContentPreview() {
         InstructionTabContent(
           index = 0,
           instruction = recipe.instructions.first(),
-          scale = 1f,
+          scaledIngredients = recipe.ingredients,
+          originalIngredients = recipe.ingredients,
           selectedUnits = selectedUnits,
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
         )

@@ -5,25 +5,18 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.mapBoth
-import com.github.michaelbull.result.onFailure
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
+import com.kronos.skilletapp.domain.scraping.ScrapeRecipe
+import com.kronos.skilletapp.domain.validation.ValidateRecipe
 import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
-import com.kronos.skilletapp.model.InvalidFormError
 import com.kronos.skilletapp.navigation.Route
-import com.kronos.skilletapp.parser.IngredientParser
-import com.kronos.skilletapp.scraping.RecipeScrape
-import com.kronos.skilletapp.scraping.RecipeScraper
-import com.kronos.skilletapp.utils.err
 import com.kronos.skilletapp.utils.move
-import com.kronos.skilletapp.utils.ok
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
-import kotlin.time.Duration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -50,8 +43,8 @@ data class RecipeState(
 
 class AddEditRecipeViewModel(
   private val recipeRepository: RecipeRepository,
-  private val scraper: RecipeScraper,
-  private val recipeParser: IngredientParser,
+  private val validateRecipe: ValidateRecipe,
+  private val scrapeRecipe: ScrapeRecipe,
   handle: SavedStateHandle,
 ) : ViewModel() {
   private val args = handle.toRoute<Route.AddEditRecipe>()
@@ -66,7 +59,7 @@ class AddEditRecipeViewModel(
   val recipeState = _recipeState.asStateFlow()
 
   init {
-    recipeId?.let { loadRecipe(it) } ?: recipeUrl?.let { scrapeRecipe(it) }
+    recipeId?.let { loadRecipe(it) } ?: recipeUrl?.let { scUrl(it) }
   }
 
   fun getRecipeId(): String {
@@ -74,19 +67,26 @@ class AddEditRecipeViewModel(
   }
 
   fun saveRecipe() {
-    validateForm() onFailure
-      { error ->
+    val validation = validateRecipe(
+      name = _recipeState.value.name,
+      ingredients = _recipeState.value.ingredients,
+      instructions = _recipeState.value.instructions,
+      servings = _recipeState.value.servings,
+      cookTime = _recipeState.value.cookTime,
+    )
+    validation.mapBoth(
+      success = {
+        if (recipeId == null) {
+          createRecipe()
+        } else {
+          updateRecipe()
+        }
+        _recipeState.update { it.copy(isSaveInProgress = true) }
+      },
+      failure = { error ->
         _recipeState.update { it.copy(userMessage = error.message) }
-        return
       }
-
-    if (recipeId == null) {
-      createRecipe()
-    } else {
-      updateRecipe()
-    }
-
-    _recipeState.update { it.copy(isSaveInProgress = true) }
+    )
   }
 
   fun updateName(name: String) {
@@ -306,78 +306,26 @@ class AddEditRecipeViewModel(
     }
   }
 
-  fun scrapeRecipe(url: String) {
+  fun scUrl(url: String) {
     _uiState.update { UiState.Loading }
     viewModelScope.launch {
       _recipeState.update { state ->
-        scraper
-          .scrapeRecipe(url)
-          .mapBoth(
-            success = { scrape ->
-              RecipeState(
-                name = scrape.recipe.name,
-                description = scrape.recipe.description,
-                servings =
-                  """\d+""".toRegex().let { regex ->
-                    regex
-                      .find(scrape.recipe.recipeYield.first { s -> regex.matches(s) })
-                      ?.value
-                      ?.toInt() ?: 0
-                  },
-                prepTime = scrape.recipe.prepTime.parseMinutes(),
-                cookTime = scrape.recipe.cookTime.parseMinutes(),
-                source = url,
-                sourceName =
-                  scrape.website?.name ?: """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: "",
-                ingredients =
-                  scrape.recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
-                instructions = scrape.recipe.instructions.map { Instruction(text = it.text) },
-                tharBeChanges = true,
-              )
-            },
-            failure = {
-              Log.e("Recipe Scraping", "Failed to scrape recipe: ${it.message}")
-              state.copy(
-                userMessage =
-                  "Recipe could not be imported, verify the link and try again, or enter the recipe manually"
-              )
-            },
-          )
+        scrapeRecipe(url).mapBoth(
+          success = { recipeState ->
+            recipeState
+          },
+          failure = { error ->
+            Log.e("Recipe Scraping", "Failed to scrape recipe: ${error.message}")
+            state.copy(
+              userMessage =
+                "Recipe could not be imported, verify the link and try again, or enter the recipe manually"
+            )
+          }
+        )
       }
 
       _uiState.update { UiState.Loaded }
     }
   }
 
-  private fun validateForm(): Result<RecipeState, InvalidFormError> =
-    with(_recipeState.value) {
-      return when {
-        name.isBlank() -> InvalidFormError("Name cannot be blank").err()
-        ingredients.isEmpty() -> InvalidFormError("At least one ingredient is required").err()
-        instructions.isEmpty() -> InvalidFormError("At least one instruction is required").err()
-        servings <= 0 -> InvalidFormError("Servings must be greater than 0").err()
-        cookTime <= 0 -> InvalidFormError("Cook time must be greater than 0").err()
-        else -> ok()
-      }
-    }
-
-  private fun RecipeScrape.toRecipeState() =
-    RecipeState(
-      name = recipe.name,
-      description = recipe.description,
-      //              servings = """\d+""".toRegex().find(it.recipe.recipeYield)?.value?.toInt() ?:
-      // 0,
-      servings =
-        """\d+""".toRegex().let { regex ->
-          regex.find(recipe.recipeYield.first { s -> regex.matches(s) })?.value?.toInt() ?: 0
-        },
-      prepTime = recipe.prepTime.parseMinutes(),
-      cookTime = recipe.prepTime.parseMinutes(),
-      source = website?.url ?: "",
-      sourceName = website?.name ?: "",
-      ingredients = recipe.ingredients.map { recipeParser.parseIngredient(text = it) },
-      instructions = recipe.instructions.map { Instruction(text = it.text) },
-    )
-
-  private fun String.parseMinutes() = Duration.parseIsoString(this).inWholeMinutes.toInt()
 }

@@ -24,7 +24,7 @@ sealed interface Route {
     val url: String? = null,
   ) : Route
 
-  @Serializable data class Cooking(val recipeId: String, val scale: Float) : Route
+  @Serializable data class Cooking(val recipeId: String, val currentServings: Int) : Route
 
   companion object {
     const val BASE_URL = "skilletapp://skillet"
@@ -84,8 +84,8 @@ class SkilletNavigationActions(private val navController: NavHostController) {
     navController.navigate(Route.AddEditRecipe(title, recipeId, url)) { restoreState = true }
   }
 
-  fun navigateToCooking(recipeId: String, scale: Float) {
-    navController.navigate(Route.Cooking(recipeId, scale)) { restoreState = true }
+  fun navigateToCooking(recipeId: String, currentServings: Int) {
+    navController.navigate(Route.Cooking(recipeId, currentServings)) { restoreState = true }
   }
 
   fun navigateViaBottomNav(route: Route) {

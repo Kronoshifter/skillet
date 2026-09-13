@@ -99,10 +99,10 @@ fun SkilletNavGraph(
       RecipeScreen(
         onBack = { navController.navigateUp() },
         onEdit = { navActions.navigateToAddEditRecipe("Edit Recipe", args.recipeId) },
-        onCook = { scale ->
+        onCook = { currentServings ->
           navActions.navigateToCooking(
             recipeId = args.recipeId,
-            scale = scale,
+            currentServings = currentServings,
           )
         },
       )
