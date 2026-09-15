@@ -4,9 +4,9 @@
 
 ## 2. DAOs, Measurement converter, mapper (additive)
 
-- [ ] 2.1 Add per-table DAOs `RecipeDao`, `IngredientDao`, `InstructionDao`, `EquipmentDao` with upsert, `deleteByRecipeId`, and ordered selects (`ORDER BY position`); put the `instruction_ingredient`/`instruction_equipment` ordered selects on `InstructionDao`. Verify: `./gradlew :app:assembleDebug` compiles the new DAOs.
-- [ ] 2.2 Add a single Room `TypeConverter` for `Measurement` ⇄ `String` (kotlinx.serialization JSON reusing the existing `Json` config, preserving the `measurement_type` discriminator) in its own new file `database/MeasurementConverters.kt` — NOT in `database/Converters.kt` (which holds `RecipeConverters` and is deleted in task 6.2). Verify: a unit test round-trips a named-unit and a `Custom`-unit `Measurement` through the converter with quantity and unit intact.
-- [ ] 2.3 Add `RecipeMapper` (domain graph ⇄ entity rows + join rows): key child rows by domain `id`, set `position` = index in the source list, dedupe ingredients/equipment shared across recipe and instructions. Verify: a unit test maps a graph to entities and back, asserting fields, child lists, ordering, and that a shared ingredient produces exactly one row.
+- [x] 2.1 Add per-table DAOs `RecipeDao`, `IngredientDao`, `InstructionDao`, `EquipmentDao` with upsert, `deleteByRecipeId`, and ordered selects (`ORDER BY position`); put the `instruction_ingredient`/`instruction_equipment` ordered selects on `InstructionDao`. Verify: `./gradlew :app:assembleDebug` compiles the new DAOs.
+- [x] 2.2 Add a single Room `TypeConverter` for `Measurement` ⇄ `String` (kotlinx.serialization JSON reusing the existing `Json` config, preserving the `measurement_type` discriminator) in its own new file `database/MeasurementConverters.kt` — NOT in `database/Converters.kt` (which holds `RecipeConverters` and is deleted in task 6.2). Verify: a unit test round-trips a named-unit and a `Custom`-unit `Measurement` through the converter with quantity and unit intact.
+- [x] 2.3 Add `RecipeMapper` (domain graph ⇄ entity rows + join rows): key child rows by domain `id`, set `position` = index in the source list, dedupe ingredients/equipment shared across recipe and instructions. Verify: a unit test maps a graph to entities and back, asserting fields, child lists, ordering, and that a shared ingredient produces exactly one row.
 
 ## 3. Database v2 and DI
 
