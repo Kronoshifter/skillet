@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface EquipmentDao {
 
-  @Upsert suspend fun upsert(equipment: EquipmentEntity)
+  @Upsert suspend fun upsertAll(equipment: List<EquipmentEntity>)
 
   @Query("SELECT * FROM equipment WHERE recipe_id = :recipeId ORDER BY position")
   suspend fun getByRecipeId(recipeId: String): List<EquipmentEntity>

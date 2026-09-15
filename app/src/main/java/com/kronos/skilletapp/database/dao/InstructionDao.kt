@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface InstructionDao {
 
-  @Upsert suspend fun upsert(instruction: InstructionEntity)
+  @Upsert suspend fun upsertInstructions(instructions: List<InstructionEntity>)
 
   @Query("SELECT * FROM instruction WHERE recipe_id = :recipeId ORDER BY position")
   suspend fun getByRecipeId(recipeId: String): List<InstructionEntity>
@@ -27,6 +27,11 @@ interface InstructionDao {
 
   @Query("DELETE FROM instruction WHERE recipe_id = :recipeId")
   suspend fun deleteByRecipeId(recipeId: String)
+
+  // Join-table upserts.
+  @Upsert suspend fun upsertInstructionIngredients(instructionIngredients: List<InstructionIngredientEntity>)
+
+  @Upsert suspend fun upsertInstructionEquipment(instructionEquipment: List<InstructionEquipmentEntity>)
 
   // Join-table ordered selects (there is no dedicated join DAO).
   @Query("SELECT * FROM instruction_ingredient WHERE recipe_id = :recipeId ORDER BY position")
