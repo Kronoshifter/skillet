@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
 /**
  * Room [TypeConverter] for the single converted type, [Measurement], stored as one JSON column.
  *
- * Reuses the same `Json { ignoreUnknownKeys = true }` config as [RecipeConverters]. Because
+ * Uses `Json { ignoreUnknownKeys = true }`. Because
  * [MeasurementUnit] is a sealed `@Serializable` hierarchy annotated with
  * `@JsonClassDiscriminator("measurement_type")`, the round-trip preserves the discriminator for both
  * named units (e.g. `Gram`, `Cup`, `Tablespoon`) and `MeasurementUnit.Custom(name)`.

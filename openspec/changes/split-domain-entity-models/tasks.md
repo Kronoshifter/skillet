@@ -28,8 +28,8 @@
 
 ## 6. Cleanup and domain purity
 
-- [ ] 6.1 Strip Room annotations (`@Entity`, `@PrimaryKey`, `@Embedded`, `@TypeConverters`) from the domain models in `model/`, keeping `@Serializable` and all field names/shapes. Verify: no domain model is `@Entity` and `./gradlew :app:assembleDebug` compiles.
-- [ ] 6.2 Delete `database/Converters.kt` (`RecipeConverters`). Verify: the file is removed, no references remain, and `./gradlew :app:assembleDebug` compiles.
+- [x] 6.1 Strip Room annotations (`@Entity`, `@PrimaryKey`, `@Embedded`, `@TypeConverters`) from the domain models in `model/`, keeping `@Serializable` and all field names/shapes. Verify: no domain model is `@Entity` and `./gradlew :app:assembleDebug` compiles.
+- [x] 6.2 Delete `database/Converters.kt` (`RecipeConverters`). Verify: the file is removed, no references remain, and `./gradlew :app:assembleDebug` compiles.
 
 ## 7. Verification
 
