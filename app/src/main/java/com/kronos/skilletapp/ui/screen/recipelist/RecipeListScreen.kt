@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
-import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.model.RecipeSummary
 import com.kronos.skilletapp.ui.*
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
@@ -242,7 +242,7 @@ fun RecipeListScreen(
 
 @Composable
 private fun RecipeListContent(
-  recipes: List<Recipe>,
+  recipes: List<RecipeSummary>,
   onRecipeClick: (id: String) -> Unit,
   modifier: Modifier = Modifier,
   gridPadding: PaddingValues = PaddingValues(8.dp),
@@ -277,7 +277,7 @@ private fun RecipeListContent(
 
 @Composable
 fun RecipeCard(
-  recipe: Recipe,
+  recipe: RecipeSummary,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -354,7 +354,18 @@ fun RecipeCard(
 @Composable
 fun RecipeCardPreview() {
   KoinPreview {
-    val recipe = koinInject<Recipe>()
+    val recipe =
+      RecipeSummary(
+        id = "1",
+        name = "Test Recipe",
+        description = "",
+        cover = null,
+        servings = 4,
+        prepTime = 10,
+        cookTime = 20,
+        sourceName = "",
+        sourceUrl = "",
+      )
 
     SkilletAppTheme() {
       RecipeCard(
@@ -370,7 +381,20 @@ fun RecipeCardPreview() {
 @Composable
 fun RecipeListPreview() {
   KoinPreview {
-    val recipes = List(10) { koinInject<Recipe>().copy(name = "Recipe $it", id = "test-$it") }
+    val recipes =
+      List(10) { i ->
+        RecipeSummary(
+          id = "test-$i",
+          name = "Recipe $i",
+          description = "",
+          cover = null,
+          servings = 4,
+          prepTime = 10,
+          cookTime = 20,
+          sourceName = "",
+          sourceUrl = "",
+        )
+      }
 
     SkilletAppTheme(true) {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

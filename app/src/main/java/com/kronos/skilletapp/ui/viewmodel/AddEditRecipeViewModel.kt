@@ -9,11 +9,16 @@ import com.github.michaelbull.result.mapBoth
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.domain.scraping.ScrapeRecipe
+import com.kronos.skilletapp.domain.scraping.ScrapedRecipe
 import com.kronos.skilletapp.domain.validation.ValidateRecipe
 import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.model.RecipeSource
+import com.kronos.skilletapp.model.RecipeTime
 import com.kronos.skilletapp.navigation.Route
+import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
@@ -22,29 +27,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class RecipeState(
-  val name: String = "",
-  val description: String = "",
-  val notes: String = "",
-  val servings: Int = 0,
-  val prepTime: Int = 0,
-  val cookTime: Int = 0,
-  val source: String = "",
-  val sourceName: String = "",
-  val image: String? = null,
-  val ingredients: List<Ingredient> = emptyList(),
-  val instructions: List<Instruction> = emptyList(),
-  val equipment: List<Equipment> = emptyList(),
-  val userMessage: String? = null,
-  val isRecipeSaved: Boolean = false,
-  val tharBeChanges: Boolean = false,
-  val isSaveInProgress: Boolean = false,
-)
-
 class AddEditRecipeViewModel(
   private val recipeRepository: RecipeRepository,
   private val validateRecipe: ValidateRecipe,
   private val scrapeRecipe: ScrapeRecipe,
+  private val ingredientParser: IngredientParser,
   handle: SavedStateHandle,
 ) : ViewModel() {
   private val args = handle.toRoute<Route.AddEditRecipe>()
@@ -53,8 +40,8 @@ class AddEditRecipeViewModel(
   private lateinit var createdId: String
 
   private val _uiState: MutableStateFlow<UiState<Nothing>> = MutableStateFlow(UiState.Loaded)
-  private val _recipeState: MutableStateFlow<RecipeState> = MutableStateFlow(RecipeState())
-  private var originalRecipeState = RecipeState()
+  private val _recipeState: MutableStateFlow<RecipeFormState> = MutableStateFlow(RecipeFormState())
+  private var originalRecipeState = RecipeFormState()
   val uiState = _uiState.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
 
@@ -209,7 +196,7 @@ class AddEditRecipeViewModel(
     _recipeState.checkForChanges(originalRecipeState)
   }
 
-  private fun MutableStateFlow<RecipeState>.checkForChanges(original: RecipeState) {
+  private fun MutableStateFlow<RecipeFormState>.checkForChanges(original: RecipeFormState) {
     update { state ->
       state.copy(
         tharBeChanges =
@@ -231,24 +218,25 @@ class AddEditRecipeViewModel(
     }
   }
 
+  private fun buildRecipeFromState(): Recipe =
+    with(_recipeState.value) {
+      Recipe(
+        name = name,
+        description = description,
+        cover = image,
+        notes = notes,
+        servings = servings,
+        time = RecipeTime(prepTime, cookTime),
+        source = RecipeSource(sourceName, source),
+        ingredients = ingredients,
+        instructions = instructions,
+        equipment = equipment,
+      )
+    }
+
   private fun createRecipe() = viewModelScope.launch {
-    createdId =
-      with(_recipeState.value) {
-        recipeRepository.createRecipe(
-          name = name,
-          description = description,
-          notes = notes,
-          servings = servings,
-          prepTime = prepTime,
-          cookTime = cookTime,
-          source = source,
-          sourceName = sourceName,
-          image = image,
-          ingredients = ingredients,
-          instructions = instructions,
-          equipment = equipment,
-        )
-      }
+    val recipe = buildRecipeFromState()
+    createdId = recipeRepository.createRecipe(recipe)
 
     _recipeState.update { it.copy(isRecipeSaved = true) }
   }
@@ -257,23 +245,8 @@ class AddEditRecipeViewModel(
     check(recipeId != null) { "No recipe id to update" }
 
     viewModelScope.launch {
-      with(_recipeState.value) {
-        recipeRepository.updateRecipe(
-          id = recipeId,
-          name = name,
-          description = description,
-          notes = notes,
-          servings = servings,
-          prepTime = prepTime,
-          cookTime = cookTime,
-          source = source,
-          sourceName = sourceName,
-          image = image,
-          ingredients = ingredients,
-          instructions = instructions,
-          equipment = equipment,
-        )
-      }
+      val recipe = buildRecipeFromState()
+      recipeRepository.updateRecipe(recipeId, recipe)
 
       _recipeState.update { it.copy(isRecipeSaved = true) }
     }
@@ -284,7 +257,7 @@ class AddEditRecipeViewModel(
     viewModelScope.launch {
       recipeRepository.fetchRecipe(id).let { recipe ->
         _recipeState.update {
-          RecipeState(
+          RecipeFormState(
               name = recipe.name,
               description = recipe.description,
               notes = recipe.notes,
@@ -309,20 +282,34 @@ class AddEditRecipeViewModel(
   fun scUrl(url: String) {
     _uiState.update { UiState.Loading }
     viewModelScope.launch {
-      _recipeState.update { state ->
-        scrapeRecipe(url).mapBoth(
-          success = { recipeState ->
-            recipeState
-          },
-          failure = { error ->
-            Log.e("Recipe Scraping", "Failed to scrape recipe: ${error.message}")
-            state.copy(
+      scrapeRecipe(url).mapBoth(
+        success = { scraped ->
+          _recipeState.update {
+            RecipeFormState(
+              name = scraped.name,
+              description = scraped.description.orEmpty(),
+              servings = scraped.servings ?: 0,
+              prepTime = scraped.prepTimeMinutes ?: 0,
+              cookTime = scraped.cookTimeMinutes ?: 0,
+              source = scraped.sourceUrl,
+              sourceName = scraped.sourceName.orEmpty(),
+              ingredients = scraped.ingredients.map { ingredientParser.parseIngredient(text = it) },
+              instructions = scraped.instructions.map { Instruction(text = it) },
+              tharBeChanges = true,
+            )
+            .also { originalRecipeState = it }
+          }
+        },
+        failure = { error ->
+          Log.e("Recipe Scraping", "Failed to scrape recipe: ${error.message}")
+          _recipeState.update {
+            it.copy(
               userMessage =
                 "Recipe could not be imported, verify the link and try again, or enter the recipe manually"
             )
           }
-        )
-      }
+        }
+      )
 
       _uiState.update { UiState.Loaded }
     }

@@ -2,9 +2,7 @@ package com.kronos.skilletapp
 
 import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.domain.scraping.ScrapeRecipe
-import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.RecipeScrapeError
-import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.InstructionHtml
 import com.kronos.skilletapp.scraping.RecipeHtml
 import com.kronos.skilletapp.scraping.RecipeScrape
@@ -38,18 +36,17 @@ class ScrapeRecipeTests :
 
       test("ScrapeRecipe with mocked scraper returns parsed data") {
         val mock = MockScraper()
-        val parser = IngredientParser()
-        val useCase = ScrapeRecipe(mock, parser)
+        val useCase = ScrapeRecipe(mock)
 
         val result = useCase("https://example.com/pancakes")
-        val state = result.unwrap()
+        val scraped = result.unwrap()
 
-        state.name shouldBe "Mock Pancakes"
-        state.description shouldBe "Mock description"
-        state.servings shouldBe 4
-        state.source shouldBe "https://example.com/pancakes"
-        state.ingredients.size shouldBe 3
-        state.instructions.size shouldBe 2
+        scraped.name shouldBe "Mock Pancakes"
+        scraped.description shouldBe "Mock description"
+        scraped.servings shouldBe 4
+        scraped.sourceUrl shouldBe "https://example.com/pancakes"
+        scraped.ingredients.size shouldBe 3
+        scraped.instructions.size shouldBe 2
       }
     }
   })

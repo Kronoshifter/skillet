@@ -1,33 +1,38 @@
 package com.kronos.skilletapp.database
 
-import androidx.room.Dao
 import androidx.room.Database
-import androidx.room.Delete
-import androidx.room.Query
 import androidx.room.RoomDatabase
-import androidx.room.Upsert
-import com.kronos.skilletapp.model.Recipe
-import kotlinx.coroutines.flow.Flow
+import androidx.room.TypeConverters
+import com.kronos.skilletapp.database.dao.EquipmentDao
+import com.kronos.skilletapp.database.dao.IngredientDao
+import com.kronos.skilletapp.database.dao.InstructionDao
+import com.kronos.skilletapp.database.dao.RecipeDao
+import com.kronos.skilletapp.database.entity.EquipmentEntity
+import com.kronos.skilletapp.database.entity.IngredientEntity
+import com.kronos.skilletapp.database.entity.InstructionEquipmentEntity
+import com.kronos.skilletapp.database.entity.InstructionEntity
+import com.kronos.skilletapp.database.entity.InstructionIngredientEntity
+import com.kronos.skilletapp.database.entity.RecipeEntity
 
-@Database(entities = [Recipe::class], version = 1)
+@Database(
+  entities =
+    [
+      RecipeEntity::class,
+      IngredientEntity::class,
+      InstructionEntity::class,
+      EquipmentEntity::class,
+      InstructionIngredientEntity::class,
+      InstructionEquipmentEntity::class,
+    ],
+  version = 2,
+)
+@TypeConverters(MeasurementConverters::class)
 abstract class RecipeDatabase : RoomDatabase() {
   abstract fun recipeDao(): RecipeDao
-}
 
-@Dao
-interface RecipeDao {
+  abstract fun ingredientDao(): IngredientDao
 
-  @Query("SELECT * FROM recipe") suspend fun getAll(): List<Recipe>
+  abstract fun equipmentDao(): EquipmentDao
 
-  @Query("SELECT * FROM recipe") fun observeAll(): Flow<List<Recipe>>
-
-  @Query("SELECT * FROM recipe WHERE id = :id") suspend fun getById(id: String): Recipe
-
-  @Query("SELECT * FROM recipe WHERE id = :id") fun observeById(id: String): Flow<Recipe>
-
-  @Query("SELECT * FROM recipe WHERE name LIKE :name LIMIT 1") fun getByName(name: String): Recipe
-
-  @Upsert(entity = Recipe::class) suspend fun upsert(recipe: Recipe)
-
-  @Delete suspend fun delete(recipe: Recipe)
+  abstract fun instructionDao(): InstructionDao
 }
