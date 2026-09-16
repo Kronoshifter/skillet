@@ -10,8 +10,8 @@ import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.navigation.toRoute
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.UiState
-import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
+import com.kronos.skilletapp.model.RecipeSummary
 import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.navigation.SharedRecipe
@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
 import kotlinx.coroutines.flow.*
 
-data class RecipeListState(val recipes: List<Recipe>)
+data class RecipeListState(val recipes: List<RecipeSummary>)
 
 class RecipeListViewModel(
   private val recipeRepository: RecipeRepository,
@@ -52,10 +52,10 @@ class RecipeListViewModel(
   private val _isLoading = MutableStateFlow(false)
   private val _recipesAsync =
     recipeRepository
-      .observeRecipes()
+      .observeRecipeSummaries()
       .distinctUntilChanged()
       .map { UiState.LoadedWithData(it) }
-      .catch<UiState<List<Recipe>>> {
+      .catch<UiState<List<RecipeSummary>>> {
         Log.e("RecipeListViewModel", "Error loading recipes", it)
         val error =
           when (it) {

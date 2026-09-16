@@ -37,6 +37,9 @@ class RecipeRepositoryImpl(
       entities.map { entity -> graphFlow(entity.id).map(mapper::toDomain) }.combineFlows()
     }
 
+  override fun observeRecipeSummaries(): Flow<List<RecipeSummary>> =
+    recipeDao.observeAll().map { entities -> entities.map { it.toSummary() } }
+
   override suspend fun upsert(recipe: Recipe) {
     val mapped = mapper.toEntities(recipe)
     val id = recipe.id
