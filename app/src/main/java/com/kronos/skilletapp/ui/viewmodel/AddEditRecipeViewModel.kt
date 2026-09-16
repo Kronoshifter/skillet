@@ -13,6 +13,9 @@ import com.kronos.skilletapp.domain.validation.ValidateRecipe
 import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.model.RecipeSource
+import com.kronos.skilletapp.model.RecipeTime
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
@@ -231,24 +234,25 @@ class AddEditRecipeViewModel(
     }
   }
 
+  private fun buildRecipeFromState(): Recipe =
+    with(_recipeState.value) {
+      Recipe(
+        name = name,
+        description = description,
+        cover = image,
+        notes = notes,
+        servings = servings,
+        time = RecipeTime(prepTime, cookTime),
+        source = RecipeSource(sourceName, source),
+        ingredients = ingredients,
+        instructions = instructions,
+        equipment = equipment,
+      )
+    }
+
   private fun createRecipe() = viewModelScope.launch {
-    createdId =
-      with(_recipeState.value) {
-        recipeRepository.createRecipe(
-          name = name,
-          description = description,
-          notes = notes,
-          servings = servings,
-          prepTime = prepTime,
-          cookTime = cookTime,
-          source = source,
-          sourceName = sourceName,
-          image = image,
-          ingredients = ingredients,
-          instructions = instructions,
-          equipment = equipment,
-        )
-      }
+    val recipe = buildRecipeFromState()
+    createdId = recipeRepository.createRecipe(recipe)
 
     _recipeState.update { it.copy(isRecipeSaved = true) }
   }
@@ -257,23 +261,8 @@ class AddEditRecipeViewModel(
     check(recipeId != null) { "No recipe id to update" }
 
     viewModelScope.launch {
-      with(_recipeState.value) {
-        recipeRepository.updateRecipe(
-          id = recipeId,
-          name = name,
-          description = description,
-          notes = notes,
-          servings = servings,
-          prepTime = prepTime,
-          cookTime = cookTime,
-          source = source,
-          sourceName = sourceName,
-          image = image,
-          ingredients = ingredients,
-          instructions = instructions,
-          equipment = equipment,
-        )
-      }
+      val recipe = buildRecipeFromState()
+      recipeRepository.updateRecipe(recipeId, recipe)
 
       _recipeState.update { it.copy(isRecipeSaved = true) }
     }

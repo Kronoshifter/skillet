@@ -10,15 +10,15 @@
 
 ## 3. Database v2 and DI
 
-- [ ] 3.1 Bump `RecipeDatabase` to `version = 2` with the new entities and per-table DAOs, and remove the old single-table `Recipe` entity + `RecipeDao` from the `@Database`. Verify: `./gradlew :app:assembleDebug` compiles and a v2 schema JSON is generated in `app/schemas/`.
-- [ ] 3.2 In `SkilletApp.kt`, register the per-table DAOs and `RecipeMapper` as Koin singles, and add `fallbackToDestructiveMigration()` plus a `RoomDatabase.Callback` enabling `PRAGMA foreign_keys = ON` in `onSupportOpen` to the Room builder (enforces the `@ForeignKey`/CASCADE constraints declared in task 1.1). (The `ScrapeRecipe` factory arity change is intentionally deferred to task 5.1, where the class change and its DI wiring land atomically.) Verify: the FK-enabling `RoomDatabase.Callback` is registered on the Room builder, the Koin graph resolves at startup (existing instrumented context test), and `./gradlew :app:assembleDebug` is green.
+- [x] 3.1 Bump `RecipeDatabase` to `version = 2` with the new entities and per-table DAOs, and remove the old single-table `Recipe` entity + `RecipeDao` from the `@Database`. Verify: `./gradlew :app:assembleDebug` compiles and a v2 schema JSON is generated in `app/schemas/`.
+- [x] 3.2 In `SkilletApp.kt`, register the per-table DAOs and `RecipeMapper` as Koin singles, and add `fallbackToDestructiveMigration()` plus a `RoomDatabase.Callback` enabling `PRAGMA foreign_keys = ON` in `onSupportOpen` to the Room builder (enforces the `@ForeignKey`/CASCADE constraints declared in task 1.1). (The `ScrapeRecipe` factory arity change is intentionally deferred to task 5.1, where the class change and its DI wiring land atomically.) Verify: the FK-enabling `RoomDatabase.Callback` is registered on the Room builder, the Koin graph resolves at startup (existing instrumented context test), and `./gradlew :app:assembleDebug` is green.
 
 ## 4. Repository collapse (coordinated with the ViewModel)
 
-- [ ] 4.1 Add `val id: String = Uuid.random().toString()` to the domain `Recipe` so IDs exist at model creation. Verify: `./gradlew :app:assembleDebug` compiles and existing `Recipe` constructions still resolve.
-- [ ] 4.2 Collapse the `RecipeRepository` interface so `createRecipe(recipe: Recipe)` and `updateRecipe(id: String, recipe: Recipe)` take a domain `Recipe`. Verify: `./gradlew :app:assembleDebug` compiles the interface.
-- [ ] 4.3 Rewrite `RecipeRepositoryImpl`: reads load the relational rows and assemble a domain `Recipe` (ordered by `position`); writes map to entities and persist atomically via `database.withTransaction { … }` (upsert recipe row, replace child + join rows by `recipe_id`); `createRecipe` returns the model's existing id and `updateRecipe` never mints ids. Verify: a repository unit test asserts create returns the model id, a re-read preserves all ids, and an update replaces the stored graph.
-- [ ] 4.4 Update all ViewModel call sites to the collapsed `createRecipe`/`updateRecipe` signatures. Verify: `./gradlew :app:assembleDebug` compiles with no stale 14-arg calls.
+- [x] 4.1 Add `val id: String = Uuid.random().toString()` to the domain `Recipe` so IDs exist at model creation. Verify: `./gradlew :app:assembleDebug` compiles and existing `Recipe` constructions still resolve.
+- [x] 4.2 Collapse the `RecipeRepository` interface so `createRecipe(recipe: Recipe)` and `updateRecipe(id: String, recipe: Recipe)` take a domain `Recipe`. Verify: `./gradlew :app:assembleDebug` compiles the interface.
+- [x] 4.3 Rewrite `RecipeRepositoryImpl`: reads load the relational rows and assemble a domain `Recipe` (ordered by `position`); writes map to entities and persist atomically via `database.withTransaction { … }` (upsert recipe row, replace child + join rows by `recipe_id`); `createRecipe` returns the model's existing id and `updateRecipe` never mints ids. Verify: a repository unit test asserts create returns the model id, a re-read preserves all ids, and an update replaces the stored graph.
+- [x] 4.4 Update all ViewModel call sites to the collapsed `createRecipe`/`updateRecipe` signatures. Verify: `./gradlew :app:assembleDebug` compiles with no stale 14-arg calls.
 
 ## 5. Scraping and form state
 

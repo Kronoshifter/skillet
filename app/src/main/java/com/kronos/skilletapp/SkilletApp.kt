@@ -3,8 +3,11 @@ package com.kronos.skilletapp
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import coil3.ImageLoader
 import coil3.request.crossfade
+import com.kronos.skilletapp.data.RecipeMapper
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.RecipeRepositoryImpl
 import org.koin.dsl.bind
@@ -44,13 +47,29 @@ class SkilletApp : Application() {
   }
 }
 
-private fun database(context: Context) = Room.databaseBuilder(
-  context = context,
-  klass = RecipeDatabase::class.java,
-  name = "recipes.db",
-).build()
+// Enforces the entity @ForeignKey/@CASCADE constraints at open time. Room does not always force
+// foreign-key enforcement on, so the pragma is set explicitly in an open callback.
+private val fkPragmaCallback = object : RoomDatabase.Callback() {
+  override fun onOpen(db: SupportSQLiteDatabase) {
+    super.onOpen(db)
+    db.execSQL("PRAGMA foreign_keys = ON")
+  }
+}
+
+private fun database(context: Context) =
+  Room.databaseBuilder(
+    context = context,
+    klass = RecipeDatabase::class.java,
+    name = "recipes.db",
+  )
+    .fallbackToDestructiveMigration(true)
+    .addCallback(fkPragmaCallback)
+    .build()
 
 private fun recipeDao(db: RecipeDatabase) = db.recipeDao()
+private fun ingredientDao(db: RecipeDatabase) = db.ingredientDao()
+private fun equipmentDao(db: RecipeDatabase) = db.equipmentDao()
+private fun instructionDao(db: RecipeDatabase) = db.instructionDao()
 
 private fun imageLoader(context: Context) = ImageLoader.Builder(context).crossfade(true).build()
 
@@ -59,7 +78,11 @@ val appModule = module {
 
   single { create(::database) } withOptions { createdAtStart() } onClose { it?.close() }
   single { create(::recipeDao) } withOptions { createdAtStart() }
+  single { create(::ingredientDao) } withOptions { createdAtStart() }
+  single { create(::equipmentDao) } withOptions { createdAtStart() }
+  single { create(::instructionDao) } withOptions { createdAtStart() }
 
+  singleOf(::RecipeMapper)
   singleOf(::RecipeRepositoryImpl) { createdAtStart() } bind RecipeRepository::class
 
   singleOf(::IngredientParser)

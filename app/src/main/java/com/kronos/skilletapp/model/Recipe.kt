@@ -6,13 +6,16 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.kronos.skilletapp.database.RecipeConverters
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 
+@OptIn(ExperimentalUuidApi::class)
 @Entity(tableName = "recipe")
 @TypeConverters(RecipeConverters::class)
 @Serializable
 data class Recipe(
-  @PrimaryKey val id: String,
+  @PrimaryKey val id: String = Uuid.random().toString(),
   val name: String,
   val description: String,
   val cover: String? = null, // cover photo

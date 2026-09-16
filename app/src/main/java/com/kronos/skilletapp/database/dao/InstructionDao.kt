@@ -37,8 +37,14 @@ interface InstructionDao {
   @Query("SELECT * FROM instruction_ingredient WHERE recipe_id = :recipeId ORDER BY position")
   suspend fun selectInstructionIngredients(recipeId: String): List<InstructionIngredientEntity>
 
+  @Query("SELECT * FROM instruction_ingredient WHERE recipe_id = :recipeId ORDER BY position")
+  fun observeInstructionIngredients(recipeId: String): Flow<List<InstructionIngredientEntity>>
+
   @Query("SELECT * FROM instruction_equipment WHERE recipe_id = :recipeId ORDER BY position")
   suspend fun selectInstructionEquipment(recipeId: String): List<InstructionEquipmentEntity>
+
+  @Query("SELECT * FROM instruction_equipment WHERE recipe_id = :recipeId ORDER BY position")
+  fun observeInstructionEquipment(recipeId: String): Flow<List<InstructionEquipmentEntity>>
 
   // Join-table deletes by recipe.
   @Query("DELETE FROM instruction_ingredient WHERE recipe_id = :recipeId")
