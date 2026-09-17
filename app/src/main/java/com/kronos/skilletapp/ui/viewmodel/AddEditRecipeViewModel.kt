@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.github.michaelbull.result.mapBoth
 import com.kronos.skilletapp.data.RecipeRepository
-import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.domain.scraping.ScrapeRecipe
 import com.kronos.skilletapp.domain.scraping.ScrapedRecipe
 import com.kronos.skilletapp.domain.validation.ValidateRecipe
@@ -23,6 +22,7 @@ import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.update
 import com.kronos.skilletapp.utils.upsert
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -39,10 +39,10 @@ class AddEditRecipeViewModel(
   private val recipeUrl = args.url
   private lateinit var createdId: String
 
-  private val _uiState: MutableStateFlow<UiState<Nothing>> = MutableStateFlow(UiState.Loaded)
+  private val _isInitializing = MutableStateFlow(false)
   private val _recipeState: MutableStateFlow<RecipeFormState> = MutableStateFlow(RecipeFormState())
   private var originalRecipeState = RecipeFormState()
-  val uiState = _uiState.asStateFlow()
+  val isInitializing: StateFlow<Boolean> = _isInitializing.asStateFlow()
   val recipeState = _recipeState.asStateFlow()
 
   init {
@@ -253,7 +253,7 @@ class AddEditRecipeViewModel(
   }
 
   private fun loadRecipe(id: String) {
-    _uiState.update { UiState.Loading }
+    _isInitializing.update { true }
     viewModelScope.launch {
       recipeRepository.fetchRecipe(id).let { recipe ->
         _recipeState.update {
@@ -275,12 +275,12 @@ class AddEditRecipeViewModel(
         }
       }
 
-      _uiState.update { UiState.Loaded }
+      _isInitializing.update { false }
     }
   }
 
   fun scUrl(url: String) {
-    _uiState.update { UiState.Loading }
+    _isInitializing.update { true }
     viewModelScope.launch {
       scrapeRecipe(url).mapBoth(
         success = { scraped ->
@@ -311,7 +311,7 @@ class AddEditRecipeViewModel(
         }
       )
 
-      _uiState.update { UiState.Loaded }
+      _isInitializing.update { false }
     }
   }
 
