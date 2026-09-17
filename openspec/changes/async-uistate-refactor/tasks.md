@@ -1,7 +1,7 @@
 ## 1. Async type and composable (additive)
 
 - [ ] 1.1 Create `data/Async.kt` with the sealed `Async<T>` interface (`Idle` / `Loading` / `Success<T>` / `Failure`), the `data`/`error`/`isLoading` accessors, and the `idle()`/`loading()`/`success()`/`failure()` companion factories, per design.md Decision 1. Verify: `./gradlew :app:assembleDebug` compiles and `rg "UiState" app/src` still lists the existing usages (unchanged at this point).
-- [ ] 1.2 Add the `AsyncContent<T>` composable to `ui/ComposeUtils.kt` alongside the existing `LoadingContent` overloads (do not delete them yet): an `AnimatedContent(targetState = state)` wrapper with `Idle` and `Loading` defaulting to a `CircularProgressIndicator`, `Failure` defaulting to `Text(error.message)`, and a `content: (T) -> Unit` slot, per design.md Decision 2. Verify: `./gradlew :app:assembleDebug` compiles and the existing `LoadingContent` overloads are untouched.
+- [x] 1.2 Add the `AsyncContent<T>` composable to `ui/ComposeUtils.kt` alongside the existing `LoadingContent` overloads (do not delete them yet): an `AnimatedContent(targetState = state)` wrapper with `Idle` and `Loading` defaulting to a `CircularProgressIndicator`, `Failure` defaulting to `Text(error.message)`, and a `content: (T) -> Unit` slot, per design.md Decision 2. Verify: `./gradlew :app:assembleDebug` compiles and the existing `LoadingContent` overloads are untouched.
 
 ## 2. Mode A ViewModels (one at a time, module must compile after each)
 

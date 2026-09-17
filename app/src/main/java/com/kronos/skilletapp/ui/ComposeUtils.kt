@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.Companion.DefaultTransform
 import coil3.compose.AsyncImagePainter.State
+import com.kronos.skilletapp.data.Async
 import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.SkilletError
@@ -95,6 +96,32 @@ fun LoadingContent(
         is UiState.Error -> errorContent(targetState.error)
         UiState.Loaded -> content()
         is UiState.LoadedWithData -> throw IllegalStateException("Invalid state: $targetState")
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun <T> AsyncContent(
+  state: Async<T>,
+  modifier: Modifier = Modifier,
+  idle: (@Composable () -> Unit)? = null,
+  loading: (@Composable () -> Unit)? = null,
+  error: (@Composable (SkilletError) -> Unit)? = null,
+  content: @Composable (data: T) -> Unit,
+) {
+  AnimatedContent(
+    targetState = state,
+    label = "Async",
+    modifier = Modifier.fillMaxSize(),
+  ) { targetState ->
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
+      when (targetState) {
+        Async.Idle -> idle?.invoke() ?: CircularProgressIndicator()
+        Async.Loading -> loading?.invoke() ?: CircularProgressIndicator()
+        is Async.Failure -> error?.invoke(targetState.error) ?: Text(targetState.error.message)
+        is Async.Success -> content(targetState.data)
       }
     }
   }
