@@ -20,17 +20,12 @@ import com.kronos.skilletapp.utils.navTypeOf
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class RecipeListViewModel(
   private val recipeRepository: RecipeRepository,
@@ -56,29 +51,16 @@ class RecipeListViewModel(
   @OptIn(SavedStateHandleSaveableApi::class)
   var showSharedUrl by handle.saveable { mutableStateOf(true) }
 
-  private val recipeListAsync = recipeRepository.observeRecipeSummaries()
-    .map { Async.Success(it) }
-    .catch { Async.Failure(RecipeCouldNotBeLoadedError("Could not load recipes")) }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Async.Idle)
-
-  private val _listState = MutableStateFlow<Async<List<RecipeSummary>>>(Async.idle())
-  val listState: StateFlow<Async<List<RecipeSummary>>> = _listState.asStateFlow()
-
-  init {
-    viewModelScope.launch {
-      try {
-        recipeRepository
-          .observeRecipeSummaries()
-          .distinctUntilChanged()
-          .collect { summaries ->
-            _listState.update { Async.success(summaries) }
-          }
-      } catch (e: Exception) {
-        Log.e("RecipeListViewModel", "Error loading recipes", e)
-        _listState.update { Async.failure(RecipeCouldNotBeLoadedError("Could not load recipes")) }
+  val recipeListAsync: StateFlow<Async<List<RecipeSummary>>> =
+    recipeRepository
+      .observeRecipeSummaries()
+      .distinctUntilChanged()
+      .map { Async.Success(it) as Async<List<RecipeSummary>> }
+      .catch {
+        Log.e("RecipeListViewModel", "Could not load recipes", it)
+        emit(Async.Failure(RecipeCouldNotBeLoadedError("Could not load recipes")))
       }
-    }
-  }
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Async.Idle)
 }
 
 const val RECIPES_SORT_TYPE_KEY = "RECIPES_SORT_TYPE_KEY"

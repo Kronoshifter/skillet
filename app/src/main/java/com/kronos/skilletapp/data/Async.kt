@@ -14,11 +14,4 @@ sealed interface Async<out T> {
 
   data class Success<out T>(override val data: T) : Async<T>
   data class Failure(override val error: SkilletError) : Async<Nothing>
-
-  companion object {
-    fun <T> idle(): Async<T> = Idle
-    fun <T> loading(): Async<T> = Loading
-    fun <T> success(data: T): Async<T> = Success(data)
-    fun <T> failure(error: SkilletError): Async<T> = Failure(error)
-  }
 }
