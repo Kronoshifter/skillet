@@ -8,11 +8,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.navigation.toRoute
+import com.kronos.skilletapp.data.Async
 import com.kronos.skilletapp.data.RecipeRepository
-import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
 import com.kronos.skilletapp.model.RecipeSummary
-import com.kronos.skilletapp.model.UsedLoadedWhereYouShouldntError
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.navigation.SharedRecipe
 import com.kronos.skilletapp.ui.saverOf
@@ -21,9 +20,17 @@ import com.kronos.skilletapp.utils.navTypeOf
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.typeOf
-import kotlinx.coroutines.flow.*
-
-data class RecipeListState(val recipes: List<RecipeSummary>)
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class RecipeListViewModel(
   private val recipeRepository: RecipeRepository,
@@ -49,37 +56,29 @@ class RecipeListViewModel(
   @OptIn(SavedStateHandleSaveableApi::class)
   var showSharedUrl by handle.saveable { mutableStateOf(true) }
 
-  private val _isLoading = MutableStateFlow(false)
-  private val _recipesAsync =
-    recipeRepository
-      .observeRecipeSummaries()
-      .distinctUntilChanged()
-      .map { UiState.LoadedWithData(it) }
-      .catch<UiState<List<RecipeSummary>>> {
-        Log.e("RecipeListViewModel", "Error loading recipes", it)
-        val error =
-          when (it) {
-            else -> RecipeCouldNotBeLoadedError("Could not load recipes")
+  private val recipeListAsync = recipeRepository.observeRecipeSummaries()
+    .map { Async.Success(it) }
+    .catch { Async.Failure(RecipeCouldNotBeLoadedError("Could not load recipes")) }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Async.Idle)
+
+  private val _listState = MutableStateFlow<Async<List<RecipeSummary>>>(Async.idle())
+  val listState: StateFlow<Async<List<RecipeSummary>>> = _listState.asStateFlow()
+
+  init {
+    viewModelScope.launch {
+      try {
+        recipeRepository
+          .observeRecipeSummaries()
+          .distinctUntilChanged()
+          .collect { summaries ->
+            _listState.update { Async.success(summaries) }
           }
-        emit(UiState.Error(error))
+      } catch (e: Exception) {
+        Log.e("RecipeListViewModel", "Error loading recipes", e)
+        _listState.update { Async.failure(RecipeCouldNotBeLoadedError("Could not load recipes")) }
       }
-
-  val uiState =
-    combine(_isLoading, _recipesAsync) { isLoading, recipesAsync ->
-        when {
-          isLoading -> UiState.Loading
-          else ->
-            when (recipesAsync) {
-              UiState.Loading -> UiState.Loading
-              is UiState.Error -> UiState.Error(recipesAsync.error)
-              is UiState.LoadedWithData ->
-                UiState.LoadedWithData(RecipeListState(recipes = recipesAsync.data))
-
-              else -> UiState.Error(UsedLoadedWhereYouShouldntError)
-            }
-        }
-      }
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UiState.Loading)
+    }
+  }
 }
 
 const val RECIPES_SORT_TYPE_KEY = "RECIPES_SORT_TYPE_KEY"

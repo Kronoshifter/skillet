@@ -54,7 +54,7 @@ are unchanged; no new Gradle module; the existing test suite is unaffected (no t
 
 **Goals:**
 - Replace `UiState<T>` with a sealed `Async<T>` that is exhaustive, carries `T` only in `Success`, and exposes `data`/`error`/`isLoading` accessors.
-- Collapse the Mode A pipeline to one `MutableStateFlow<Async<T>>` managed in `init` (no `combine`, no `stateIn`, no `catch<UiState<T>>`, no dead `_isLoading`).
+- Collapse the Mode A pipeline to a Flow transformer chain (`.map` / `.catch` / `.stateIn`) (no `combine`, no `MutableStateFlow<Async<T>>`, no `init`-collect, no `catch<UiState<T>>`, no dead `_isLoading`).
 - Replace both `LoadingContent` overloads with one `AsyncContent<T>` composable.
 - Break the recomposition coupling in `RecipeScreen`/`CookingScreen` by scoping `uiState` collection into a child composable.
 - Remove the Mode B full-wrap spinner (replace with a busy flag + conditional); keep the save flow untouched.
@@ -68,7 +68,7 @@ are unchanged; no new Gradle module; the existing test suite is unaffected (no t
 
 ## Decisions
 
-**1. `Async<T>` sealed interface with accessors + companion factories.**
+**1. `Async<T>` sealed interface with accessors — no companion; construct the sealed states directly.**
 
 ```kotlin
 // data/Async.kt
@@ -85,21 +85,15 @@ sealed interface Async<out T> {
   data object Loading : Async<Nothing> { override val isLoading: Boolean get() = true }
   data class Success<out T>(override val data: T) : Async<T>
   data class Failure(override val error: SkilletError) : Async<Nothing>
-
-  companion object {
-    fun <T> idle(): Async<T> = Idle
-    fun <T> loading(): Async<T> = Loading
-    fun <T> success(data: T): Async<T> = Success(data)
-    fun <T> failure(error: SkilletError): Async<T> = Failure(error)
-  }
 }
 ```
 
 - `Success<T>` is the only data-carrying state; `T` is never erased elsewhere (fixes `LoadedWithData`'s erasure).
 - `Idle` (haven't started) is distinct from `Loading` (fetching) per the objective.
-- Companion factories give ergonomic construction at VM update sites.
+- **No companion object:** construct the states directly — `Async.Idle`, `Async.Loading`, `Async.Success(data)`, `Async.Failure(error)`. A `when` over `Async<T>` already references the sealed subtypes by name, so a parallel `idle()`/`success()`/… factory API is redundant.
+- Rejected: a companion of factory functions (`idle()`/`loading()`/`success()`/`failure()`) — a second, redundant construction surface for values that are already reachable as `Async.Idle`/`Async.Loading`/`Async.Success(…)`/`Async.Failure(…)`.
 - Rejected: a `data class Async<T>(val data, val error, val isLoading)` triple — loses exhaustive matching and lets illegal states be constructed.
-- Rejected: a `Flow`-backed approach (no `stateIn`) — we *want* a `StateFlow` so back-navigation retains the last value and there is no resubscription churn; a plain `MutableStateFlow` is the minimum that gives that.
+- Rejected: a raw `Flow` without `stateIn` — we *want* a `StateFlow` so back-navigation retains the last value and there is no resubscription churn; the Mode A pipeline therefore ends in `.stateIn(…)` (see Decision 3).
 
 **2. `AsyncContent<T>` replaces both `LoadingContent` overloads; `AnimatedContent` is retained; `Idle` renders a spinner by default.**
 
@@ -133,7 +127,7 @@ fun <T> AsyncContent(
 ```
 
 - Keeps `AnimatedContent` (spec: "The `AnimatedContent` wrapper is untouched") so loading→content transitions still animate.
-- **Idle-flash decision (resolves Edge Case 1):** data screens initialize their flow to `Async.idle()`. Because
+- **Idle-flash decision (resolves Edge Case 1):** data screens initialize their flow to `Async.Idle`. Because
   `AsyncContent` renders `Idle` with the *same spinner* as `Loading` by default (the `idle` slot defaults to the
   loading spinner), a cold start shows a spinner (not a blank) until the first `Success`. This preserves the
   `Idle`/`Loading` distinction semantically while eliminating the blank-flash. The `idle` slot stays overridable.
@@ -141,7 +135,7 @@ fun <T> AsyncContent(
 - Both old `LoadingContent` overloads are removed (the `<T>` and the `UiState<Nothing>` form). Mode B no longer
   needs a composable for its spinner (see Decision 5), so only `AsyncContent` remains.
 
-**3. Mode A ViewModels: one `MutableStateFlow<Async<T>>` managed in `init`; error via `try/catch` on the collect.**
+**3. Mode A ViewModels: Flow transformer chain (`.map` / `.catch` / `.stateIn`); no `MutableStateFlow<Async<T>>`, no `init`-collect.**
 
 `RecipeViewModel` (representative; `CookingViewModel` is identical in shape, seeded from `args.currentServings`):
 
@@ -159,30 +153,23 @@ class RecipeViewModel(
   private val _uiState = MutableStateFlow(RecipeUiState())
   val uiState: StateFlow<RecipeUiState> = _uiState.asStateFlow()
 
-  private val _recipeState = MutableStateFlow<Async<Recipe>>(Async.idle())
-  val recipeState: StateFlow<Async<Recipe>> = _recipeState.asStateFlow()
-
-  init {
-    viewModelScope.launch {
-      try {
-        recipeRepository.observeRecipe(recipeId).collect { recipe ->
-          _recipeState.update { Async.success(recipe) }
-          if (originalRecipe == null) {                // one-time scaling baseline
-            originalRecipe = recipe
-            _uiState.update {
-              it.copy(
-                currentServings = recipe.servings,
-                scaledIngredients = scaleRecipe(recipe, recipe.servings).scaledIngredients,
-              )
-            }
+  val recipeAsync: StateFlow<Async<Recipe>> =
+    recipeRepository
+      .observeRecipe(recipeId)
+      .onEach { recipe ->                               // one-time scaling baseline (first emission only)
+        if (originalRecipe == null) {
+          originalRecipe = recipe
+          _uiState.update {
+            it.copy(
+              currentServings = recipe.servings,
+              scaledIngredients = scaleRecipe(recipe, recipe.servings).scaledIngredients,
+            )
           }
         }
-      } catch (e: Exception) {
-        Log.e("RecipeScreen", "Could not load recipe", e)
-        _recipeState.update { Async.failure(RecipeCouldNotBeLoadedError("Could not load recipe")) }
       }
-    }
-  }
+      .map { Async.Success(it) }
+      .catch { emit(Async.Failure(RecipeCouldNotBeLoadedError("Could not load recipe"))) }
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Async.Idle)
 
   fun selectUnit(ingredient: Ingredient, unit: MeasurementUnit?) {
     _uiState.update { it.copy(selectedUnits = it.selectedUnits + (ingredient to unit)) }
@@ -197,12 +184,21 @@ class RecipeViewModel(
 
 - `RecipeUiState` loses `originalRecipe` (now a private field) and keeps `selectedUnits`, `currentServings`,
   `scaledIngredients`. `RecipeListState` is deleted; the list payload is `List<RecipeSummary>`.
-- **Why no `stateIn(WhileSubscribed(5000L))`:** the value now lives in a `MutableStateFlow`, so it persists across
-  composition regardless of collection — no subscription buffer needed, no `WhileSubscribed` cancellation to reason
-  about.
-- **`try/catch` on the collect (resolves Edge Case 4):** the old `catch<UiState<T>>` is gone; a repository
-  emission failure is caught around `collect` and mapped to `Async.failure(…)`, preserving the old "error
-  terminates and sticks" behavior. `Log.e` keeps the current logging side-effect.
+- **Property naming:** `recipeAsync` (not `recipeState` or `uiState`). The `*Async` suffix signals the property
+  is an `Async<T>`-typed flow, distinct from interaction state (`uiState`).
+- **`.onEach` one-time baseline:** `originalRecipe` is set on the first emission via
+  `.onEach { if (originalRecipe == null) … }`. This is impure (a side-effect in the transformer chain) but safe
+  because `originalRecipe` is never reset to `null`, so the guard makes the assignment effectively one-time. The
+  alternative — a separate `launch`/`collect` for the baseline — would reintroduce the `init`-collect pattern that
+  was rejected. (There is no built-in `onFirst` operator in kotlinx.coroutines; `onEach` + null guard is the
+  idiomatic equivalent.)
+- **`.stateIn(WhileSubscribed(5000L), Async.Idle)`:** the pipeline ends in `stateIn` so the property is a
+  `StateFlow` that retains the last emission across navigation. The upstream `Flow` is only actively collected
+  while subscribed (+5 s grace), but the `StateFlow` value persists for the ViewModel's lifetime. Initial value
+  is `Async.Idle`.
+- **`.catch { emit(…) }` (resolves Edge Case 4):** the old `catch<UiState<T>>` is gone; the standard kotlinx `catch`
+  operator's handler is a `FlowCollector` suspend lambda, so it must `emit` the replacement value:
+  `.catch { emit(Async.Failure(…)) }`. The failure terminates the flow, preserving the old "error sticks" behavior.
 - `setScaling`/`selectUnit` are unchanged except they read the private `originalRecipe` instead of
   `_uiState.value.originalRecipe` (same null-guard semantics).
 - `refresh()` is **deleted** (dead code: sets `_isLoading` which no longer exists and has no call site; its body
@@ -215,8 +211,8 @@ scaling only mutates in-memory `uiState.scaledIngredients`. Therefore the screen
 `recipe.ingredients` (the payload passed into `RecipeContent`/`CookingContent`), so `originalRecipe` no longer
 needs to be observable state. This removes a field from `RecipeUiState`/`CookingUiState` and eliminates the
 `uiState.originalRecipe?.ingredients ?: emptyList()` idiom in both screens.
-- Verified: today `uiState.originalRecipe` is set to the same `recipe` object that populates `recipeState`, so
-  `originalIngredients = recipe.ingredients` is behavior-preserving.
+- Verified: today `uiState.originalRecipe` is set to the same `recipe` object that populates `recipeAsync`, so
+   `originalIngredients = recipe.ingredients` is behavior-preserving.
 
 **5. Mode B (`AddEditRecipeViewModel`): replace `UiState<Nothing>` with `isInitializing: StateFlow<Boolean>`; leave the save flow alone.**
 
@@ -274,7 +270,7 @@ The save overlay (AddEditRecipeScreen.kt:205-215) and the save-button disable (l
 ```kotlin
 @Composable
 fun RecipeScreen(onBack: () -> Unit, onEdit: () -> Unit, onCook: (Int) -> Unit, vm: RecipeViewModel = koinViewModel()) {
-  val recipeState by vm.recipeState.collectAsStateWithLifecycle()   // ONLY async at top
+  val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()   // ONLY async at top
   // … BackHandler, pagerState, fabTransition, isFabExpanded, scrollBehavior (unchanged) …
   Scaffold(
     topBar = { … },
@@ -289,7 +285,7 @@ fun RecipeScreen(onBack: () -> Unit, onEdit: () -> Unit, onCook: (Int) -> Unit, 
       }
     },
   ) { paddingValues ->
-    AsyncContent(state = recipeState, modifier = Modifier.fillMaxSize().padding(paddingValues)) { recipe ->
+    AsyncContent(state = recipeAsync, modifier = Modifier.fillMaxSize().padding(paddingValues)) { recipe ->
       RecipeDetailScreen(recipe = recipe, vm = vm,
         pagerState = pagerState, ingredientListState = ingredientListState,
         instructionsListState = instructionsListState, topAppBarScrollBehavior = scrollBehavior)
@@ -329,7 +325,7 @@ private fun RecipeDetailScreen(
   ("Cook") and its behavior only depends on the *current* servings, so a lazy read is correct.
 - `RecipeContent` keeps its exact signature (it is previewed with a Koin-provided `Recipe`); `RecipeDetailScreen`
   is a thin new wrapper that owns the `uiState` collection.
-- `CookingScreen` follows the same pattern: top level keeps `recipeState`, wraps in `AsyncContent`, and defers to
+- `CookingScreen` follows the same pattern: top level keeps `cookingAsync`, wraps in `AsyncContent`, and defers to
   a new `CookingDetailScreen(recipe, vm, onBack)` which collects `uiState` (scoped) and builds the `Scaffold`
   (moved out of the old `LoadingContent` lambda) + `CookingContent(…, originalIngredients = recipe.ingredients, …)`.
   `CookingContent` keeps its exact signature (it is previewed).
@@ -337,26 +333,18 @@ private fun RecipeDetailScreen(
 **7. `RecipeListViewModel` payload is `List<RecipeSummary>`; `RecipeListState` deleted.**
 
 ```kotlin
-private val _listState = MutableStateFlow<Async<List<RecipeSummary>>>(Async.idle())
-val listState: StateFlow<Async<List<RecipeSummary>>> = _listState.asStateFlow()
-
-init {
-  viewModelScope.launch {
-    try {
-      recipeRepository.observeRecipeSummaries().distinctUntilChanged().collect {
-        _listState.update { Async.success(it) }
-      }
-    } catch (e: Exception) {
-      Log.e("RecipeListViewModel", "Error loading recipes", e)
-      _listState.update { Async.failure(RecipeCouldNotBeLoadedError("Could not load recipes")) }
-    }
-  }
-}
+val recipeListAsync: StateFlow<Async<List<RecipeSummary>>> =
+  recipeRepository
+    .observeRecipeSummaries()
+    .distinctUntilChanged()
+    .map { Async.Success(it) }
+    .catch { emit(Async.Failure(RecipeCouldNotBeLoadedError("Could not load recipes"))) }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Async.Idle)
 ```
 
 - `data class RecipeListState(val recipes: List<RecipeSummary>)` is deleted (single-field wrapper, no value).
-- `RecipeListScreen` collects `vm.listState`, wraps in `AsyncContent`, and passes `recipes` (the `List`) straight
-  to `RecipeListContent(recipes = …)` instead of `data.recipes`.
+- `RecipeListScreen` collects `vm.recipeListAsync`, wraps in `AsyncContent`, and passes `recipes` (the `List`)
+  straight to `RecipeListContent(recipes = …)` instead of `data.recipes`.
 - `sharedRecipe`, `showSharedUrl`, `_savedSortType`, and the SpeedDial/bottom-sheet UI are unchanged.
 
 ## Risks / Trade-offs
@@ -365,11 +353,12 @@ init {
   never reset to `false`. It is masked today because a successful save sets `isRecipeSaved` → the screen navigates
   away before the stuck flag matters.] → **Preserved, not fixed** (out of scope; the refactor must not change save
   behavior). Flagged here so it is not mistaken for a regression. A follow-up may add the reset in `finally`.
-- [Removing `stateIn(WhileSubscribed)` changes buffer/cancellation semantics.] → State now lives in a
-  `MutableStateFlow` for the VM's lifetime; the last emission persists across navigation. This is the intended
-  improvement (no resubscription flicker) and matches Edge Case 2.
-- [`try/catch` around `collect` only catches the *first* failure (a terminated Room `Flow` does not re-emit).]
+- [`.catch { }` only catches the *first* failure (a terminated Room `Flow` does not re-emit).]
   → Matches today's `catch` behavior (error sticks). Not a regression.
+- [`stateIn(WhileSubscribed(5000L))` stops the *upstream* 5 s after the last subscriber leaves, but the
+  `StateFlow` value persists for the ViewModel's lifetime.] → The last emission (success or failure) survives
+  navigation, so re-entering a screen does not flash a fresh idle placeholder. This is the same retention the old
+  pipeline's `stateIn(WhileSubscribed)` provided.
 - [FAB lazy `vm.uiState.value.currentServings` read.] → Correct because the click only needs the current value;
   if `setScaling` were animated into the button label this would need to become a subscription (it is not).
 - [`AsyncContent` adds an `Idle` arm; any screen initializing to `Idle` shows a spinner (not blank).] → Intended
@@ -383,15 +372,18 @@ init {
 1. **Additive type + composable (no breakage):** add `data/Async.kt`; add `AsyncContent<T>` to `ui/ComposeUtils.kt`
    *alongside* the existing `LoadingContent` overloads (old code still compiles).
 2. **Mode A VMs one at a time:** `RecipeListViewModel` → `RecipeViewModel` → `CookingViewModel` (each: drop
-   `_isLoading`/`combine`/`catch`/`stateIn`, add `init`-managed `MutableStateFlow<Async<T>>`, make
+   `_isLoading`/`combine`/`catch<UiState<T>>`/`MutableStateFlow<Async<T>>`; build the `*Async` property as a Flow
+   transformer chain (`.map { Async.Success(it) }` / `.catch { emit(Async.Failure(…)) }` / `.stateIn(…, Async.Idle)`); make
    `originalRecipe` private, delete `refresh()` on `RecipeViewModel`). After each, the matching screen is
    updated so the module compiles.
 3. **Mode A screens one at a time (matching order):** `RecipeListScreen` → `RecipeScreen` → `CookingScreen`
    (`AsyncContent` + child-composable scoping for Recipe/Cooking).
 4. **Mode B:** `AddEditRecipeViewModel` (`UiState<Nothing>` → `isInitializing`) + `AddEditRecipeScreen`
    (remove `LoadingContent` wrap, conditional spinner). Save flow untouched.
-5. **Cleanup:** delete `data/UiState.kt`, remove both `LoadingContent` overloads from `ui/ComposeUtils.kt`, remove
-   `UsedLoadedWhereYouShouldntError` and `UsedLoadedWithDataWhereYouShouldntError` from `model/SkilletError.kt`.
+5. **Cleanup:** delete `data/UiState.kt`, remove both `LoadingContent` overloads from `ui/ComposeUtils.kt`, remove the
+   `companion object` from `data/Async.kt` (already committed; switch all consumers to `Async.Idle`/`Async.Success(…)`/
+   `Async.Failure(…)` directly), and remove `UsedLoadedWhereYouShouldntError` and `UsedLoadedWithDataWhereYouShouldntError`
+   from `model/SkilletError.kt`.
 6. **Gate:** `./gradlew :app:assembleDebug`, `./gradlew test`, `./gradlew :app:lint`, and
    `rg "UiState|LoadingContent|UsedLoaded|RecipeListState" app/src` returns nothing.
 
