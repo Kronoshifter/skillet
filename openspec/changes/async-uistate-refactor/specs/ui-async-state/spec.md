@@ -1,6 +1,6 @@
 ## Purpose
 
-Defines how the UI layer models and renders an asynchronous data lifecycle. It specifies the exhaustive set of states a screen can be in, how each state is displayed, how a ViewModel holds and updates that state, and how frequently-changing interaction state is scoped so it does not force the whole screen to re-compose.
+Defines how the UI layer models and renders an asynchronous data lifecycle. It specifies the exhaustive set of states a screen can be in, how each state is displayed, how a ViewModel holds and updates that state, and the rule that a ViewModel is used only at the top level of a screen (children receive plain data + lambdas, never the ViewModel).
 
 ## ADDED Requirements
 
@@ -92,13 +92,17 @@ A form screen that performs an initial load or scrape SHALL expose that operatio
 - **WHEN** the form screen is saving
 - **THEN** the in-progress state is indicated without the form being replaced, so the form's interactive state is preserved
 
-### Requirement: High-churn interaction state SHALL be scoped away from async wrappers
+### Requirement: A ViewModel SHALL be used only at the top level of its screen
 
-On a screen that displays both async data and frequently-changing interaction state (such as scaling or unit selection), the async data state SHALL be read at the top of the screen while the high-churn interaction state SHALL be read only within the child that renders the loaded content, so that a change to interaction state re-composes only that child and not the async content wrapper.
+A screen's ViewModel SHALL be accessed only within the top-level composable function of that screen. The top-level composable SHALL collect the screen's states (including the async data state and any high-churn interaction state such as scaling or unit selection) and SHALL pass to child composables only plain data values and callback lambdas (for example method references to ViewModel functions). A child composable SHALL NOT receive the ViewModel instance as a parameter.
 
-#### Scenario: An interaction change re-composes only the content child
-- **WHEN** an interaction that changes the interaction state occurs while data is loaded
-- **THEN** only the loaded content subtree re-composes and the async content wrapper is not re-executed
+#### Scenario: Child composables never receive the ViewModel
+- **WHEN** a screen's top-level composable passes screen state into a child content composable
+- **THEN** it passes collected plain values and method-reference lambdas, and no child composable in the screen takes a ViewModel parameter
+
+#### Scenario: Both async and interaction state are collected at the top level
+- **WHEN** a screen displays both async data and frequently-changing interaction state
+- **THEN** both states are collected within the top-level composable, and a change to the interaction state may re-compose the top level including the async content wrapper (accepted trade-off, in exchange for the top-level ViewModel rule)
 
 #### Scenario: A data state change re-composes through the async wrapper
 - **WHEN** the async data transitions between states (for example from idle to success)

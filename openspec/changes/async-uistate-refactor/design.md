@@ -50,13 +50,31 @@ Constraints: only `:app` is touched; the repository/database, `measurement/`, `u
 are unchanged; no new Gradle module; the existing test suite is unaffected (no test references `UiState`,
 `LoadingContent`, or `RecipeListState`). See `openspec/speculation.md` for the originating rationale.
 
+## Hard Constraint (human directive)
+
+**The ViewModel instance must never be passed as a parameter to a child composable.** The ViewModel lives only
+in the top-level `@Composable` function for each screen (the `vm: XxxViewModel = koinViewModel()` default
+parameter). Specifically:
+
+- **CORRECT:** `val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()` — collecting state at the
+  top level is fine.
+- **CORRECT:** `RecipeContent(…, onScalingChanged = vm::setScaling, …)` — method references and property
+  reads evaluated at the call site are fine.
+- **INCORRECT:** `RecipeDetailScreen(…, vm = vm, …)` — passing the VM instance itself as a parameter to a
+  child composable is forbidden.
+
+Every child composable in the app (`RecipeContent`, `CookingContent`, `RecipeListContent`,
+`AddEditRecipeContent`, …) is therefore a pure data + callback function that can never hold a reference to a
+ViewModel. This is what keeps them previewable without a ViewModel and is why the earlier "scope the
+`uiState` collection into a child composable" plan was rejected (see Decision 6).
+
 ## Goals / Non-Goals
 
 **Goals:**
 - Replace `UiState<T>` with a sealed `Async<T>` that is exhaustive, carries `T` only in `Success`, and exposes `data`/`error`/`isLoading` accessors.
 - Collapse the Mode A pipeline to a Flow transformer chain (`.map` / `.catch` / `.stateIn`) (no `combine`, no `MutableStateFlow<Async<T>>`, no `init`-collect, no `catch<UiState<T>>`, no dead `_isLoading`).
 - Replace both `LoadingContent` overloads with one `AsyncContent<T>` composable.
-- Break the recomposition coupling in `RecipeScreen`/`CookingScreen` by scoping `uiState` collection into a child composable.
+- Enforce the **top-level ViewModel rule** (human directive): the ViewModel instance is used only inside the top-level `@Composable` function of each screen; no child composable ever receives the ViewModel. Children receive plain data plus lambdas (`vm::method` references and property reads evaluated at the call site are fine).
 - Remove the Mode B full-wrap spinner (replace with a busy flag + conditional); keep the save flow untouched.
 - Delete the now-dead sentinels, `UiState.kt`, `RecipeListState`, and `RecipeViewModel.refresh()`.
 
@@ -65,6 +83,7 @@ are unchanged; no new Gradle module; the existing test suite is unaffected (no t
 - No new Gradle module. No new unit tests required (optional; the type is trivially testable).
 - No change to `RecipeFormState`'s field set or to the save/scrape business logic.
 - No fix for the pre-existing latent `isSaveInProgress` reset gap (documented in Risks, deliberately preserved).
+- Breaking the `uiState` recomposition coupling in `RecipeScreen`/`CookingScreen` — the original plan scoped the `uiState` collection into a child composable (`RecipeDetailScreen`/`CookingDetailScreen`), which required passing the VM instance into that child. That violates the top-level ViewModel rule, so the coupling is retained (see Risks).
 
 ## Decisions
 
@@ -263,14 +282,21 @@ if (isInitializing) {
 
 The save overlay (AddEditRecipeScreen.kt:205-215) and the save-button disable (line 129) are unchanged.
 
-**6. Recomposition scoping in `RecipeScreen` and `CookingScreen`.**
+**6. Screen refactors: collect at the top level, pass data + lambdas down; no child composable receives the ViewModel.**
 
-`RecipeScreen` (top level reads only the async state; interaction state moved into a child):
+The earlier version of this decision scoped the high-churn `uiState` collection into a child composable
+(`RecipeDetailScreen(recipe, vm, …)` / `CookingDetailScreen(recipe, vm, onBack)`). **That approach is rejected:**
+a child composable that collects `vm.uiState` must take the VM as a parameter, which violates the top-level
+ViewModel rule (see Hard Constraint). The revised approach: collect **all** ViewModel state at the top level and
+pass the collected values + method references into the `AsyncContent` lambda and the child composables.
+
+`RecipeScreen` (representative; `CookingScreen` is identical in shape):
 
 ```kotlin
 @Composable
 fun RecipeScreen(onBack: () -> Unit, onEdit: () -> Unit, onCook: (Int) -> Unit, vm: RecipeViewModel = koinViewModel()) {
-  val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()   // ONLY async at top
+  val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()   // async state, top level
+  val uiState by vm.uiState.collectAsStateWithLifecycle()           // interaction state, top level
   // … BackHandler, pagerState, fabTransition, isFabExpanded, scrollBehavior (unchanged) …
   Scaffold(
     topBar = { … },
@@ -279,56 +305,47 @@ fun RecipeScreen(onBack: () -> Unit, onEdit: () -> Unit, onCook: (Int) -> Unit, 
         ExtendedFloatingActionButton(
           text = { Text("Cook") },
           icon = { … },
-          onClick = { onCook(vm.uiState.value.currentServings) },   // lazy read; no Compose subscription
+          onClick = { onCook(uiState.currentServings) },           // top-level collected value
           expanded = isFabExpanded,
         )
       }
     },
   ) { paddingValues ->
     AsyncContent(state = recipeAsync, modifier = Modifier.fillMaxSize().padding(paddingValues)) { recipe ->
-      RecipeDetailScreen(recipe = recipe, vm = vm,
-        pagerState = pagerState, ingredientListState = ingredientListState,
-        instructionsListState = instructionsListState, topAppBarScrollBehavior = scrollBehavior)
+      RecipeContent(
+        recipe = recipe,
+        currentServings = uiState.currentServings,
+        selectedUnits = uiState.selectedUnits,
+        onScalingChanged = vm::setScaling,                        // method reference, evaluated at call site
+        onUnitSelect = vm::selectUnit,
+        scaledIngredients = uiState.scaledIngredients,
+        originalIngredients = recipe.ingredients,                 // from payload, not uiState
+        pagerState = pagerState,
+        ingredientListState = ingredientListState,
+        instructionsListState = instructionsListState,
+        topAppBarScrollBehavior = scrollBehavior,
+        modifier = Modifier.fillMaxSize(),
+      )
     }
   }
 }
-
-@Composable
-private fun RecipeDetailScreen(
-  recipe: Recipe, vm: RecipeViewModel,
-  pagerState: PagerState, ingredientListState: LazyListState,
-  instructionsListState: LazyListState, topAppBarScrollBehavior: TopAppBarScrollBehavior,
-) {
-  val uiState by vm.uiState.collectAsStateWithLifecycle()   // scoped: only this subtree re-composes
-  RecipeContent(
-    recipe = recipe,
-    currentServings = uiState.currentServings,
-    selectedUnits = uiState.selectedUnits,
-    onScalingChanged = vm::setScaling,
-    onUnitSelect = vm::selectUnit,
-    scaledIngredients = uiState.scaledIngredients,
-    originalIngredients = recipe.ingredients,               // from payload, not uiState
-    pagerState = pagerState,
-    ingredientListState = ingredientListState,
-    instructionsListState = instructionsListState,
-    topAppBarScrollBehavior = topAppBarScrollBehavior,
-    modifier = Modifier.fillMaxSize(),
-  )
-}
 ```
 
-- `uiState` is now collected **only** inside `RecipeDetailScreen`, so `selectedUnits`/`currentServings`
-  changes invalidate that subtree (and below) but NOT `RecipeScreen` or the `AsyncContent`/`AnimatedContent`
-  wrapper.
-- The FAB reads `vm.uiState.value.currentServings` **at click time** (a snapshot read of the `StateFlow`, not a
-  Compose subscription) so the top level does not re-compose on every interaction. The FAB label is static
-  ("Cook") and its behavior only depends on the *current* servings, so a lazy read is correct.
-- `RecipeContent` keeps its exact signature (it is previewed with a Koin-provided `Recipe`); `RecipeDetailScreen`
-  is a thin new wrapper that owns the `uiState` collection.
-- `CookingScreen` follows the same pattern: top level keeps `cookingAsync`, wraps in `AsyncContent`, and defers to
-  a new `CookingDetailScreen(recipe, vm, onBack)` which collects `uiState` (scoped) and builds the `Scaffold`
-  (moved out of the old `LoadingContent` lambda) + `CookingContent(…, originalIngredients = recipe.ingredients, …)`.
-  `CookingContent` keeps its exact signature (it is previewed).
+- **No intermediate composable is created.** There is no `RecipeDetailScreen`/`CookingDetailScreen`; the
+  `AsyncContent` lambda calls `RecipeContent`/`CookingContent` directly.
+- `RecipeContent` and `CookingContent` keep their exact signatures — they are previewed and remain
+  **ViewModel-free** (plain data + lambdas only).
+- The FAB uses the top-level collected `uiState.currentServings` (a normal Compose subscription; the FAB label
+  is static "Cook" and only needs the current value at click time).
+- `CookingScreen` follows the same pattern: the top level collects `cookingAsync` + `uiState`; the
+  `AsyncContent` lambda builds the `Scaffold` (moved out of the old `LoadingContent` lambda) +
+  `CookingContent(recipe, scaledIngredients = uiState.scaledIngredients, originalIngredients = recipe.ingredients,
+  selectedUnits = uiState.selectedUnits, onUnitSelect = vm::selectUnit, onBack = onBack, …)`.
+- **Accepted trade-off (recomposition coupling retained):** because `uiState` is collected at the top level, a
+  unit selection / scaling change re-executes the top-level `@Composable` (including the
+  `AsyncContent`/`AnimatedContent` call) and re-passes new lambda instances to the children. The only fix —
+  scoping the collection into a child composable — required passing the VM into that child, which is forbidden.
+  See Risks.
 
 **7. `RecipeListViewModel` payload is `List<RecipeSummary>`; `RecipeListState` deleted.**
 
@@ -359,8 +376,15 @@ val recipeListAsync: StateFlow<Async<List<RecipeSummary>>> =
   `StateFlow` value persists for the ViewModel's lifetime.] → The last emission (success or failure) survives
   navigation, so re-entering a screen does not flash a fresh idle placeholder. This is the same retention the old
   pipeline's `stateIn(WhileSubscribed)` provided.
-- [FAB lazy `vm.uiState.value.currentServings` read.] → Correct because the click only needs the current value;
-  if `setScaling` were animated into the button label this would need to become a subscription (it is not).
+- [`uiState` recomposition coupling retained in `RecipeScreen`/`CookingScreen`: the top-level
+  `collectAsStateWithLifecycle()` on `uiState` means every unit-selection / scaling change re-executes the
+  top-level `@Composable` (including the `AsyncContent`/`AnimatedContent` call) and re-passes fresh lambda
+  instances to the children.] → **Accepted, not fixed.** The only scoping fix (collecting `uiState` in a child
+  composable) required passing the VM instance into that child, which violates the top-level ViewModel rule
+  (Hard Constraint). The coupling is no worse than today's code, where these screens already collect
+  `uiState` at the top level.
+- [FAB reads `uiState.currentServings` from the top-level collection.] → Correct because the click only needs
+  the current value; the FAB label is static ("Cook"), so no special lazy-read handling is required.
 - [`AsyncContent` adds an `Idle` arm; any screen initializing to `Idle` shows a spinner (not blank).] → Intended
   (Edge Case 1 resolution); if a screen wants a distinct idle placeholder it passes the `idle` slot.
 - [Two `SkilletError` sentinels removed; `UsedLoadedWithDataWhereYouShouldntError` is already unreferenced.]
@@ -377,7 +401,9 @@ val recipeListAsync: StateFlow<Async<List<RecipeSummary>>> =
    `originalRecipe` private, delete `refresh()` on `RecipeViewModel`). After each, the matching screen is
    updated so the module compiles.
 3. **Mode A screens one at a time (matching order):** `RecipeListScreen` → `RecipeScreen` → `CookingScreen`
-   (`AsyncContent` + child-composable scoping for Recipe/Cooking).
+   (`AsyncContent` + top-level `collectAsStateWithLifecycle()` for both the async and interaction state; the
+   content lambda passes the collected values + `vm::method` references into `RecipeContent`/`CookingContent`.
+   **No child composable receives the ViewModel** — no `RecipeDetailScreen`/`CookingDetailScreen` wrappers.)
 4. **Mode B:** `AddEditRecipeViewModel` (`UiState<Nothing>` → `isInitializing`) + `AddEditRecipeScreen`
    (remove `LoadingContent` wrap, conditional spinner). Save flow untouched.
 5. **Cleanup:** delete `data/UiState.kt`, remove both `LoadingContent` overloads from `ui/ComposeUtils.kt`, remove the

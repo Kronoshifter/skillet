@@ -22,7 +22,7 @@ import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.ui.KoinPreview
-import com.kronos.skilletapp.ui.LoadingContent
+import com.kronos.skilletapp.ui.AsyncContent
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
@@ -59,11 +59,11 @@ fun CookingScreen(
   onBack: () -> Unit,
   vm: CookingViewModel = koinViewModel(),
 ) {
-  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+  val cookingAsync by vm.cookingAsync.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
 
-  LoadingContent(
-    state = recipeState,
+  AsyncContent(
+    state = cookingAsync,
     modifier = Modifier.fillMaxSize(),
   ) { recipe ->
     Scaffold(
@@ -81,7 +81,7 @@ fun CookingScreen(
         CookingContent(
           recipe = recipe,
           scaledIngredients = uiState.scaledIngredients,
-          originalIngredients = uiState.originalRecipe?.ingredients ?: emptyList(),
+          originalIngredients = recipe.ingredients,
           selectedUnits = uiState.selectedUnits,
           onUnitSelect = vm::selectUnit,
           onBack = onBack,
