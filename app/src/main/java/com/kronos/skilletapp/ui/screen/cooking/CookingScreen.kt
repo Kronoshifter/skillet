@@ -63,7 +63,7 @@ fun CookingScreen(
   val uiState by vm.uiState.collectAsStateWithLifecycle()
 
   AsyncContent(
-    state = cookingAsync,
+    async = cookingAsync,
     modifier = Modifier.fillMaxSize(),
   ) { recipe ->
     Scaffold(

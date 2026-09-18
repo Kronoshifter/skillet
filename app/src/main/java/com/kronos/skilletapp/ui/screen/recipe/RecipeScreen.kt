@@ -1,6 +1,5 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
-import android.R.attr.onClick
 import android.webkit.URLUtil.isValidUrl
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -19,7 +18,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -64,7 +62,6 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.kronos.skilletapp.model.*
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
@@ -172,7 +169,7 @@ fun RecipeScreen(
     },
   ) { paddingValues ->
     AsyncContent(
-      state = recipeAsync,
+      async = recipeAsync,
       modifier = Modifier.fillMaxSize().padding(paddingValues),
     ) { recipe ->
         RecipeContent(

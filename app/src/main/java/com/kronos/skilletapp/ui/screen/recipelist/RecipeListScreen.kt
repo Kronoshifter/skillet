@@ -142,7 +142,7 @@ fun RecipeListScreen(
     val recipeListAsync by vm.recipeListAsync.collectAsStateWithLifecycle()
 
     AsyncContent(
-      state = recipeListAsync,
+      async = recipeListAsync,
       modifier = Modifier.fillMaxSize(),
     ) { recipes ->
       RecipeListContent(

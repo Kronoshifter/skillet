@@ -104,7 +104,7 @@ fun LoadingContent(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T> AsyncContent(
-  state: Async<T>,
+  async: Async<T>,
   modifier: Modifier = Modifier,
   idle: (@Composable () -> Unit)? = null,
   loading: (@Composable () -> Unit)? = null,
@@ -112,7 +112,7 @@ fun <T> AsyncContent(
   content: @Composable (data: T) -> Unit,
 ) {
   AnimatedContent(
-    targetState = state,
+    targetState = async,
     label = "Async",
     modifier = Modifier.fillMaxSize(),
   ) { targetState ->
