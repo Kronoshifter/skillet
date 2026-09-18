@@ -68,10 +68,10 @@ import coil3.compose.AsyncImage
 import com.kronos.skilletapp.model.*
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
+import com.kronos.skilletapp.ui.AsyncContent
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
 import com.kronos.skilletapp.ui.KoinPreview
-import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.component.IngredientRow
@@ -100,7 +100,7 @@ fun RecipeScreen(
   onCook: (currentServings: Int) -> Unit,
   vm: RecipeViewModel = koinViewModel(),
 ) {
-  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+  val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
 
   BackHandler(enabled = true, onBack = onBack)
@@ -171,8 +171,8 @@ fun RecipeScreen(
       }
     },
   ) { paddingValues ->
-    LoadingContent(
-      state = recipeState,
+    AsyncContent(
+      state = recipeAsync,
       modifier = Modifier.fillMaxSize().padding(paddingValues),
     ) { recipe ->
         RecipeContent(
@@ -182,7 +182,7 @@ fun RecipeScreen(
           onScalingChanged = vm::setScaling,
           onUnitSelect = vm::selectUnit,
           scaledIngredients = uiState.scaledIngredients,
-          originalIngredients = uiState.originalRecipe?.ingredients ?: emptyList(),
+          originalIngredients = recipe.ingredients,
           pagerState = pagerState,
           ingredientListState = ingredientListState,
           instructionsListState = instructionsListState,
