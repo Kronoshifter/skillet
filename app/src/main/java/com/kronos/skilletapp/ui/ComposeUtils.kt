@@ -129,6 +129,29 @@ fun <T> AsyncContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun DeferredContent(
+  isDeferred: Boolean,
+  modifier: Modifier = Modifier,
+  loading: (@Composable () -> Unit)? = null,
+  content: @Composable () -> Unit,
+) {
+  AnimatedContent(
+    targetState = isDeferred,
+    label = "Deferred",
+    modifier = Modifier.fillMaxSize(),
+  ) { deferred ->
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
+      if (deferred) {
+        loading?.invoke() ?: CircularProgressIndicator()
+      } else {
+        content()
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun DisableRipple(content: @Composable () -> Unit) =
   CompositionLocalProvider(
     value = LocalRippleConfiguration provides null,
