@@ -26,7 +26,7 @@
 ## 5. Cleanup and dead code removal
 
 - [x] 5.1 Delete `data/UiState.kt`; remove the `companion object` from `data/Async.kt` (the committed file still has `idle()`/`loading()`/`success()`/`failure()`; all in-tree consumers were switched to `Async.Idle`/`Async.Success(…)`/`Async.Failure(…)` in 2.x/3.x, so the object is now dead); and remove both `LoadingContent` overloads from `ui/ComposeUtils.kt` (only `AsyncContent` remains). Verify: `./gradlew :app:assembleDebug` compiles and `rg "UiState|LoadingContent|Async\.(idle|loading|success|failure)\(" app/src` returns nothing.
-- [ ] 5.2 Remove `UsedLoadedWhereYouShouldntError` and `UsedLoadedWithDataWhereYouShouldntError` from `model/SkilletError.kt`. Verify: `./gradlew :app:assembleDebug` compiles and `rg "UsedLoaded" app/src` returns nothing.
+- [x] 5.2 Remove `UsedLoadedWhereYouShouldntError` and `UsedLoadedWithDataWhereYouShouldntError` from `model/SkilletError.kt`. Verify: `./gradlew :app:assembleDebug` compiles and `rg "UsedLoaded" app/src` returns nothing.
 
 ## 6. Verification
 
