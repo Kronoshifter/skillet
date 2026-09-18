@@ -28,7 +28,6 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.Companion.DefaultTransform
 import coil3.compose.AsyncImagePainter.State
 import com.kronos.skilletapp.data.Async
-import com.kronos.skilletapp.data.UiState
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.SkilletError
 import com.kronos.measurement.model.Measurement
@@ -45,61 +44,6 @@ import org.koin.compose.koinInject
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun <T> LoadingContent(
-  state: UiState<T>,
-  modifier: Modifier = Modifier,
-  loadingContent: @Composable () -> Unit = { CircularProgressIndicator() },
-  errorContent: @Composable (SkilletError) -> Unit = { error -> Text(text = error.message) },
-  content: @Composable (data: T) -> Unit,
-) {
-  AnimatedContent(
-    targetState = state,
-    label = "Loading",
-    modifier = Modifier.fillMaxSize(),
-  ) { targetState ->
-    Box(
-      contentAlignment = Alignment.Center,
-      modifier = Modifier.fillMaxSize().then(modifier),
-    ) {
-      when (targetState) {
-        UiState.Loading -> loadingContent()
-        is UiState.Error -> errorContent(targetState.error)
-        is UiState.LoadedWithData -> content(targetState.data)
-        UiState.Loaded -> throw IllegalStateException("Invalid state: $targetState")
-      }
-    }
-  }
-}
-
-@Composable
-fun LoadingContent(
-  state: UiState<Nothing>,
-  modifier: Modifier = Modifier,
-  loadingContent: @Composable () -> Unit = { CircularProgressIndicator() },
-  errorContent: @Composable (SkilletError) -> Unit = { error -> Text(text = error.message) },
-  content: @Composable () -> Unit,
-) {
-  AnimatedContent(
-    targetState = state,
-    label = "Loading",
-    modifier = Modifier.fillMaxSize(),
-  ) { targetState ->
-    Box(
-      contentAlignment = Alignment.Center,
-      modifier = Modifier.fillMaxSize().then(modifier),
-    ) {
-      when (targetState) {
-        UiState.Loading -> loadingContent()
-        is UiState.Error -> errorContent(targetState.error)
-        UiState.Loaded -> content()
-        is UiState.LoadedWithData -> throw IllegalStateException("Invalid state: $targetState")
-      }
-    }
-  }
-}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
