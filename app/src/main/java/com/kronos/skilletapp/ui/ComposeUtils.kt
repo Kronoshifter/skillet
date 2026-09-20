@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.Companion.DefaultTransform
 import coil3.compose.AsyncImagePainter.State
-import com.kronos.skilletapp.data.UiState
+import com.kronos.skilletapp.data.Async
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.SkilletError
 import com.kronos.measurement.model.Measurement
@@ -47,54 +47,48 @@ import org.koin.dsl.module
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun <T> LoadingContent(
-  state: UiState<T>,
+fun <T> AsyncContent(
+  async: Async<T>,
   modifier: Modifier = Modifier,
-  loadingContent: @Composable () -> Unit = { CircularProgressIndicator() },
-  errorContent: @Composable (SkilletError) -> Unit = { error -> Text(text = error.message) },
+  idle: (@Composable () -> Unit)? = null,
+  loading: (@Composable () -> Unit)? = null,
+  error: (@Composable (SkilletError) -> Unit)? = null,
   content: @Composable (data: T) -> Unit,
 ) {
   AnimatedContent(
-    targetState = state,
-    label = "Loading",
+    targetState = async,
+    label = "Async",
     modifier = Modifier.fillMaxSize(),
   ) { targetState ->
-    Box(
-      contentAlignment = Alignment.Center,
-      modifier = Modifier.fillMaxSize().then(modifier),
-    ) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
       when (targetState) {
-        UiState.Loading -> loadingContent()
-        is UiState.Error -> errorContent(targetState.error)
-        is UiState.LoadedWithData -> content(targetState.data)
-        UiState.Loaded -> throw IllegalStateException("Invalid state: $targetState")
+        Async.Idle -> idle?.invoke() ?: CircularProgressIndicator()
+        Async.Loading -> loading?.invoke() ?: CircularProgressIndicator()
+        is Async.Failure -> error?.invoke(targetState.error) ?: Text(targetState.error.message)
+        is Async.Success -> content(targetState.data)
       }
     }
   }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoadingContent(
-  state: UiState<Nothing>,
+fun DeferredContent(
+  isDeferred: Boolean,
   modifier: Modifier = Modifier,
-  loadingContent: @Composable () -> Unit = { CircularProgressIndicator() },
-  errorContent: @Composable (SkilletError) -> Unit = { error -> Text(text = error.message) },
+  loading: (@Composable () -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
   AnimatedContent(
-    targetState = state,
-    label = "Loading",
+    targetState = isDeferred,
+    label = "Deferred",
     modifier = Modifier.fillMaxSize(),
-  ) { targetState ->
-    Box(
-      contentAlignment = Alignment.Center,
-      modifier = Modifier.fillMaxSize().then(modifier),
-    ) {
-      when (targetState) {
-        UiState.Loading -> loadingContent()
-        is UiState.Error -> errorContent(targetState.error)
-        UiState.Loaded -> content()
-        is UiState.LoadedWithData -> throw IllegalStateException("Invalid state: $targetState")
+  ) { deferred ->
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
+      if (deferred) {
+        loading?.invoke() ?: CircularProgressIndicator()
+      } else {
+        content()
       }
     }
   }

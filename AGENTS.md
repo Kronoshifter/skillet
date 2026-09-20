@@ -27,9 +27,9 @@
 | `scraping/` | `RecipeScraper` (JSON-LD via skrape.it), custom kotlinx.serialization serializers |
 | `navigation/` | Type-safe `@Serializable` sealed `Route`; deep links via `skilletapp://skillet` |
 | `ui/screen/` | `RecipeListScreen`, `RecipeScreen`, `AddEditRecipeScreen`, `CookingScreen` |
-| `ui/viewmodel/` | 4 ViewModels — all use `koinViewModel()`, `combine`+`stateIn(WhileSubscribed(5000L))` pattern |
+| `ui/viewmodel/` | 4 ViewModels — all use `koinViewModel()`, Flow-transformer `.map/.catch/.stateIn(WhileSubscribed(5000L), Async.Idle)` pattern |
 | `ui/component/` | Reusable composables: bottom nav, dialogs, ingredient pills, pickers, bottom sheets |
-| `ui/` | `ComposeUtils`: `LoadingContent`, `KoinPreview`, `AsyncImage` wrapper |
+| `ui/` | `ComposeUtils`: `AsyncContent`, `DeferredContent`, `KoinPreview`, `AsyncImage` wrapper |
 | `utils/` | App-local utilities: `ListUtils`, `NavDeepLinkRequestBuilder`, `NavigationUtils`, `ResultUtils`, `StringUtils`, `modifier/` |
 
 ### Module structure
@@ -57,10 +57,10 @@ All bindings in `appModule` in `SkilletApp.kt`. Room/DAO/repository use `created
 
 ### State patterns
 
-- Sealed `UiState<T>`: `Loading`, `Loaded`, `LoadedWithData<T>`, `Error`
+- Sealed `Async<T>`: `Idle`, `Loading`, `Success<T>`, `Failure`
 - `SkilletError` hierarchy for typed errors
 - `result-kotlin` (`Result<T, E>`) with `ok()`/`err()`/`guard` for form validation
-- `combine(_isLoading, dataFlow)` → `stateIn` in all ViewModels
+- Single Flow transformer per VM: `flow.map { Async.Success(it) }.catch { emit(Async.Failure(...)) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Async.Idle)`
 
 ## Testing
 

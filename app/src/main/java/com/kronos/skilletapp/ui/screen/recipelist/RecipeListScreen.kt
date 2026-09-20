@@ -139,14 +139,14 @@ fun RecipeListScreen(
     },
     floatingActionButtonPosition = FabPosition.End,
   ) { padding ->
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val recipeListAsync by vm.recipeListAsync.collectAsStateWithLifecycle()
 
-    LoadingContent(
-      state = uiState,
+    AsyncContent(
+      async = recipeListAsync,
       modifier = Modifier.fillMaxSize(),
-    ) { data ->
+    ) { recipes ->
       RecipeListContent(
-        recipes = data.recipes,
+        recipes = recipes,
         onRecipeClick = onRecipeClick,
         modifier = Modifier.fillMaxSize(),
         gridPadding =

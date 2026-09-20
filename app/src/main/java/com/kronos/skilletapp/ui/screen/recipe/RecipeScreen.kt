@@ -1,6 +1,5 @@
 package com.kronos.skilletapp.ui.screen.recipe
 
-import android.R.attr.onClick
 import android.webkit.URLUtil.isValidUrl
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -19,7 +18,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -64,14 +62,13 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.kronos.skilletapp.model.*
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
+import com.kronos.skilletapp.ui.AsyncContent
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
 import com.kronos.skilletapp.ui.KoinPreview
-import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.component.IngredientPill
 import com.kronos.skilletapp.ui.component.IngredientRow
@@ -100,7 +97,7 @@ fun RecipeScreen(
   onCook: (currentServings: Int) -> Unit,
   vm: RecipeViewModel = koinViewModel(),
 ) {
-  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+  val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()
   val uiState by vm.uiState.collectAsStateWithLifecycle()
 
   BackHandler(enabled = true, onBack = onBack)
@@ -171,8 +168,8 @@ fun RecipeScreen(
       }
     },
   ) { paddingValues ->
-    LoadingContent(
-      state = recipeState,
+    AsyncContent(
+      async = recipeAsync,
       modifier = Modifier.fillMaxSize().padding(paddingValues),
     ) { recipe ->
         RecipeContent(
@@ -182,7 +179,7 @@ fun RecipeScreen(
           onScalingChanged = vm::setScaling,
           onUnitSelect = vm::selectUnit,
           scaledIngredients = uiState.scaledIngredients,
-          originalIngredients = uiState.originalRecipe?.ingredients ?: emptyList(),
+          originalIngredients = recipe.ingredients,
           pagerState = pagerState,
           ingredientListState = ingredientListState,
           instructionsListState = instructionsListState,

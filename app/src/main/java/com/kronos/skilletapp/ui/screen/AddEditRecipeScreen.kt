@@ -61,9 +61,9 @@ import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.AsyncImage
+import com.kronos.skilletapp.ui.DeferredContent
 import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.KoinPreview
-import com.kronos.skilletapp.ui.LoadingContent
 import com.kronos.skilletapp.ui.component.*
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
@@ -98,6 +98,7 @@ fun AddEditRecipeScreen(
   var showDiscardChangesDialog by remember { mutableStateOf(false) }
 
   val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+  val isInitializing by vm.isInitializing.collectAsStateWithLifecycle()
 
   BackHandler {
     if (recipeState.tharBeChanges) {
@@ -134,11 +135,9 @@ fun AddEditRecipeScreen(
     },
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
   ) { paddingValues ->
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
-
-    LoadingContent(
-      state = uiState,
-      modifier = Modifier.fillMaxSize().padding(paddingValues),
+    DeferredContent(
+      isDeferred = isInitializing,
+      modifier = Modifier.padding(paddingValues),
     ) {
       AddEditRecipeContent(
         name = recipeState.name,
