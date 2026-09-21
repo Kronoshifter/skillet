@@ -1,7 +1,7 @@
-## 1. Spike — prove the JVM test vehicle (de-risk, gates the rest)
+## 1. Instrumented test vehicle — deps + smoke test (de-risk, gates the tests)
 
-- [ ] 1.1 Add an `androidx-sqlite` (version 2.7.1) entry to `gradle/libs.versions.toml` and a `testImplementation` dependency in `app/build.gradle.kts`; verify it resolves on the `:app` JVM unit-test classpath (`./gradlew :app:dependencies --configuration debugUnitTestRuntimeClasspath` shows `androidx.sqlite:sqlite:2.7.1` → `sqlite-bundled-jvm`)
-- [ ] 1.2 Write a minimal JVM Kotest test that builds the real `RecipeDatabase` via `Room.testing()`, inserts a recipe row through the DAO, closes, reopens, and asserts the row is intact; verify it passes via `./gradlew :app:testDebugUnitTest --tests "*<SpikeTest>*"` and record the exact `Room.testing()` builder mechanics in the test; **if the driver fails to resolve or its native library won't load, pivot the remaining test tasks to instrumented `MigrationTestHelper` and flag for human review**
+- [ ] 1.1 Revert the two obsolete JVM-driver files — `gradle/libs.versions.toml` (remove the `androidx-sqlite = "2.7.1"` version entry and the `androidx-sqlite` library entry) and `app/build.gradle.kts` (remove `testImplementation(libs.androidx.sqlite)` from the Testing block) — then add a `room-testing` library entry to the catalog (`androidx.room:room-testing`, `version.ref = room`, i.e. 2.8.4 — no new version entry) and an `androidTestImplementation(libs.room.testing)` line in `app/build.gradle.kts`'s Testing block; verify `./gradlew :app:dependencies --configuration debugAndroidTestRuntimeClasspath` shows `androidx.room:room-testing:2.8.4` and `git diff` shows only those two intended files changed
+- [ ] 1.2 Write a minimal instrumented smoke test in `app/src/androidTest/` that (a) opens the real `RecipeDatabase` via `Room.databaseBuilder` on the instrumentation context, inserts a recipe row through the DAO, closes, reopens, and asserts the row is intact, and (b) constructs `androidx.room.testing.MigrationTestHelper` with `RecipeDatabase::class.java` and the checked-in schema directory (`app/schemas/com.kronos.skilletapp.database.RecipeDatabase/`), reading the v1 and v2 schema files; verify it passes on the connected device via `./gradlew :app:connectedDebugAndroidTest --tests "*<SmokeTest>*"` and record the exact `MigrationTestHelper` mechanics (schema-directory argument, `migrate(1)` usage) in the test; **if Room fails to open on-device or the helper cannot read the schema directory, stop and flag for human review**
 
 ## 2. Migration code
 
@@ -15,8 +15,8 @@
 
 ## 4. Migration tests
 
-- [ ] 4.1 Make the v2-data-preservation test permanent (a v2 DB with existing rows opens cleanly and every row survives, proving the fallback's removal is safe); verify it is in the permanent test set and passes via `./gradlew test`
-- [ ] 4.2 Write a v1 → v2 test that builds a v1 database, applies `MIGRATION_1_2`, and asserts the result is an empty v2 schema matching `2.json` (JVM path if straightforward, else instrumented `MigrationTestHelper`); verify it passes
+- [ ] 4.1 Write the v2-data-preservation test as a plain instrumented Room test in `app/src/androidTest/`: open a v2 `RecipeDatabase` with existing rows (inserted via the DAO), close, reopen, and assert every row is intact — no migration runs since the version is unchanged, proving the fallback's removal is safe; verify it is in the permanent instrumented test set and passes via `./gradlew :app:connectedDebugAndroidTest`
+- [ ] 4.2 Write a v1 → v2 migration test in `app/src/androidTest/` using `androidx.room.testing.MigrationTestHelper`: construct the helper with `RecipeDatabase::class.java` and the checked-in schema directory (`app/schemas/com.kronos.skilletapp.database.RecipeDatabase/`), use `migrate(1)` to materialize a v1 database from schema `1.json` (seed a v1 recipe row), then open the DB so the registered `MIGRATION_1_2` runs; assert the resulting schema matches the checked-in v2 schema (`2.json`) and that the seeded v1 row is gone (destructive contract); verify it passes via `./gradlew :app:connectedDebugAndroidTest`
 
 ## 5. Docs
 
@@ -24,5 +24,5 @@
 
 ## 6. Verification gates
 
-- [ ] 6.1 Run `./gradlew :app:assembleDebug`, `./gradlew test`, and `./gradlew :app:lint`; verify all three are green
-- [ ] 6.2 Confirm no schema version bump and that `app/schemas/` is unchanged via `git status` / `git diff`; verify only the intended files (`SkilletApp.kt`, `RecipeDatabase.kt`, `database/migrations/*`, the new test(s), `build.gradle.kts`, `libs.versions.toml`, `AGENTS.md`) changed
+- [ ] 6.1 Run `./gradlew :app:assembleDebug`, `./gradlew :app:connectedDebugAndroidTest`, `./gradlew test`, and `./gradlew :app:lint`; verify all four are green (the JVM suite has no new DB tests but must stay green)
+- [ ] 6.2 Confirm no schema version bump and that `app/schemas/` is unchanged via `git status` / `git diff`; verify only the intended files (`SkilletApp.kt`, `RecipeDatabase.kt`, `database/migrations/*`, the new instrumented test(s), `build.gradle.kts`, `libs.versions.toml`, `AGENTS.md`) changed
