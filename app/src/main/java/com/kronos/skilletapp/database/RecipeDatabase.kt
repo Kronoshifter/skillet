@@ -25,6 +25,7 @@ import com.kronos.skilletapp.database.entity.RecipeEntity
       InstructionEquipmentEntity::class,
     ],
   version = 2,
+  autoMigrations = [],
 )
 @TypeConverters(MeasurementConverters::class)
 abstract class RecipeDatabase : RoomDatabase() {

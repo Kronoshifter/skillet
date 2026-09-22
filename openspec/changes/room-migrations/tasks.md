@@ -5,13 +5,13 @@
 
 ## 2. Migration code
 
-- [ ] 2.1 Create the `app/.../database/migrations/` package with `MIGRATION_1_2`, a destructive custom `Migration(1, 2)` that drops the v1 `recipe` table and recreates all six v2 tables (DDL derived from the v2 entities, matching `2.json`); verify it compiles and the six `CREATE TABLE` statements match the v2 entity definitions
-- [ ] 2.2 Verify `MIGRATION_1_2`'s DDL is complete (all six tables, foreign keys, indexes) against `app/schemas/com.kronos.skilletapp.database.RecipeDatabase/2.json`
+- [x] 2.1 Create the `app/.../database/migrations/` package with `MIGRATION_1_2`, a destructive custom `Migration(1, 2)` that drops the v1 `recipe` table and recreates all six v2 tables (DDL derived from the v2 entities, matching `2.json`); verify it compiles and the six `CREATE TABLE` statements match the v2 entity definitions
+- [x] 2.2 Verify `MIGRATION_1_2`'s DDL is complete (all six tables, foreign keys, indexes) against `app/schemas/com.kronos.skilletapp.database.RecipeDatabase/2.json`
 
 ## 3. Wire up the database
 
-- [ ] 3.1 Add `autoMigrations` (empty list) to `@Database` in `RecipeDatabase.kt` while keeping `version = 2` (no schema change); verify the module compiles and the schema version is unchanged
-- [ ] 3.2 In `SkilletApp.kt`, add `.addMigrations(MIGRATION_1_2)` and remove the `.fallbackToDestructiveMigration(true)` call, keeping `fkPragmaCallback` registered; verify `./gradlew :app:assembleDebug` succeeds and the database opens at launch without the fallback
+- [x] 3.1 Add `autoMigrations` (empty list) to `@Database` in `RecipeDatabase.kt` while keeping `version = 2` (no schema change); verify the module compiles and the schema version is unchanged
+- [x] 3.2 In `SkilletApp.kt`, add `.addMigrations(MIGRATION_1_2)` and remove the `.fallbackToDestructiveMigration(true)` call, keeping `fkPragmaCallback` registered; verify `./gradlew :app:assembleDebug` succeeds and the database opens at launch without the fallback
 
 ## 4. Migration tests (DEFERRED to Room 3)
 
@@ -20,7 +20,7 @@
 
 ## 5. Docs
 
-- [ ] 5.1 Fix the two stale `AGENTS.md` schema claims (the "migrations not yet implemented / version 1 only" claim and the schemaLocation note); verify the corrected text matches reality (schema version 2, migrations registered)
+- [x] 5.1 Fix the two stale `AGENTS.md` schema claims (the "migrations not yet implemented / version 1 only" claim and the schemaLocation note); verify the corrected text matches reality (schema version 2, migrations registered)
 
 ## 6. Verification gates
 

@@ -12,6 +12,7 @@ import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.data.RecipeRepositoryImpl
 import org.koin.dsl.bind
 import com.kronos.skilletapp.database.RecipeDatabase
+import com.kronos.skilletapp.database.migrations.MIGRATION_1_2
 import com.kronos.skilletapp.domain.scaling.ScaleRecipe
 import com.kronos.skilletapp.domain.scraping.ScrapeRecipe
 import com.kronos.skilletapp.domain.validation.ValidateRecipe
@@ -62,7 +63,7 @@ private fun database(context: Context) =
     klass = RecipeDatabase::class.java,
     name = "recipes.db",
   )
-    .fallbackToDestructiveMigration(true)
+    .addMigrations(MIGRATION_1_2)
     .addCallback(fkPragmaCallback)
     .build()
 
