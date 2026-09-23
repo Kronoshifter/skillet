@@ -129,6 +129,7 @@ dependencies {
   testImplementation(libs.bundles.kotest)
   androidTestImplementation(libs.androidx.test.ext)
   androidTestImplementation(libs.espresso.core)
+  androidTestImplementation(libs.room.testing)
   androidTestImplementation(platform(libs.compose.bom))
   androidTestImplementation(libs.compose.ui.test)
   debugImplementation(libs.compose.ui.tooling)
