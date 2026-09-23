@@ -24,8 +24,8 @@
 
 ## 6. Verification gates
 
-- [ ] 6.1 Run `./gradlew :app:assembleDebug`, `./gradlew test`, and `./gradlew :app:lint`; verify all three are green (the JVM suite has no new DB tests but must stay green; `connectedDebugAndroidTest` is no longer part of the gate — the instrumented tests are deferred to Room 3)
-- [ ] 6.2 Confirm no schema version bump and that `app/schemas/` is unchanged via `git status` / `git diff`; verify only the intended files (`SkilletApp.kt`, `RecipeDatabase.kt`, `database/migrations/*`, `AGENTS.md`, `app/build.gradle.kts`, `gradle/libs.versions.toml`) changed
+- [x] 6.1 Run `./gradlew :app:assembleDebug`, `./gradlew test`, and `./gradlew :app:lint`; verify all three are green (the JVM suite has no new DB tests but must stay green; `connectedDebugAndroidTest` is no longer part of the gate — the instrumented tests are deferred to Room 3) — **DONE (2026-09-23, Archivist-independent re-run):** `assembleDebug` green; `lint` green; `test` — utils (29/29) + measurement (119/119) green, app suite's only failures are the 2 pre-existing network-dependent `RecipeScrapingTests` cases (Pancakes, Garlic Shells — `InvalidHtmlError`), a human-adjudicated documented exception provably unrelated to this change (disjoint components); full evidence on `skillet-rm-10` (close reason + comments)
+- [x] 6.2 Confirm no schema version bump and that `app/schemas/` is unchanged via `git status` / `git diff`; verify only the intended files (`SkilletApp.kt`, `RecipeDatabase.kt`, `database/migrations/*`, `AGENTS.md`, `app/build.gradle.kts`, `gradle/libs.versions.toml`) changed — **DONE (2026-09-23):** `bfa0774..HEAD` = 5 commits touching exactly the 11 allowlisted files; `app/schemas/` untouched (`1.json` + `2.json` only, no version bump); no test files changed; `version = 2`; tree clean; evidence on `skillet-rm-11`
 
 ## Bead mapping (1:1)
 
@@ -33,14 +33,14 @@
 |------|------|--------|
 | 1.1 | `skillet-azy` | closed |
 | 1.2 | `skillet-scd` | closed (per human directive, 2026-09-22) |
-| 2.1 | `skillet-rm-02` | open |
-| 2.2 | `skillet-rm-06` | open |
-| 3.1 | `skillet-rm-03` | open |
-| 3.2 | `skillet-rm-07` | open |
+| 2.1 | `skillet-rm-02` | closed |
+| 2.2 | `skillet-rm-06` | closed |
+| 3.1 | `skillet-rm-03` | closed |
+| 3.2 | `skillet-rm-07` | closed |
 | 4.1 | `skillet-rm-08` | **deferred** (Room 3 revival, with `skillet-m5r`) |
 | 4.2 | `skillet-rm-09` | **deferred** (Room 3 revival, with `skillet-m5r`) |
-| 5.1 | `skillet-rm-04` | open |
-| 6.1 | `skillet-rm-10` | open |
-| 6.2 | `skillet-rm-11` | open |
+| 5.1 | `skillet-rm-04` | closed |
+| 6.1 | `skillet-rm-10` | closed |
+| 6.2 | `skillet-rm-11` | closed |
 
-Unnumbered (not one of the tasks above): spike-artifact cleanup → `skillet-5tb` (open, P4 chore, discovered-from `skillet-scd`).
+Unnumbered (not one of the tasks above): spike-artifact cleanup → `skillet-5tb` (closed, P4 chore, discovered-from `skillet-scd`).
