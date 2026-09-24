@@ -65,7 +65,6 @@ style:
   MaxLineLength:
     active: true
     maxLineLength: 140 # Default is 120 (100 for Android)
-    excludeExtensionFunctionHints: true
 
 naming:
   FunctionNaming:
