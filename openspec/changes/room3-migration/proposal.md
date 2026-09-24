@@ -44,7 +44,8 @@ this gate makes the later cutover a mechanical rename.
 - Room Gradle plugin re-pointed at the Room 3 plugin with `room { schemaDirectory(...) }` kept
   (exact plugin id / task names resolved by the Gate 2 verification task, V1/V4).
 - The exported v2 schema (`app/schemas/…/RecipeDatabase/2.json`) must remain **byte-identical**
-  before and after (git-diff gate); `@Database` version stays **2**.
+  before and after (git-diff gate); `@Database` version stays **2** through this gate (the
+  single version bump to **3** lands in Gate 3 with the rescoped v3 index cut).
 - Folds in the low-priority doc fixes: 5 stale KDocs (4 DAOs "not yet registered in `@Database`
   or Koin", 1 converter "orphan converter class").
 - `AGENTS.md` updated to Room 3 facts (final task of the gate).
@@ -54,7 +55,14 @@ this gate makes the later cutover a mechanical rename.
 - Spike to re-derive the Room 3 `MigrationTestHelper` API (V5) — the 2.8.4 learnings are stale by
   design.
 - Un-defer and implement `skillet-rm-08` (v2 data-preservation test) and `skillet-rm-09`
-  (v1→v2 migration test) in `app/src/androidTest/`.
+  (migration-chain test; final schema is the v3 export) in `app/src/androidTest/`.
+- **Rescoped into this change (2026-09-24):** the captured index set from a parallel
+  workstream (8 indexes on the 6 entities) lands here as a single **v2 → v3 schema cut**
+  (`@Database` version 3; `3.json` = `2.json` + exactly those 8 indexes; explicit
+   `MIGRATION_2_3`; `2.json` stays byte-identical) — new bead `skillet-g3-schema`
+   (F-1 resolved 2026-09-24: all 8 indexes NON-UNIQUE, option (a); the captured uniqueness
+   was structurally unachievable on the multi-row foreign-key columns per the app's own
+   write path; see design D12/F-1).
 
 ## Capabilities
 
@@ -66,8 +74,10 @@ this gate makes the later cutover a mechanical rename.
 
 - `domain-persistence`: new ADDED requirements — the cutover must be proven non-destructive
   (byte-identical v2 schema export, data intact across close/reopen on device), the app must not
-  bundle a second SQLite engine, and the v1→v2 migration chain plus v2 data preservation must be
-  covered by instrumented tests (revives the deferred `skillet-rm-08`/`skillet-rm-09` scope).
+  bundle a second SQLite engine, the single v3 index cut must be provable (new `3.json` = v2
+  schema + exactly the 8 captured indexes, v2 rows intact across 2→3, explicit
+  `MIGRATION_2_3`), and the migration chain plus v2 data preservation must be covered by
+  instrumented tests (revives the deferred `skillet-rm-08`/`skillet-rm-09` scope).
 
 ## Impact
 
@@ -78,12 +88,16 @@ this gate makes the later cutover a mechanical rename.
   Equipment}Dao.kt`, `data/RecipeRepositoryImpl.kt`.
 - **Build**: `gradle/libs.versions.toml`, `app/build.gradle.kts` (plugin, room3 bundle,
   `androidx.sqlite:sqlite-android`, `room3-testing` in androidTest).
-- **Tests**: `app/src/androidTest/` gains the two revived migration tests (currently only
-  `ExampleInstrumentedTest.kt`). `app/src/test/` is untouched and must stay green.
+- **Tests**: `app/src/androidTest/` gains the two revived migration tests plus the v3
+  schema-cut test (currently only `ExampleInstrumentedTest.kt`). `app/src/test/` is untouched
+  and must show no NEW failures vs. the G1-AUDIT baseline (design D10/D11).
 - **Docs**: `AGENTS.md` (Room 3 facts), 5 stale KDocs folded into the Gate 2 sweep.
-- **Untouched**: `:utils`, `:measurement` (no Room dependency), schema version, on-disk data,
-  module layout, DI wiring shape.
+- **Untouched**: `:utils`, `:measurement` (no Room dependency), on-disk user data, module
+  layout, DI wiring shape. (Schema version is NOT untouched: the single 2→3 cut, task 3.4/D12;
+  the checked-in `2.json` export itself is untouched at every gate.)
 - **Verification**: per gate — `./gradlew :app:assembleDebug`, `./gradlew test`,
-  `./gradlew :app:lint`; after Gates 1–2 — `rg "SupportSQLite" app/src` → zero and
-  `git diff --stat app/schemas` → empty; manual device launch after each gate (data intact);
+  `./gradlew :app:lint` (failures judged against the G1-AUDIT baseline per design D10/D11,
+  not absolute green); after Gates 1–2 — `rg "SupportSQLite" app/src` → zero and
+  `git diff --stat app/schemas` → no `2.json` diff (end state after the v3 cut: `2.json`
+  unchanged + new `3.json`); manual device launch after each gate (data intact);
   Gate 3 — `./gradlew :app:connectedDebugAndroidTest`.

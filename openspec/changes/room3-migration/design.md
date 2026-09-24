@@ -38,14 +38,17 @@ deferred to this migration: `skillet-rm-08` (v2 data preservation) and `skillet-
 
 - Run on Room 3.0.0 with **zero** `androidx.room` / `SupportSQLite` references in `app/src`.
 - **Zero APK bloat**: platform SQLite driver, no bundled engine.
-- **Data + schema invariance**: checked-in `app/schemas/.../2.json` stays byte-identical;
-  DB version stays 2; no user data loss.
+- **Data + schema contract**: checked-in `app/schemas/.../2.json` stays byte-identical at
+  every gate; no user data loss. The only schema change in this change is the v3 index cut
+  (task 3.4, D12): the 8 captured indexes land as a single 2→3 version bump, so the final
+  schema is `3.json` = `2.json` + exactly those 8 indexes.
 - Gate 1 and Gate 2 verifiable **without a device** (assembleDebug/test/lint/grep/diff).
 - Restore the deferred instrumented migration tests (rm-08/rm-09) in Gate 3.
 
 ## Non-Goals
 
-- No new features, no schema changes, no DB version bump.
+- No new features. No schema changes except the single v3 index cut (task 3.4, D12 — the
+  rescoped parallel-workstream index spec, now owned by this change).
 - No changes to `:utils` or `:measurement` (pure JVM, zero Room).
 - No JVM unit-test additions for Room (instrumented only, per existing test strategy).
 - No CI or new infrastructure.
@@ -56,7 +59,7 @@ deferred to this migration: `skillet-rm-08` (v2 data preservation) and `skillet-
   - **Gate 1** (still on Room 2.8.4): convert all APIs to non-deprecated driver APIs.
   - **Gate 2** (Room 3.0.0): artifact swap, import sweep, suspend signatures.
   - **Gate 3** (instrumented, device required): spike the Room 3 migration-test API, then
-    execute rm-08 → rm-09.
+    execute rm-08 → rm-09 → the v3 schema cut (3.4, D12).
 - **D2 (approved): `AndroidSQLiteDriver`** (platform engine; zero APK bloat; minSdk 30).
   Delivered by `androidx.sqlite:sqlite-android` — latest stable **2.7.1** (Google Maven
   metadata, checked 2026-09-09; 2.8.0-alpha01 is alpha, not used).
@@ -79,7 +82,9 @@ deferred to this migration: `skillet-rm-08` (v2 data preservation) and `skillet-
 - **D8: Reuse existing beads.** rm-08/rm-09 are un-deferred and wired into the new graph —
   no duplicate tracking of the same work.
 - **D9: Schema contract.** `app/schemas/com.kronos.skilletapp.database.RecipeDatabase/2.json`
-  must remain byte-identical (`git diff --stat app/schemas` → empty at each gate).
+  must remain byte-identical at every gate up to and including the v3 cut
+  (`git diff --stat app/schemas` → no `2.json` diff at any gate; the v3 cut (3.4, D12) adds
+  `3.json` as a NEW file without modifying `2.json`).
 - **D10: Baseline-relative style gates (Option A).** `skillet-dlm` is OPEN and records
   pre-existing `:app` style failures (15 ktfmtCheck files, 9 detekt issues) that include two
   files this migration edits (`RecipeRepositoryImpl.kt`, `SkilletApp.kt`), while its fix scope
@@ -90,7 +95,68 @@ deferred to this migration: `skillet-rm-08` (v2 data preservation) and `skillet-
   snapshot, plus ktfmt/detekt green on every file the migration touched. Pre-existing baseline
   failures in untouched files remain owned by `skillet-dlm`, not this change (strict
   module-wide green would fail gates for pre-existing reasons; excluding style checks entirely
-  would drop format control over the very files the migration edits). No scope expansion.
+   would drop format control over the very files the migration edits). No scope expansion.
+  Baseline measured at G1-AUDIT (2026-09-24): ktfmt 29 files (26 main + 3 test), detekt
+  config-validation abort / zero findings, lint green (0 errors/29 warnings/1 hint), test
+  37/2 (network). Earlier '~15 files / ~9 detekt issues' estimates were stale.
+- **D11: Gate clauses rescoped to measured G1-AUDIT baseline (2026-09-24).** The measured
+  G1-AUDIT baseline (authoritative, recorded on `skillet-g1-audit`) is red at canonical gate
+  item 2 (`./gradlew test`: 37 tests, 2 failures — both in `RecipeScrapingTests`,
+  network-dependent live-URL scrapers) and at item 4's `:app:detekt` half (aborts at config
+  validation before any file is analyzed — `style>MaxLineLength>excludeExtensionFunctionHints`
+  is SET IN THE REPO `detekt.yml` but not recognized by `dev.detekt` 2.0.0-alpha.6, so the
+  run produces zero findings and fails on the invalid property; zero findings). Both are
+  pre-existing and migration-unrelated, so as written the two clauses could never hold
+  regardless of migration quality: item 2 is rescoped to "no NEW failures vs. the G1-AUDIT
+  baseline snapshot" (every failing test at gate time must be a member of the baseline
+  failing set), and item 4's detekt half is rescoped to "behavior UNCHANGED from the
+  G1-AUDIT snapshot" (config-validation abort, zero findings; this migration must not alter
+  detekt config or catalog; the fix — remove/rename the invalid property in `detekt.yml`,
+  or pin/upgrade detekt to a version that supports it — is owned by `skillet-dlm`, now
+  carried there as a first-step item). Rest of D10 unchanged.
+  NOTE (2026-09-24 post-close correction): a one-line removal of that property is ALREADY
+  PENDING in the working tree (uncommitted), alongside unrelated entity-index changes and a
+  regenerated `app/schemas/.../2.json` — a parallel workstream, not this migration. If
+  still present at gate time, items 4 (detekt behavior) and 6 (schema byte-identical) would
+  fail for pre-existing, migration-unrelated reasons (same class as this rescoping). For
+  Oracle/owner decision: commit or shelve the parallel workstream before gates; if the
+  detekt.yml fix lands, the detekt half of item 4 needs a re-baseline (capture the real
+   `:app:detekt` findings set). Flagged on `skillet-g1-audit`; not acted on here.
+- **D12: The rescoped v3 index cut is an explicit 2→3 version bump (2026-09-24 rescope).**
+  A parallel workstream captured a unique-index set on all 6 entities (8 indexes total; full
+  spec captured verbatim on `skillet-g3-schema`). That session's working-tree changes were
+  reverted before capture completed, so the bead carries the authoritative spec. Mechanism:
+  explicit `MIGRATION_2_3` in `database/migrations/Migrations.kt` in the Room 3 suspend form
+  (`override suspend fun migrate(db: SQLiteConnection)` + `androidx.sqlite.async.executeSQL` —
+  the same form G2-SIG leaves `MIGRATION_1_2` in; this task runs after Gate 2), registered
+  via `.addMigrations(MIGRATION_1_2, MIGRATION_2_3)` in `SkilletApp.kt`;
+  `@Database(version = 3)`; `autoMigrations` stays `[]` (consistent with the existing
+  `MIGRATION_1_2` explicit-migration pattern). Auto-migration rejected: a new style for this
+  codebase, an opaque generated class, and the 8 DDL statements are fully determined by the
+  captured spec. `2.json` stays byte-identical throughout; KSP emits `3.json` and it must be
+  KSP-stable across consecutive builds.
+  **FINDING F-1 (CRITICAL — RESOLVED 2026-09-24 by human decision: option (a), 8 NON-UNIQUE
+  indexes; finding text preserved below as permanent rationale):** the captured
+  spec is `unique = true` on the foreign-key columns of MULTI-ROW tables. The write path
+  (`data/RecipeMapper.kt` lines 34–95) proves ingredient/instruction/equipment and both join
+  tables hold multiple rows per recipe/instruction — 7 of the 8 unique columns (all except
+  `recipe.name`) are violated by ANY realistic recipe (2+ instructions or 2+ ingredients), so
+  implemented as captured the 2→3 migration would fail on first open of every device with
+  real data (migration abort → Koin `createdAtStart()` failure → blank app; the app has no
+  user-visible migration-error path today). The directive's default (hard-fail on duplicate
+  data) is therefore UNACCEPTABLE AS A DEFAULT for this spec. Original options for the record:
+  (a) 8 NON-UNIQUE indexes — keeps the FK-lookup indexing intent, zero data risk;
+  (b) keep `unique` as captured — not viable per the above; (c) a different uniqueness column
+  set (e.g. per-recipe ordering) — a separate domain decision.
+  **F-1 RESOLUTION (2026-09-24, human):** option (a) — all 8 indexes land as plain NON-UNIQUE
+  `Index(value = [...])` (no `unique = true`). Consequences: no duplicate/violation-data
+  failure mode exists — `MIGRATION_2_3` cannot fail on data; its DDL is still 8 ×
+  `CREATE INDEX IF NOT EXISTS` (non-unique form), required so the post-migration schema
+  matches `3.json`; the new instrumented test asserts all 8 indexes present and non-unique,
+  schema = `3.json`, v2 rows intact, and has NO violation-data case (none is possible).
+  Note (one line, not a requirement): `recipe.name` is NON-UNIQUE as well — name-uniqueness
+  is intentionally NOT enforced by the schema and is deferred as a separate domain decision
+  (option (c) territory).
 
 ## Verified API Reference
 
@@ -205,10 +271,10 @@ Transactions: `useWriterConnection { immediateTransaction { ... } }` →
 | R4 | Guide's callback example shows `onCreate`; our app overrides `onOpen` — `onOpen(SQLiteConnection)` overload presumed present in 2.8.4 (scout audit confirms it as target) | Compile check in G1-CALLBACK; fallback: keep `SupportSQLiteDatabase` callback through Gate 1, move it to Gate 2 (G1 grep gate scoped accordingly) |
 | R5 | `AndroidSQLiteDriver` FQN/artifact: guide only shows `androidx.sqlite.driver.bundled.BundledSQLiteDriver` import; Android driver lives in `androidx.sqlite:sqlite-android` (expected FQN `androidx.sqlite.driver.android.AndroidSQLiteDriver`) | G1-DRV: add `sqlite-android:2.7.1`, confirm FQN + alignment with Room's transitive `androidx.sqlite` core version via dependency graph; compile is the check |
 | R6 | Room 3 Gradle plugin id, `room3-ktx` existence, `room3-testing` artifact name all unverified (V1/V2/V5) | G2-VERIFY resolves all from Google Maven metadata **before** any build-file edit |
-| R7 | Room 3 KSP may regenerate `2.json` with different byte content (same schema) | `git diff --stat app/schemas` → empty at every gate; investigate any diff before proceeding |
-| R8 | `MIGRATION_1_2` is destructive by design (v1 rows dropped) | Semantics unchanged by this migration; rm-09 test pins the contract (seeded v1 row gone, schema = 2.json) |
+| R7 | Room 3 KSP may regenerate `2.json` with different byte content (same schema) | `git diff --stat app/schemas` shows no `2.json` diff at any gate; from the v3 cut (3.4, D12) the end state is `2.json` byte-identical + NEW `3.json` (KSP-stable); investigate any `2.json` diff before proceeding |
+| R8 | `MIGRATION_1_2` is destructive by design (v1 rows dropped) | Semantics unchanged by this migration; rm-09 test pins the contract (seeded v1 row gone after the full chain; final schema = `3.json`, which is `2.json` + the 8 captured indexes) |
 | R9 | Gate 3 requires a device; Gates 1–2 must stay device-free | Graph edges make Gate 3 beads depend on the Gate-2 gate bead; no Gate-1/2 task requires a device |
-| R10 | Formatting/lint drift across a 15-file sweep; pre-existing ktfmt/detekt baseline failures (`skillet-dlm`, OPEN) include two files this migration edits | Baseline-relative gates per D10: G1-AUDIT snapshots pre-migration `:app:ktfmtCheck` / `:app:detekt` / `:app:lint` / `./gradlew test` failure sets; per-gate gates = assembleDebug green; test green with no new failures vs. snapshot; `:app:lint` green with no new findings vs. snapshot; ktfmtCheck/detekt green on every file the migration touched (newly touched files ktfmt-clean; pre-existing baseline failures in untouched files may remain); rg checks → 0; `git diff --stat app/schemas` → empty. ktfmt/detekt health of the rest of the module stays owned by `skillet-dlm`, not this change |
+| R10 | Formatting/lint drift across a 15-file sweep; pre-existing ktfmt/detekt baseline failures (`skillet-dlm`, OPEN) include two files this migration edits | Baseline-relative gates per D10, with item 2 and item 4's detekt half rescoped per D11 against the measured G1-AUDIT baseline (recorded on `skillet-g1-audit`): per-gate gates = assembleDebug green; `./gradlew test` — no NEW failures vs. the snapshot (baseline: 37 tests, 2 network-dependent `RecipeScrapingTests` failures; every failing test at gate time a member of the baseline failing set); `:app:lint` green with no new findings vs. the snapshot; `:app:ktfmtCheck` green on every file the migration touched (newly touched files ktfmt-clean; the 29-file pre-existing baseline elsewhere may remain); `:app:detekt` behavior UNCHANGED from the snapshot (config-validation abort, zero findings — detekt config/catalog must not be altered by this migration; the tooling fix is owned by `skillet-dlm`); rg checks → 0; `git diff --stat app/schemas` → empty. ktfmt/detekt health of the rest of the module stays owned by `skillet-dlm`, not this change |
 | R11 | Guide examples omit `suspend` on `immediateTransaction`/`useWriterConnection` lambdas; our body calls suspend DAO fns | G1-TX compile check; if 2.8's `immediateTransaction` is non-suspend, find the suspend variant (compile will name it) |
 
 ## Migration Plan
@@ -222,7 +288,7 @@ Transactions: `useWriterConnection { immediateTransaction { ... } }` →
 | 1.3 | G1-CALLBACK: `fkPragmaCallback.onOpen` → `SQLiteConnection` | `SkilletApp.kt:53-58` | compiles (R4 fallback noted) |
 | 1.4 | G1-TX: `database.withTransaction` → `useWriterConnection { immediateTransaction { … } }` | `RecipeRepositoryImpl.kt:3,46-63` | compiles; transaction body unchanged |
 | 1.5 | G1-DRV: add `androidx.sqlite:sqlite-android:2.7.1` (aligned to Room's transitive sqlite core); builder += `setQueryCoroutineContext(Dispatchers.IO)` then `setDriver(AndroidSQLiteDriver())` LAST | `libs.versions.toml`, `app/build.gradle.kts`, `SkilletApp.kt:60-68` | compiles; R5 checked |
-| 1.6 | G1-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` green with no new failures vs. the G1-AUDIT baseline snapshot; 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` and `./gradlew :app:detekt` green on every file the migration touched (newly touched files must be ktfmt-clean; pre-existing baseline failures in untouched files may remain); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
+| 1.6 | G1-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures, both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the migration touched (newly touched files must be ktfmt-clean; the 29-file pre-existing baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
 
 Dependencies: 1.1 → {1.2, 1.3, 1.4} → 1.5 → 1.6. (1.2/1.3/1.4 may run in parallel.)
 
@@ -234,7 +300,7 @@ Dependencies: 1.1 → {1.2, 1.3, 1.4} → 1.5 → 1.6. (1.2/1.3/1.4 may run in p
 | 2.2 | G2-DEPS: catalog swap (`room3` version + `androidx.room3:*` libraries), plugin swap, `ksp(libs.androidx.room3.compiler)`, bundle swap, `androidTestImplementation` test-artifact swap; **conditional KSP bump** per 1.1/2.1 | `gradle/libs.versions.toml`, `app/build.gradle.kts` | dependency resolution succeeds; R1/R2 checked |
 | 2.3 | G2-IMPORTS: sweep 15 files `androidx.room` → `androidx.room3`; fix 5 stale KDocs (4 DAOs "not yet registered in @Database or Koin", `MeasurementConverters.kt` "orphan converter class") | 15 source files | `rg "^import androidx\.room\." app/src` → 0; compiles |
 | 2.4 | G2-SIG: `MIGRATION_1_2.migrate` → `suspend` + `androidx.sqlite.async.executeSQL`; `fkPragmaCallback.onOpen` → `suspend`; `useWriterConnection/immediateTransaction` → `withWriteTransaction`; `@TypeConverter(s)` → `@ColumnTypeConverter(s)` | `Migrations.kt`, `SkilletApp.kt`, `RecipeRepositoryImpl.kt`, `MeasurementConverters.kt`, `RecipeDatabase.kt` | compiles |
-| 2.5 | G2-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` green with no new failures vs. the G1-AUDIT baseline snapshot; 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` and `./gradlew :app:detekt` green on every file the migration touched (newly touched files must be ktfmt-clean; pre-existing baseline failures in untouched files may remain); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `rg "^import androidx\.room\." app/src` → 0 matches (no non-room3 Room imports); 7) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
+| 2.5 | G2-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures, both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the migration touched (newly touched files must be ktfmt-clean; the 29-file pre-existing baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `rg "^import androidx\.room\." app/src` → 0 matches (no non-room3 Room imports); 7) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
 | 2.6 | G2-DOCS: update `AGENTS.md` (Room 3, plugin, driver, migration-test notes) | `AGENTS.md` | docs match build files |
 
 Dependencies: 1.6 → 2.1 → 2.2 → 2.3 → 2.4 → 2.5 → 2.6 (strict chain).
@@ -245,10 +311,13 @@ Dependencies: 1.6 → 2.1 → 2.2 → 2.3 → 2.4 → 2.5 → 2.6 (strict chain)
 |---|---|---|---|
 | 3.1 | G3-SPIKE: re-derive Room 3 migration-test mechanics — test artifact (from 2.1), helper class FQN, schema-directory argument, `migrate(1)` usage, suspend-ness; minimal smoke androidTest; record mechanics in bead comment (V4: how schema JSON reaches the test — assets copy vs direct path) | `app/src/androidTest/...` (scratch) | green on device via `./gradlew :app:connectedDebugAndroidTest`; if unreachable, STOP + flag human |
 | 3.2 | G3-RM08: un-defer `skillet-rm-08`; add graph edges (spike blocks rm-08); execute: v2 data-preservation test (open v2 DB, seed rows, close, reopen, assert intact) | `app/src/androidTest/...` | `connectedDebugAndroidTest` green |
-| 3.3 | G3-RM09: un-defer `skillet-rm-09`; add graph edges (rm-08 blocks rm-09); execute: `migrate(1)` from `1.json`, seed v1 row, open DB so `MIGRATION_1_2` runs, assert schema = `2.json` + seeded row gone (destructive contract) | `app/src/androidTest/...` | `connectedDebugAndroidTest` green |
-| 3.4 | G3-GATE: full instrumented suite | — | `./gradlew :app:connectedDebugAndroidTest` fully green (includes existing `ExampleInstrumentedTest`) |
+| 3.3 | G3-RM09: un-defer `skillet-rm-09`; add graph edges (rm-08 blocks rm-09); execute: `migrate(1)` from `1.json`, seed v1 row, open DB so the registered chain runs (`MIGRATION_1_2` → `MIGRATION_2_3`; the v3 cut from 3.4 is in place before this task), assert final schema = `3.json` + seeded v1 row gone (destructive contract at the 1→2 step; rm-08's v2 data-preservation assertion stays valid — rows intact across 2→3 too) | `app/src/androidTest/...` | `connectedDebugAndroidTest` green |
+| 3.4 | G3-SCHEMA: the rescoped v3 schema cut (D12; spec verbatim on `skillet-g3-schema`): apply the 8 captured `@Index` annotations as NON-UNIQUE (per F-1 resolution, 2026-09-24) to the 6 entities + `@Database(version = 3)`; KSP: `2.json` byte-identical, `3.json` emitted with exactly the 8 captured indexes, KSP-stable; explicit `MIGRATION_2_3` (Room 3 suspend form) creating the 8 NON-UNIQUE indexes (8 × `CREATE INDEX IF NOT EXISTS`), registered via `.addMigrations(MIGRATION_1_2, MIGRATION_2_3)`; duplicate/violation-data behavior: N/A (non-unique per F-1 resolution, no data-dependent failure mode); new instrumented test (v2 seed → chain applies 2→3 → schema = `3.json`, rows intact, all 8 indexes present and NON-UNIQUE; no violation-data case — none possible) | `database/entity/*.kt` (6), `database/RecipeDatabase.kt`, `database/migrations/Migrations.kt`, `SkilletApp.kt`, `app/src/androidTest/...`, `AGENTS.md` (Room/schema notes: v3, `2.json`/`3.json`, both migrations) | `:app:assembleDebug` green; `git diff --stat` on `2.json` empty; `3.json` present + KSP-stable; `connectedDebugAndroidTest` green incl. the new v3 test; `AGENTS.md` updated |
+| 3.5 | G3-GATE: full instrumented suite | — | `./gradlew :app:connectedDebugAndroidTest` fully green (includes existing `ExampleInstrumentedTest`, rm-08, rm-09, and the v3 schema-cut test) |
 
-Dependencies: 2.6 → 3.1 → 3.2 → 3.3 → 3.4 (strict chain; 3.2/3.3 reuse existing beads).
+Dependencies: 2.6 → 3.1 → 3.2 → 3.3 → 3.4 → 3.5 (strict chain; 3.2/3.3 reuse existing beads;
+3.4 is `skillet-g3-schema`, created 2026-09-24; the F-1 uniqueness decision was resolved
+2026-09-24 — 8 NON-UNIQUE indexes, option (a) — and the bead is no longer flagged `human`).
 
 ## Open Questions (resolved in-graph, not blocking planning)
 
@@ -264,9 +333,14 @@ Dependencies: 2.6 → 3.1 → 3.2 → 3.3 → 3.4 (strict chain; 3.2/3.3 reuse e
 
 1. `app/src` contains zero `androidx.room` (non-`room3`) imports and zero `SupportSQLite` references.
 2. `gradle/libs.versions.toml` has no `room = "2.8.4"` entry used by `:app` (replaced by `room3`).
-3. `./gradlew :app:assembleDebug` green; `./gradlew test` green with no new failures vs. the
-   G1-AUDIT baseline snapshot; `./gradlew :app:lint` green with no new findings vs. the snapshot.
-4. `git diff --stat app/schemas` is empty vs. the pre-migration commit.
-5. `./gradlew :app:connectedDebugAndroidTest` green including rm-08 and rm-09 tests.
-6. `skillet-rm-08`, `skillet-rm-09`, and all new beads closed; `skillet-m5r` closed on completion.
+3. `./gradlew :app:assembleDebug` green; `./gradlew test` shows no NEW failures vs. the
+   G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures, both in `RecipeScrapingTests`,
+   network-dependent; every failing test at close time must be a member of the baseline
+   failing set); `./gradlew :app:lint` green with no new findings vs. the snapshot.
+4. `git diff --stat app/schemas` shows `2.json` unchanged vs. the pre-migration commit, plus
+   NEW `3.json` (the v3 index cut, D12).
+5. `./gradlew :app:connectedDebugAndroidTest` green including rm-08, rm-09, and the
+   v3 schema-cut test (3.4).
+6. `skillet-rm-08`, `skillet-rm-09`, `skillet-g3-schema`, and all new beads closed;
+   `skillet-m5r` closed on completion.
 7. `AGENTS.md` accurately describes the Room 3 setup.
