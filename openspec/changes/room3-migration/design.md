@@ -96,9 +96,13 @@ deferred to this migration: `skillet-rm-08` (v2 data preservation) and `skillet-
   failures in untouched files remain owned by `skillet-dlm`, not this change (strict
   module-wide green would fail gates for pre-existing reasons; excluding style checks entirely
    would drop format control over the very files the migration edits). No scope expansion.
-  Baseline measured at G1-AUDIT (2026-09-24): ktfmt 29 files (26 main + 3 test), detekt
-  config-validation abort / zero findings, lint green (0 errors/29 warnings/1 hint), test
-  37/2 (network). Earlier '~15 files / ~9 detekt issues' estimates were stale.
+   Baseline measured at G1-AUDIT (2026-09-24): ktfmt 39 files at ktfmt width 140 (re-baselined
+   2026-09-24 after the human-approved `maxWidth = 100 → 140` change; the width-100, 29-file
+   snapshot was superseded — the width-140 canonical form re-joins lines, so the set grew;
+   canonical 39-file list on the `skillet-g1-audit` comment per this decision's snapshot
+   location), detekt
+   config-validation abort / zero findings, lint green (0 errors/29 warnings/1 hint), test
+   37/2 (network). Earlier '~15 files / ~9 detekt issues' estimates were stale.
 - **D11: Gate clauses rescoped to measured G1-AUDIT baseline (2026-09-24).** The measured
   G1-AUDIT baseline (authoritative, recorded on `skillet-g1-audit`) is red at canonical gate
   item 2 (`./gradlew test`: 37 tests, 2 failures — both in `RecipeScrapingTests`,
@@ -155,8 +159,20 @@ deferred to this migration: `skillet-rm-08` (v2 data preservation) and `skillet-
   matches `3.json`; the new instrumented test asserts all 8 indexes present and non-unique,
   schema = `3.json`, v2 rows intact, and has NO violation-data case (none is possible).
   Note (one line, not a requirement): `recipe.name` is NON-UNIQUE as well — name-uniqueness
-  is intentionally NOT enforced by the schema and is deferred as a separate domain decision
-  (option (c) territory).
+   is intentionally NOT enforced by the schema and is deferred as a separate domain decision
+   (option (c) territory).
+- **D13 (approved): ktfmt baseline rebaselined to width 140 / 39 files (2026-09-24).** Mid-Gate
+   1, a human-made, human-approved working-tree change set the `app/build.gradle.kts` ktfmt
+   config `maxWidth = 100 → 140` (uncommitted; the migration ADOPTS it). The width-140
+   canonical form re-joins lines, so the ktfmt baseline grew from 29 to 39 dirty files. The
+   rebaselined snapshot — width 140, 39 files — is now authoritative; its full file list and
+   the supersession note are recorded canonically on the `skillet-g1-audit` bead comment (the
+   designated snapshot location per D10) and supersede the width-100/29-file snapshot. All
+   three migration-touched files (`Migrations.kt`, `SkilletApp.kt`, `RecipeRepositoryImpl.kt`)
+   are verified ktfmt-clean at width 140. Gate MECHANICS UNCHANGED: per-gate ktfmt rule =
+   `ktfmtCheck` green on every file the migration touched; the pre-existing baseline elsewhere
+   (39 files, width 140) may remain — only the snapshot CONTENT moved. A notice comment is on
+   `skillet-dlm`.
 
 ## Verified API Reference
 
@@ -274,7 +290,7 @@ Transactions: `useWriterConnection { immediateTransaction { ... } }` →
 | R7 | Room 3 KSP may regenerate `2.json` with different byte content (same schema) | `git diff --stat app/schemas` shows no `2.json` diff at any gate; from the v3 cut (3.4, D12) the end state is `2.json` byte-identical + NEW `3.json` (KSP-stable); investigate any `2.json` diff before proceeding |
 | R8 | `MIGRATION_1_2` is destructive by design (v1 rows dropped) | Semantics unchanged by this migration; rm-09 test pins the contract (seeded v1 row gone after the full chain; final schema = `3.json`, which is `2.json` + the 8 captured indexes) |
 | R9 | Gate 3 requires a device; Gates 1–2 must stay device-free | Graph edges make Gate 3 beads depend on the Gate-2 gate bead; no Gate-1/2 task requires a device |
-| R10 | Formatting/lint drift across a 15-file sweep; pre-existing ktfmt/detekt baseline failures (`skillet-dlm`, OPEN) include two files this migration edits | Baseline-relative gates per D10, with item 2 and item 4's detekt half rescoped per D11 against the measured G1-AUDIT baseline (recorded on `skillet-g1-audit`): per-gate gates = assembleDebug green; `./gradlew test` — no NEW failures vs. the snapshot (baseline: 37 tests, 2 network-dependent `RecipeScrapingTests` failures; every failing test at gate time a member of the baseline failing set); `:app:lint` green with no new findings vs. the snapshot; `:app:ktfmtCheck` green on every file the migration touched (newly touched files ktfmt-clean; the 29-file pre-existing baseline elsewhere may remain); `:app:detekt` behavior UNCHANGED from the snapshot (config-validation abort, zero findings — detekt config/catalog must not be altered by this migration; the tooling fix is owned by `skillet-dlm`); rg checks → 0; `git diff --stat app/schemas` → empty. ktfmt/detekt health of the rest of the module stays owned by `skillet-dlm`, not this change |
+| R10 | Formatting/lint drift across a 15-file sweep; pre-existing ktfmt/detekt baseline failures (`skillet-dlm`, OPEN) include two files this migration edits | Baseline-relative gates per D10, with item 2 and item 4's detekt half rescoped per D11 against the measured G1-AUDIT baseline (recorded on `skillet-g1-audit`): per-gate gates = assembleDebug green; `./gradlew test` — no NEW failures vs. the snapshot (baseline: 37 tests, 2 network-dependent `RecipeScrapingTests` failures; every failing test at gate time a member of the baseline failing set); `:app:lint` green with no new findings vs. the snapshot; `:app:ktfmtCheck` green on every file the migration touched (newly touched files ktfmt-clean; the 39-file (width 140) pre-existing baseline elsewhere may remain); `:app:detekt` behavior UNCHANGED from the snapshot (config-validation abort, zero findings — detekt config/catalog must not be altered by this migration; the tooling fix is owned by `skillet-dlm`); rg checks → 0; `git diff --stat app/schemas` → empty. ktfmt/detekt health of the rest of the module stays owned by `skillet-dlm`, not this change |
 | R11 | Guide examples omit `suspend` on `immediateTransaction`/`useWriterConnection` lambdas; our body calls suspend DAO fns | G1-TX compile check; if 2.8's `immediateTransaction` is non-suspend, find the suspend variant (compile will name it) |
 
 ## Migration Plan
@@ -288,7 +304,7 @@ Transactions: `useWriterConnection { immediateTransaction { ... } }` →
 | 1.3 | G1-CALLBACK: `fkPragmaCallback.onOpen` → `SQLiteConnection` | `SkilletApp.kt:53-58` | compiles (R4 fallback noted) |
 | 1.4 | G1-TX: `database.withTransaction` → `useWriterConnection { immediateTransaction { … } }` | `RecipeRepositoryImpl.kt:3,46-63` | compiles; transaction body unchanged |
 | 1.5 | G1-DRV: add `androidx.sqlite:sqlite-android:2.7.1` (aligned to Room's transitive sqlite core); builder += `setQueryCoroutineContext(Dispatchers.IO)` then `setDriver(AndroidSQLiteDriver())` LAST | `libs.versions.toml`, `app/build.gradle.kts`, `SkilletApp.kt:60-68` | compiles; R5 checked |
-| 1.6 | G1-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures, both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the migration touched (newly touched files must be ktfmt-clean; the 29-file pre-existing baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
+| 1.6 | G1-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures, both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the migration touched (newly touched files must be ktfmt-clean; the 39-file (width 140) pre-existing baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
 
 Dependencies: 1.1 → {1.2, 1.3, 1.4} → 1.5 → 1.6. (1.2/1.3/1.4 may run in parallel.)
 
@@ -300,7 +316,7 @@ Dependencies: 1.1 → {1.2, 1.3, 1.4} → 1.5 → 1.6. (1.2/1.3/1.4 may run in p
 | 2.2 | G2-DEPS: catalog swap (`room3` version + `androidx.room3:*` libraries), plugin swap, `ksp(libs.androidx.room3.compiler)`, bundle swap, `androidTestImplementation` test-artifact swap; **conditional KSP bump** per 1.1/2.1 | `gradle/libs.versions.toml`, `app/build.gradle.kts` | dependency resolution succeeds; R1/R2 checked |
 | 2.3 | G2-IMPORTS: sweep 15 files `androidx.room` → `androidx.room3`; fix 5 stale KDocs (4 DAOs "not yet registered in @Database or Koin", `MeasurementConverters.kt` "orphan converter class") | 15 source files | `rg "^import androidx\.room\." app/src` → 0; compiles |
 | 2.4 | G2-SIG: `MIGRATION_1_2.migrate` → `suspend` + `androidx.sqlite.async.executeSQL`; `fkPragmaCallback.onOpen` → `suspend`; `useWriterConnection/immediateTransaction` → `withWriteTransaction`; `@TypeConverter(s)` → `@ColumnTypeConverter(s)` | `Migrations.kt`, `SkilletApp.kt`, `RecipeRepositoryImpl.kt`, `MeasurementConverters.kt`, `RecipeDatabase.kt` | compiles |
-| 2.5 | G2-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures, both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the migration touched (newly touched files must be ktfmt-clean; the 29-file pre-existing baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `rg "^import androidx\.room\." app/src` → 0 matches (no non-room3 Room imports); 7) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
+| 2.5 | G2-GATE: full verification (baseline-relative; snapshot in the `skillet-g1-audit` comment) | — | 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test` — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures, both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the migration touched (newly touched files must be ktfmt-clean; the 39-file (width 140) pre-existing baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`); 5) `rg "SupportSQLite" app/src` → 0 matches; 6) `rg "^import androidx\.room\." app/src` → 0 matches (no non-room3 Room imports); 7) `git diff --stat app/schemas` → empty (schema 2.json byte-identical) |
 | 2.6 | G2-DOCS: update `AGENTS.md` (Room 3, plugin, driver, migration-test notes) | `AGENTS.md` | docs match build files |
 
 Dependencies: 1.6 → 2.1 → 2.2 → 2.3 → 2.4 → 2.5 → 2.6 (strict chain).

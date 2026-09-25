@@ -12,6 +12,7 @@ navigation = "2.9.8"
 koin = "4.2.2"
 koin-plugin = "1.2.1"
 room = "2.8.4"
+sqlite = "2.7.1"
 coil = "3.5.0"
 speed-dial = "2.0.0-alpha01"
 antlr = "4.13.2"
@@ -64,6 +65,7 @@ room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+sqlite-android = { group = "androidx.sqlite", name = "sqlite-framework", version.ref = "sqlite" }
 
 # Coil
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose-core", version.ref = "coil" }

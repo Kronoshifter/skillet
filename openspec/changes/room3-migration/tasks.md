@@ -18,29 +18,29 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
   `./gradlew :app:lint`, and `./gradlew test` in a bead comment — the 1.6/2.5 gates are
   baseline-relative and compare against this snapshot (design D10).
   Bead: `skillet-g1-audit` · deps: —
-- [ ] **1.2** `G1-MIGRATIONS` convert `MIGRATION_1_2` (`database/migrations/Migrations.kt`)
+- [x] **1.2** `G1-MIGRATIONS` convert `MIGRATION_1_2` (`database/migrations/Migrations.kt`)
   to `migrate(connection: SQLiteConnection)` with `import androidx.sqlite.SQLiteConnection`
   + `import androidx.sqlite.execSQL`; DDL strings byte-identical.
   Bead: `skillet-g1-migr` · deps: 1.1
-- [ ] **1.3** `G1-CALLBACK` convert `fkPragmaCallback` (`SkilletApp.kt:53-58`) to
+- [x] **1.3** `G1-CALLBACK` convert `fkPragmaCallback` (`SkilletApp.kt:53-58`) to
   `onOpen(connection: SQLiteConnection)`; keep FK-pragma comment. Fallback per design R4:
   if the 2.8.4 overload is missing, defer callback to Gate 2 and note it.
   Bead: `skillet-g1-cb` · deps: 1.1
-- [ ] **1.4** `G1-TX` convert `database.withTransaction` (`RecipeRepositoryImpl.kt:46-63`)
+- [x] **1.4** `G1-TX` convert `database.withTransaction` (`RecipeRepositoryImpl.kt:46-63`)
   to `useWriterConnection { connection -> connection.immediateTransaction { … } }`
   (`import androidx.room.useWriterConnection`, `import androidx.room.immediateTransaction`);
   transaction body unchanged.   Bead: `skillet-g1-tx` · deps: 1.1
-- [ ] **1.5** `G1-DRV` add `androidx.sqlite:sqlite-android:2.7.1` to catalog +
+- [x] **1.5** `G1-DRV` add `androidx.sqlite:sqlite-android:2.7.1` to catalog +
   `implementation` (align with Room's transitive `androidx.sqlite` core version); builder in
   `SkilletApp.kt:60-68`: `.setQueryCoroutineContext(Dispatchers.IO)` then
   `.setDriver(AndroidSQLiteDriver())` **LAST** (disables compat mode).   Bead: `skillet-g1-drv` · deps: 1.2, 1.3, 1.4
-- [ ] **1.6** `G1-GATE` full verification (baseline-relative; snapshot in the
+- [x] **1.6** `G1-GATE` full verification (baseline-relative; snapshot in the
   `skillet-g1-audit` comment): 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test`
   — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures,
   both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must
   be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new
   findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the
-  migration touched (newly touched files must be ktfmt-clean; the 29-file pre-existing
+  migration touched (newly touched files must be ktfmt-clean; the 39-file (width 140) pre-existing
   baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the
   G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not
   alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`);
@@ -73,7 +73,7 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
   both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must
   be a member of the baseline failing set); 3) `./gradlew :app:lint` green with no new
   findings vs. the snapshot; 4) `./gradlew :app:ktfmtCheck` green on every file the
-  migration touched (newly touched files must be ktfmt-clean; the 29-file pre-existing
+  migration touched (newly touched files must be ktfmt-clean; the 39-file (width 140) pre-existing
   baseline elsewhere may remain); `./gradlew :app:detekt` behavior UNCHANGED from the
   G1-AUDIT snapshot (config-validation abort, zero findings — this migration must not
   alter detekt config or catalog; the tooling fix is owned by `skillet-dlm`);

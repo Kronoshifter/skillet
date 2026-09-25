@@ -73,7 +73,7 @@ detekt {
 ktfmt {
   googleStyle()
   removeUnusedImports = true
-  maxWidth = 100
+  maxWidth = 140
   trailingCommaManagementStrategy = TrailingCommaManagementStrategy.COMPLETE
 }
 
@@ -119,6 +119,7 @@ dependencies {
 
   // Android Room
   implementation(libs.bundles.room)
+  implementation(libs.sqlite.android)
   ksp(libs.room.compiler)
 
   // Coil
