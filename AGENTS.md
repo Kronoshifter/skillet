@@ -13,7 +13,7 @@
 ## Architecture
 
 - **Multi-module**: `app/` (Android library, namespace `com.kronos.skilletapp`) depends on `:utils` and `:measurement`
-- **Stack**: Kotlin 2.4, Compose (BOM 2026.06), Koin 4 DI, Room 2.8, Navigation Compose 2.9, Coil3, ANTLR4 parser, skrape.it scraper
+- **Stack**: Kotlin 2.4, Compose (BOM 2026.06), Koin 4 DI, Room 3.0.0 (`androidx.room3`, KSP-processed), Navigation Compose 2.9, Coil3, ANTLR4 parser, skrape.it scraper
 - **Min SDK**: 30 | **Compile SDK**: 37 | **JVM**: 11
 
 ### Package layout
@@ -21,7 +21,7 @@
 | Package | Role |
 |---------|------|
 | `model/` | Data classes: `Recipe`, `Ingredient`, `Instruction`, `Equipment`, `SkilletError` |
-| `database/` | Room: `RecipeDatabase`, `RecipeDao`, `RecipeConverters` (JSON type converters) |
+| `database/` | Room: `RecipeDatabase`, `RecipeDao`, `MeasurementConverters` (JSON column-type converters), migrations in `migrations/` |
 | `data/` | `RecipeRepository` — **doubles as domain layer** (persistence + business logic) |
 | `parser/` | ANTLR-generated lexer/parser/visitor in `parser/grammar/`; `IngredientVisitor` transforms parse tree |
 | `scraping/` | `RecipeScraper` (JSON-LD via skrape.it), custom kotlinx.serialization serializers |
@@ -55,6 +55,14 @@ The project has been split into three Gradle modules:
 
 All bindings in `appModule` in `SkilletApp.kt`. Room/DAO/repository use `createdAtStart()`. ViewModels use `viewModelOf()`. Preview composables define their own inline Koin module with test data.
 
+### Room 3 (`androidx.room3`)
+
+- **Build**: Gradle plugin `androidx.room3` (catalog: `room3 = "3.0.0"`); artifacts `androidx.room3:room3-runtime` (implementation via the `room3` bundle), `room3-compiler` (ksp), `room3-testing` (androidTestImplementation). There is **no** `room3-ktx` artifact — do not add one.
+- **Driver**: Room 3 does not bundle a SQLite driver; the app supplies `AndroidSQLiteDriver()` from `androidx.sqlite:sqlite-framework` (catalog alias `sqlite-android`, v2.7.1), set LAST on the builder (`.setDriver(...)` just before `.build()` in `SkilletApp.kt`). `androidx.sqlite:sqlite-async` (2.7.1) is required for `import androidx.sqlite.async.executeSQL` used by suspend migrations/callbacks.
+- **Suspend migration/callback API**: `Migration.migrate(connection: SQLiteConnection)` and `RoomDatabase.Callback.onOpen(connection)` are both `suspend`; run SQL with `connection.executeSQL(...)` (`import androidx.sqlite.async.executeSQL`) — see `MIGRATION_1_2` in `database/migrations/Migrations.kt` and the FK-pragma callback in `SkilletApp.kt`.
+- **Write transactions**: `database.withWriteTransaction { ... }` (`import androidx.room3.withWriteTransaction`) in `RecipeRepositoryImpl` — the old Room 2 writer-transaction forms are gone.
+- **Converters**: `@ColumnTypeConverter` on converter methods (`MeasurementConverters`), `@ColumnTypeConverters(MeasurementConverters::class)` on the `@Database` class — the old Room 2 type-converter annotation names no longer exist.
+
 ### State patterns
 
 - Sealed `Async<T>`: `Idle`, `Loading`, `Success<T>`, `Failure`
@@ -65,7 +73,8 @@ All bindings in `appModule` in `SkilletApp.kt`. Room/DAO/repository use `created
 ## Testing
 
 - Unit tests: `app/src/test/` — Kotest `FunSpec` with JUnit platform
-- Instrumented tests: `app/src/androidTest/` — minimal (only basic context test)
+- Instrumented tests: `app/src/androidTest/` — minimal (only basic context test); run via `./gradlew connectedAndroidTest` (or `:app:connectedDebugAndroidTest`)
+- **Room 3 migration tests (Gate 3, not yet written)**: the helper mechanics (entry point, schema-dir arg, `migrate(1)` usage) are still being derived in bead `skillet-g3-spike`; test specs for v2 data preservation and the migration chain live in deferred beads `skillet-rm-08` / `skillet-rm-09`. When they land: instrumented tests under `app/src/androidTest/`, run via `./gradlew connectedAndroidTest`, backed by `androidx.room3:room3-testing` (androidTestImplementation).
 - Run a single test: `./gradlew :app:testDebugUnitTest --tests "com.kronos.skilletapp.MeasurementTests"`
 - Heavy test: `MeasurementTests.kt` (907 lines) covers scaling, conversions, normalization, fraction rounding
 - `RecipeScrapingTests.kt` scrapes real URLs (allrecipes.com, iowagirleats.com) — network-dependent
@@ -73,7 +82,7 @@ All bindings in `appModule` in `SkilletApp.kt`. Room/DAO/repository use `created
 ## Gotchas
 
 - **No domain/use case layer** — repository is both data access and domain. Don't look for one.
-- **Room schema** lives in `app/schemas/` (configured via `room { schemaDirectory("$projectDir/schemas") }` in `app/build.gradle.kts`); at version 2 — v1→v2 is an explicit destructive migration (`MIGRATION_1_2` in `com.kronos.skilletapp.database.migrations`, registered via `.addMigrations(...)` in `SkilletApp.kt`); `@Database` carries an empty `autoMigrations` list.
+- **Room schema** lives in `app/schemas/` (configured via `room3 { schemaDirectory("$projectDir/schemas") }` in `app/build.gradle.kts`); at version 2 — v1→v2 is an explicit destructive migration (`MIGRATION_1_2` in `com.kronos.skilletapp.database.migrations`, registered via `.addMigrations(...)` in `SkilletApp.kt`); `@Database` carries an empty `autoMigrations` list.
 - **ANTLR parser** generates Java files — don't edit them manually; regenerate from grammar.
 - **Compose previews** require `KoinPreview` (not standard `@Preview`) because ViewModels are Koin-injected.
 - **Measurement system** has cross-dimension converters (e.g., tbsp butter → grams) — these are explicit converter blocks, not automatic.

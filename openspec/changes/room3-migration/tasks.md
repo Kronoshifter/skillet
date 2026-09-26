@@ -67,7 +67,7 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
   `useWriterConnection/immediateTransaction` → `withWriteTransaction`;
   `@TypeConverter` → `@ColumnTypeConverter` (2 sites, `MeasurementConverters.kt`);
   `@TypeConverters` → `@ColumnTypeConverters` (`RecipeDatabase.kt`).   Bead: `skillet-g2-sig` · deps: 2.3
-- [ ] **2.5** `G2-GATE` full verification (baseline-relative; snapshot in the
+- [x] **2.5** `G2-GATE` full verification (baseline-relative; snapshot in the
   `skillet-g1-audit` comment): 1) `./gradlew :app:assembleDebug` green; 2) `./gradlew test`
   — no NEW failures vs. the G1-AUDIT baseline snapshot (baseline: 37 tests, 2 failures,
   both in `RecipeScrapingTests`, network-dependent; every failing test at gate time must
@@ -81,7 +81,7 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
   0 matches (no non-room3 Room imports); 7) `git diff --stat app/schemas` → empty
   (schema 2.json byte-identical).
   Bead: `skillet-g2-gate` · deps: 2.4
-- [ ] **2.6** `G2-DOCS` update `AGENTS.md`: Room 3.0.0, room3 plugin/artifacts,
+- [x] **2.6** `G2-DOCS` update `AGENTS.md`: Room 3.0.0, room3 plugin/artifacts,
   `AndroidSQLiteDriver`, suspend migration/callback API, migration-test notes.
   Bead: `skillet-g2-docs` · deps: 2.5
 
