@@ -2,11 +2,11 @@ package com.kronos.skilletapp
 
 import android.app.Application
 import android.content.Context
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room3.Room
+import androidx.room3.RoomDatabase
 import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.async.executeSQL
 import androidx.sqlite.driver.AndroidSQLiteDriver
-import androidx.sqlite.execSQL
 import coil3.ImageLoader
 import coil3.request.crossfade
 import com.kronos.skilletapp.data.RecipeMapper
@@ -55,9 +55,9 @@ class SkilletApp : Application() {
 // foreign-key enforcement on, so the pragma is set explicitly in an open callback.
 private val fkPragmaCallback =
   object : RoomDatabase.Callback() {
-    override fun onOpen(connection: SQLiteConnection) {
+    override suspend fun onOpen(connection: SQLiteConnection) {
       super.onOpen(connection)
-      connection.execSQL("PRAGMA foreign_keys = ON")
+      connection.executeSQL("PRAGMA foreign_keys = ON")
     }
   }
 

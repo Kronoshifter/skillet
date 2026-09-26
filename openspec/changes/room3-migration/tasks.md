@@ -50,19 +50,19 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
 
 ## Gate 2 — Swap to Room 3.0.0 (no device)
 
-- [ ] **2.1** `G2-VERIFY` resolve before any edit (record in bead comment): V1 Room 3 Gradle
+- [x] **2.1** `G2-VERIFY` resolve before any edit (record in bead comment): V1 Room 3 Gradle
   plugin id; V2 `room3-ktx` existence; `room3-testing` artifact name; `@Upsert` support in
   `room3-compiler`; KSP version requirement.   Bead: `skillet-g2-verify` · deps: 1.6
-- [ ] **2.2** `G2-DEPS` catalog + build swap: `room3 = "3.0.0"` + `androidx.room3:room3-runtime`
+- [x] **2.2** `G2-DEPS` catalog + build swap: `room3 = "3.0.0"` + `androidx.room3:room3-runtime`
   / `room3-compiler` (+ ktx if it exists); plugin swap; `ksp(libs.androidx.room3.compiler)`;
   bundle swap; `androidTestImplementation` test-artifact swap; conditional KSP bump per 1.1/2.1.
   Bead: `skillet-g2-deps` · deps: 2.1
-- [ ] **2.3** `G2-IMPORTS` sweep 15 files `androidx.room` → `androidx.room3` (6 entities, 4 DAOs,
+- [x] **2.3** `G2-IMPORTS` sweep 15 files `androidx.room` → `androidx.room3` (6 entities, 4 DAOs,
   `RecipeDatabase`, `Migrations`, `SkilletApp`, `MeasurementConverters`,
   `RecipeRepositoryImpl`); fix 5 stale KDocs (4 DAOs: "not yet registered in `@Database` or
   Koin…"; `MeasurementConverters.kt:17`: "orphan converter class…").
   Bead: `skillet-g2-imports` · deps: 2.2
-- [ ] **2.4** `G2-SIG` suspend + rename signatures: `migrate` → `suspend` +
+- [x] **2.4** `G2-SIG` suspend + rename signatures: `migrate` → `suspend` +
   `import androidx.sqlite.async.executeSQL` (call `executeSQL`); `onOpen` → `suspend`;
   `useWriterConnection/immediateTransaction` → `withWriteTransaction`;
   `@TypeConverter` → `@ColumnTypeConverter` (2 sites, `MeasurementConverters.kt`);

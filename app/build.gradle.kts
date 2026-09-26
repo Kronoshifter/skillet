@@ -8,7 +8,7 @@ plugins {
   alias(libs.plugins.kotlin.parcelize)
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.compose)
-  alias(libs.plugins.androidx.room)
+  alias(libs.plugins.androidx.room3)
   alias(libs.plugins.koin.compiler)
   alias(libs.plugins.detekt)
   alias(libs.plugins.ktfmt)
@@ -59,7 +59,7 @@ kotlin {
   }
 }
 
-room { schemaDirectory("$projectDir/schemas") }
+room3 { schemaDirectory("$projectDir/schemas") }
 
 detekt {
   config.setFrom("$rootDir/detekt.yml")
@@ -118,9 +118,10 @@ dependencies {
   implementation(project(":utils"))
 
   // Android Room
-  implementation(libs.bundles.room)
+  implementation(libs.bundles.room3)
   implementation(libs.sqlite.android)
-  ksp(libs.room.compiler)
+  implementation(libs.sqlite.android.async)
+  ksp(libs.androidx.room3.compiler)
 
   // Coil
   implementation(libs.bundles.coil)
@@ -130,7 +131,7 @@ dependencies {
   testImplementation(libs.bundles.kotest)
   androidTestImplementation(libs.androidx.test.ext)
   androidTestImplementation(libs.espresso.core)
-  androidTestImplementation(libs.room.testing)
+  androidTestImplementation(libs.androidx.room3.testing)
   androidTestImplementation(platform(libs.compose.bom))
   androidTestImplementation(libs.compose.ui.test)
   debugImplementation(libs.compose.ui.tooling)

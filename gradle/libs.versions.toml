@@ -11,7 +11,7 @@ compose-material-icons = "1.7.8"
 navigation = "2.9.8"
 koin = "4.2.2"
 koin-plugin = "1.2.1"
-room = "2.8.4"
+room3 = "3.0.0"
 sqlite = "2.7.1"
 coil = "3.5.0"
 speed-dial = "2.0.0-alpha01"
@@ -61,11 +61,11 @@ kotlin-result = { group = "com.michael-bull.kotlin-result", name = "kotlin-resul
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 # Room
-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room3" }
+androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room3" }
+androidx-room3-testing = { group = "androidx.room3", name = "room3-testing", version.ref = "room3" }
 sqlite-android = { group = "androidx.sqlite", name = "sqlite-framework", version.ref = "sqlite" }
+sqlite-android-async = { group = "androidx.sqlite", name = "sqlite-async", version.ref = "sqlite" }
 
 # Coil
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose-core", version.ref = "coil" }
@@ -88,7 +88,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-parcelize = { id = "kotlin-parcelize" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-androidx-room = { id = "androidx.room", version.ref = "room" }
+androidx-room3 = { id = "androidx.room3", version.ref = "room3" }
 koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
@@ -98,6 +98,6 @@ java-library = { id = "java-library" }
 [bundles]
 compose = ["compose-ui", "compose-ui-graphics", "compose-ui-tooling-preview", "compose-material3", "compose-material-icons"]
 koin = ["koin-androidx-compose", "koin-androidx-compose-navigation"]
-room = ["room-runtime", "room-ktx"]
+room3 = ["androidx-room3-runtime"]
 coil = ["coil-compose", "coil-okhttp"]
 kotest = ["kotest-runner", "kotest-assertions", "kotest-property"]

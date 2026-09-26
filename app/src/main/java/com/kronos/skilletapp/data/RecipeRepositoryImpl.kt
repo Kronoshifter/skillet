@@ -1,7 +1,6 @@
 package com.kronos.skilletapp.data
 
-import androidx.room.immediateTransaction
-import androidx.room.useWriterConnection
+import androidx.room3.withWriteTransaction
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.database.RecipeDatabase
@@ -44,25 +43,23 @@ class RecipeRepositoryImpl(
   override suspend fun upsert(recipe: Recipe) {
     val mapped = mapper.toEntities(recipe)
     val id = recipe.id
-    database.useWriterConnection { connection ->
-      connection.immediateTransaction {
-        // 1) existing join rows first (they reference the child rows that follow)
-        instructionDao.deleteInstructionIngredientsByRecipeId(id)
-        instructionDao.deleteInstructionEquipmentByRecipeId(id)
-        // 2) existing child rows
-        ingredientDao.deleteByRecipeId(id)
-        instructionDao.deleteByRecipeId(id)
-        equipmentDao.deleteByRecipeId(id)
-        // 3) recipe row
-        recipeDao.upsert(mapped.recipe)
-        // 4) child rows
-        ingredientDao.upsertAll(mapped.ingredients)
-        instructionDao.upsertInstructions(mapped.instructions)
-        equipmentDao.upsertAll(mapped.equipment)
-        // 5) join rows last (they reference the child rows just written)
-        instructionDao.upsertInstructionIngredients(mapped.instructionIngredients)
-        instructionDao.upsertInstructionEquipment(mapped.instructionEquipment)
-      }
+    database.withWriteTransaction {
+      // 1) existing join rows first (they reference the child rows that follow)
+      instructionDao.deleteInstructionIngredientsByRecipeId(id)
+      instructionDao.deleteInstructionEquipmentByRecipeId(id)
+      // 2) existing child rows
+      ingredientDao.deleteByRecipeId(id)
+      instructionDao.deleteByRecipeId(id)
+      equipmentDao.deleteByRecipeId(id)
+      // 3) recipe row
+      recipeDao.upsert(mapped.recipe)
+      // 4) child rows
+      ingredientDao.upsertAll(mapped.ingredients)
+      instructionDao.upsertInstructions(mapped.instructions)
+      equipmentDao.upsertAll(mapped.equipment)
+      // 5) join rows last (they reference the child rows just written)
+      instructionDao.upsertInstructionIngredients(mapped.instructionIngredients)
+      instructionDao.upsertInstructionEquipment(mapped.instructionEquipment)
     }
   }
 
