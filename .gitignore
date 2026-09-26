@@ -32,3 +32,4 @@ demos
 .opencode/speculation.md
 openspec/speculation.md
 .kotlin/
+.cortexkit/magic-context/
