@@ -116,12 +116,12 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
   update `AGENTS.md` Room/schema notes (v3, `2.json`/`3.json`, both migrations).
   Bead: `skillet-g3-schema` (created 2026-09-24; F-1 resolved 2026-09-24, no longer
   flagged `human`) · deps: 3.3
-- [ ] **3.5** `G3-GATE` full instrumented suite green
+- [x] **3.5** `G3-GATE` full instrumented suite green
   (`./gradlew :app:connectedDebugAndroidTest`, includes existing `ExampleInstrumentedTest`,
   rm-08, rm-09, and the v3 schema-cut test).
   Bead: `skillet-g3-gate` · deps: 3.4
 
 ## Close-out
 
-- [ ] Close all Gate 1–3 beads as they complete; update `skillet-m5r` description with the
+- [x] Close all Gate 1–3 beads as they complete; update `skillet-m5r` description with the
   change name (`room3-migration`); close `skillet-m5r` when 3.5 is green.
