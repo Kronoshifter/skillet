@@ -24,7 +24,7 @@ import com.kronos.skilletapp.database.entity.RecipeEntity
       InstructionIngredientEntity::class,
       InstructionEquipmentEntity::class,
     ],
-  version = 2,
+  version = 3,
   autoMigrations = [],
 )
 @ColumnTypeConverters(MeasurementConverters::class)

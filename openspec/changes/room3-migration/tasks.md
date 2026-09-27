@@ -87,11 +87,11 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
 
 ## Gate 3 — Instrumented migration tests (device required)
 
-- [ ] **3.1** `G3-SPIKE` re-derive Room 3 migration-test mechanics (artifact, helper FQN,
+- [x] **3.1** `G3-SPIKE` re-derive Room 3 migration-test mechanics (artifact, helper FQN,
   schema-directory argument, `migrate(1)` usage, suspend-ness, V4 schema-JSON delivery to
   test); minimal scratch smoke test; record mechanics in bead comment. If unreachable on
   device, STOP + flag human.   Bead: `skillet-g3-spike` · deps: 2.6 (+ `blocks:skillet-rm-08`)
-- [ ] **3.2** `G3-RM08` un-defer `skillet-rm-08` + wire edges (spike blocks rm-08); execute
+- [x] **3.2** `G3-RM08` un-defer `skillet-rm-08` + wire edges (spike blocks rm-08); execute
   v2 data-preservation test: open v2 `RecipeDatabase`, seed rows via DAOs, close, reopen,
   assert every row intact. Bead: `skillet-rm-08` (existing) · deps: 3.1
 - [ ] **3.3** `G3-RM09` un-defer `skillet-rm-09` + wire edges (rm-08 blocks rm-09); execute
@@ -101,7 +101,7 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
   contract at the 1→2 step; rm-08's v2 data-preservation assertion stays valid — rows intact
   across 2→3 too).
   Bead: `skillet-rm-09` (existing) · deps: 3.2
-- [ ] **3.4** `G3-SCHEMA` the rescoped v3 schema cut (design D12; full spec captured verbatim
+- [x] **3.4** `G3-SCHEMA` the rescoped v3 schema cut (design D12; full spec captured verbatim
   on the bead): apply the 8 captured `@Index` annotations as NON-UNIQUE (per F-1 resolution,
   2026-09-24) to the 6 entities in `database/entity/` +
   `@Database(version = 3)` in `database/RecipeDatabase.kt`; KSP: `2.json` byte-identical,

@@ -2,9 +2,13 @@ package com.kronos.skilletapp.database.entity
 
 import androidx.room3.ColumnInfo
 import androidx.room3.Entity
+import androidx.room3.Index
 import androidx.room3.PrimaryKey
 
-@Entity(tableName = "recipe")
+@Entity(
+  tableName = "recipe",
+  indices = [Index(value = ["name"])],
+)
 data class RecipeEntity(
   @PrimaryKey val id: String,
   val name: String,

@@ -28,3 +28,25 @@ val MIGRATION_1_2 =
       )
     }
   }
+
+val MIGRATION_2_3 =
+  object : Migration(2, 3) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+      connection.executeSQL("CREATE INDEX IF NOT EXISTS `index_recipe_name` ON `recipe` (`name`)")
+      connection.executeSQL("CREATE INDEX IF NOT EXISTS `index_ingredient_recipe_id` ON `ingredient` (`recipe_id`)")
+      connection.executeSQL("CREATE INDEX IF NOT EXISTS `index_instruction_recipe_id` ON `instruction` (`recipe_id`)")
+      connection.executeSQL("CREATE INDEX IF NOT EXISTS `index_equipment_recipe_id` ON `equipment` (`recipe_id`)")
+      connection.executeSQL(
+        "CREATE INDEX IF NOT EXISTS `index_instruction_ingredient_instruction_id` ON `instruction_ingredient` (`instruction_id`)"
+      )
+      connection.executeSQL(
+        "CREATE INDEX IF NOT EXISTS `index_instruction_ingredient_ingredient_id` ON `instruction_ingredient` (`ingredient_id`)"
+      )
+      connection.executeSQL(
+        "CREATE INDEX IF NOT EXISTS `index_instruction_equipment_instruction_id` ON `instruction_equipment` (`instruction_id`)"
+      )
+      connection.executeSQL(
+        "CREATE INDEX IF NOT EXISTS `index_instruction_equipment_equipment_id` ON `instruction_equipment` (`equipment_id`)"
+      )
+    }
+  }
