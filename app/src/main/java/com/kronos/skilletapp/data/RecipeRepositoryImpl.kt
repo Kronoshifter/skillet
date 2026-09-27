@@ -1,14 +1,14 @@
 package com.kronos.skilletapp.data
 
-import androidx.room.withTransaction
+import androidx.room3.withWriteTransaction
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.database.RecipeDatabase
 import com.kronos.skilletapp.database.dao.EquipmentDao
 import com.kronos.skilletapp.database.dao.IngredientDao
 import com.kronos.skilletapp.database.dao.InstructionDao
 import com.kronos.skilletapp.database.dao.RecipeDao
 import com.kronos.skilletapp.model.*
-import com.kronos.measurement.model.Measurement
-import com.kronos.measurement.model.MeasurementUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -43,7 +43,7 @@ class RecipeRepositoryImpl(
   override suspend fun upsert(recipe: Recipe) {
     val mapped = mapper.toEntities(recipe)
     val id = recipe.id
-    database.withTransaction {
+    database.withWriteTransaction {
       // 1) existing join rows first (they reference the child rows that follow)
       instructionDao.deleteInstructionIngredientsByRecipeId(id)
       instructionDao.deleteInstructionEquipmentByRecipeId(id)
@@ -71,9 +71,8 @@ class RecipeRepositoryImpl(
   override suspend fun updateRecipe(id: String, recipe: Recipe) = upsert(recipe.copy(id = id))
 
   /**
-   * Suspends to assemble the full relational graph for a single recipe row from the per-table DAOs.
-   * The recipe row must exist; child and join tables are always present (possibly empty) for a valid
-   * recipe, so only the recipe row is guarded.
+   * Suspends to assemble the full relational graph for a single recipe row from the per-table DAOs. The recipe row must exist; child and
+   * join tables are always present (possibly empty) for a valid recipe, so only the recipe row is guarded.
    */
   private suspend fun loadRecipe(id: String): Recipe {
     val recipe = requireNotNull(recipeDao.getById(id)) { "recipe not found: $id" }
@@ -90,9 +89,8 @@ class RecipeRepositoryImpl(
   }
 
   /**
-   * Reactive variant of [loadRecipe]: a cold [Flow] that re-emits the assembled graph whenever any
-   * table backing this recipe changes. All six sources are combined so child/join edits (not just a
-   * recipe-row write) trigger a re-assembly.
+   * Reactive variant of [loadRecipe]: a cold [Flow] that re-emits the assembled graph whenever any table backing this recipe changes. All
+   * six sources are combined so child/join edits (not just a recipe-row write) trigger a re-assembly.
    */
   private fun graphFlow(id: String): Flow<MappedRecipe> =
     combine(
@@ -103,7 +101,9 @@ class RecipeRepositoryImpl(
       combine(
         instructionDao.observeInstructionIngredients(id),
         instructionDao.observeInstructionEquipment(id),
-      ) { iis, ieq -> iis to ieq },
+      ) { iis, ieq ->
+        iis to ieq
+      },
     ) { recipe, ingredients, instructions, equipment, joins ->
       MappedRecipe(
         recipe = requireNotNull(recipe) { "recipe not found: $id" },
@@ -209,9 +209,8 @@ class RecipeRepositoryImpl(
 }
 
 /**
- * Combines a dynamic list of flows into a single flow that emits the latest value of every source,
- * preserving input order. Used by [RecipeRepositoryImpl.observeRecipes] to reassemble all recipes
- * whenever any recipe's graph changes.
+ * Combines a dynamic list of flows into a single flow that emits the latest value of every source, preserving input order. Used by
+ * [RecipeRepositoryImpl.observeRecipes] to reassemble all recipes whenever any recipe's graph changes.
  */
 private fun <T> List<Flow<T>>.combineFlows(): Flow<List<T>> {
   if (isEmpty()) return flowOf(emptyList())

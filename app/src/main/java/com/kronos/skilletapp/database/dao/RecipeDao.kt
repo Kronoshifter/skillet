@@ -1,15 +1,12 @@
 package com.kronos.skilletapp.database.dao
 
-import androidx.room.Dao
-import androidx.room.Query
-import androidx.room.Upsert
+import androidx.room3.Dao
+import androidx.room3.Query
+import androidx.room3.Upsert
 import com.kronos.skilletapp.database.entity.RecipeEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Per-table DAO for the `recipe` table. Not yet registered in `@Database` or Koin (that is a later
- * gate); it compiles as an orphan `@Dao` interface in this additive gate.
- */
+/** Per-table DAO for the `recipe` table. */
 @Dao
 interface RecipeDao {
 
