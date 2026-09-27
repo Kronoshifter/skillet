@@ -94,7 +94,7 @@ baseline snapshot — see design.md D10/R10), `./gradlew :app:connectedDebugAndr
 - [x] **3.2** `G3-RM08` un-defer `skillet-rm-08` + wire edges (spike blocks rm-08); execute
   v2 data-preservation test: open v2 `RecipeDatabase`, seed rows via DAOs, close, reopen,
   assert every row intact. Bead: `skillet-rm-08` (existing) · deps: 3.1
-- [ ] **3.3** `G3-RM09` un-defer `skillet-rm-09` + wire edges (rm-08 blocks rm-09); execute
+- [x] **3.3** `G3-RM09` un-defer `skillet-rm-09` + wire edges (rm-08 blocks rm-09); execute
   the migration-chain test: `migrate(1)` from `1.json`, seed v1 recipe row, open DB so the
   registered chain runs (`MIGRATION_1_2` → `MIGRATION_2_3`; the v3 cut from 3.4 is in place
   before this task), assert final schema matches `3.json` + seeded v1 row gone (destructive
