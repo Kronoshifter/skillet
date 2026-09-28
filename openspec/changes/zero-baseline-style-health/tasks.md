@@ -1,0 +1,75 @@
+# Tasks
+
+Scope: **Band 1 only** (mechanical fixes + baseline elimination) plus the Band 2 design
+(section 10, executed separately under `skillet-ym4`). File lists below are the
+2026-09-25 photo (design.md D8) — **every fix task is set-driven: fix exactly what the live
+measurement reports** (task 1.3's superseding record after the S1 pin; 1.1's record is the
+pre-pin baseline for that delta), using the photo only as a cross-check. Exactly one
+`detekt.yml` change in this change: **R1** (task 1.0, committed in 7.1) —
+`UnusedPrivateFunction` `ignoreAnnotated: ['Preview']` (design D9). Exactly two
+`build.gradle.kts` additions in this change: the `:utils`/`:measurement` source-set pins
+(task 1.3, committed in 8.1, design D10). The five Set-C `active: false` rules are the
+Band 2 handoff (design D7). One commit per concern, deletion last (design D3/D5).
+
+## 1. Live baseline re-measurement (prerequisite)
+
+- [ ] 1.0 (R1, step 0 — **before** any measurement) Apply the `detekt.yml` `UnusedPrivateFunction` Preview tolerance **uncommitted** (design D9): add `ignoreAnnotated: ['Preview']` to the `UnusedPrivateFunction` block (`detekt.yml:27–29`). Rationale: 10 private `@Preview` composables (7 in `ui/screen/recipe/RecipeScreen.kt`, 2 in `IngredientComponent.kt`, 1 in `AddEditRecipeScreen.kt`) would otherwise be new findings in the first true (no-baseline) run — and baselines are forbidden (human hard constraint); all 26 preview annotations are plain `@Preview`, so no multipreview annotation is needed. **Status (2026-09-28): the R1 change is already applied in the working tree (uncommitted) — verify it is present and correct, do not re-apply.** Committed in task 7.1 (commit 2). — verify: `git diff detekt.yml` is exactly the one R1 `ignoreAnnotated` line (step 0 done); the 10 preview sites are in the live finding set only if R1 is missing
+- [ ] 1.1 Temporarily replace the three wired baselines (`detekt-baseline.xml`, `utils/detekt-baseline.xml`, `measurement/detekt-baseline.xml`) with empty baselines at the same paths (design D4 XML; do not commit the swap), run `./gradlew :app:detekt :utils:detekt :measurement:detekt`, record the complete live finding set (per module, per rule, per file:signature) in a comment on bead `skillet-dlm`, then restore the original baselines — verify: the recorded set exists as a `skillet-dlm` comment, `git status` shows ONLY `detekt.yml` modified (the R1 line — expected, not clean-tree), and the recorded rules match the six mechanical rules (WildcardImport, MagicNumber, MaxLineLength, MatchingDeclarationName=0, ForbiddenComment, plus no surprises from other enabled rules; if any other rule reports, stop and report before continuing. With 1.0/R1 applied, `UnusedPrivateFunction` is expected to report 0 — the 10 private previews are excluded by `ignoreAnnotated`)
+- [ ] 1.2 Run `./gradlew :app:ktfmtCheck :utils:ktfmtCheck :measurement:ktfmtCheck`, record the live dirty-file set in the same bead comment, reconcile both sets against design.md D8 — verify: the comment states every delta vs. the photo (expected: 17 not 18 TODOs, wildcard drift in `RecipeRepositoryImpl.kt`/`Equipment.kt`/`DefaultRecipeScraper.kt`, `Converters.kt` gone), and the file lists in tasks 3.1–6.1 below are replaced by the live lists where they differ
+- [ ] 1.3 **Source-set pin (S1 fix, design D10 — human-approved Option A; executed after 2.1/commit 1 — its bead is wired between 2.1 and 3.1 so commit 1 stays format-only).** Apply `source.setFrom("src/main/kotlin")` to the two detekt blocks — `utils/build.gradle.kts` (insert between `allRules = false` and `failOnSeverity = FailOnSeverity.Error`, becoming line 31) and `measurement/build.gradle.kts` (same position, becoming line 47) — the mechanism proven in `:app` (`app/build.gradle.kts:68`); leave `:app` and both modules' `tasks.withType<Detekt> { exclude(...) }` blocks byte-identical (kept as defense-in-depth). Then re-run task 1.1's empty-baseline three-module measurement (D4 swap; restore each baseline byte-verified via `git show HEAD:<path> > <path>` — `cp` and `git checkout --` are blocked in the Smith profile) and record the **superseding** per-module/per-rule/per-file finding set as a comment on `skillet-dlm`, explicitly marked as superseding 1.1's record for all downstream fix tasks. Expected deltas — **verify against the live record, not the arithmetic**: the recorded 99-finding set drops to 97 (minus `LargeClass:MeasurementTests.kt` and `WildcardImport:MeasurementTests.kt:3`); `WildcardImport` total 46 → 45; `MagicNumber:Measurement.kt` and `ForbiddenComment:MeasurementUnit.kt` remain (main source). — verify: each of the two build files carries exactly the one added pin line; the superseding record exists as a `skillet-dlm` comment; `git status` shows `detekt.yml` (R1), `utils/build.gradle.kts`, `measurement/build.gradle.kts` modified and nothing else (all expected uncommitted: R1 → commit 2, pins → commit 3); the three baseline files match HEAD byte-for-byte
+
+## 2. ktfmt format sweep (commit 1)
+
+- [ ] 2.1 Run `:app:ktfmtFormat` over the live dirty set (photo: 34 files, all `app/src/main`; extend to `:utils`/`:measurement` only if 1.2 recorded them dirty — design D8/K4) — verify: `./gradlew ktfmtCheck` green in all three modules, `git diff --stat` shows only format churn, then commit exactly those files: `style: ktfmt format sweep (dlm band 1, skillet-dlm)`
+
+## 3. Mechanical detekt fixes — imports (R2, part of commit 2)
+
+- [ ] 3.1 Expand every `WildcardImport` from the live set into the specific imports actually used (photo: ~19 files incl. `AddEditRecipeScreen` ×7, `ComposeUtils`, `Picker`, `RecipeScreen`, `SkilletApp`, `ModifierUtils` + `NumberUtils.kt` in `:utils`; live set has grown — trust the 1.3 superseding record, D8 principle) — verify: `grep -rn "import .*\.\*$" app/src/main utils/src/main measurement/src/main` returns nothing, `:app:detekt :utils:detekt :measurement:detekt` (baselines still in place) reports zero WildcardImport findings (orphans print as warnings only), and `./gradlew test` is still green
+
+## 4. Mechanical detekt fixes — MagicNumber (R3, part of commit 2)
+
+- [ ] 4.1 Name every live `MagicNumber` as a `private const val` with a descriptive name (`ignoreConstantDeclaration`/`ignorePropertyDeclaration` are `true` in `detekt.yml`, so a named constant is the clean fix; keep constants module-local — do not create cross-module constants for a formatting fix; photo: `AddEditRecipeScreen` 0.95f, `ModifierUtils` 0.5f, `RecipeRepository` 10, `RecipeScreen` 0.5f/3f, `TimeSelectBottomSheet` 60, `Fraction` ×6, `NumberUtils` ×2, `Measurement` 4 — photo counts are cross-checks; the 1.3 superseding record is authoritative, D8 principle) — verify: re-run the 1.1 empty-baseline measurement for MagicNumber only and confirm 0 findings, `ktfmtCheck` still green, `./gradlew test` green (changes stay uncommitted — commit 2 is made once, in task 7.1)
+
+## 5. Mechanical detekt fixes — MaxLineLength (R4, part of commit 2)
+
+- [ ] 5.1 Split every live `MaxLineLength` string literal from the 1.3 superseding record (photo: 6 — `ui/ComposeUtils.kt` ×3, `data/RecipeRepository.kt` ×3 — fake/preview data strings; cross-check only) into concatenated segments under 140 chars, preserving exact values — verify: no line over 140 chars in any `src/main` (e.g. `awk 'length > 140'` across the three source roots), 0 MaxLineLength in the 1.1-style measurement, `./gradlew test` green (value preservation)
+
+## 6. TODO migration to bd (part of commit 2, human option (b))
+
+- [ ] 6.1 For every live `ForbiddenComment` finding from the 1.3 superseding record (expect 17: 16 in `:app` src/main, 1 in `:measurement` `MeasurementUnit.kt` — main source, unaffected by the S1 pin; photo said 18 — one is stale, design D2; the live count is authoritative): run `bd todo add "<imperative title derived from the TODO text>"`, then `bd update <id> --description "file: <path> (line <N> in pre-migration source); original comment: '<exact text>'; migrated during skillet-dlm / zero-baseline-style-health (detekt ForbiddenComment)"`, then `bd link <id> skillet-dlm --type discovered-from` — verify: the number of created task issues equals the live finding count and every one carries file location + exact text
+- [ ] 6.2 Delete the migrated comments from source (remove the line; for end-of-line comments remove only the comment) — verify: `grep -rn "TODO:" app/src/main utils/src/main measurement/src/main` returns nothing, 0 ForbiddenComment in the 1.1-style measurement, ktfmtCheck still green (re-run `:app:ktfmtFormat` if the removal shifted lines); changes stay uncommitted — commit 2 is made once, in task 7.1
+
+## 7. Final format + check sweep + commit 2 (pre-deletion proof)
+
+- [ ] 7.1 Run `ktfmtFormat` in all three modules (catches anything 3.1–6.2 re-broke), then the full sweep with baselines still in place: `./gradlew ktfmtCheck :app:detekt :utils:detekt :measurement:detekt test` — verify all green (proves the exact content the deletion commit will see is clean before suppression is removed), **then make commit 2** — the single mechanical commit covering task 1.0 (R1), tasks 3.1–6.2 (R2–R4) plus this final format: `style: mechanical detekt fixes (R1 Preview tolerance, imports, constants, strings, TODO migration) (dlm band 1, skillet-dlm)` — verify: `git diff --stat HEAD` after commit shows ONLY the two uncommitted build-file pin lines (task 1.3 — expected, committed in 8.1) and the commit contains only the one `detekt.yml` line (R1) + mechanical fixes + format churn, no baseline files, no build files
+
+## 8. Baseline elimination (R5, commit 3, last)
+
+- [ ] 8.1 Delete `detekt-baseline.xml`, `utils/detekt-baseline.xml`, `measurement/detekt-baseline.xml` and remove the `baseline = file(...)` line from `app/build.gradle.kts`, `utils/build.gradle.kts`, `measurement/build.gradle.kts` (task 1.3's source-set pins are already applied uncommitted in the working tree — commit them here, alongside the unwiring; `:app`'s build file receives no pin, design D10) — verify: `git status` shows exactly 3 deletions + 3 modified build files, of which the `utils`/`measurement` files carry exactly the one added pin line each
+- [ ] 8.2 Run the no-baseline green sweep: `./gradlew ktfmtCheck :app:detekt :utils:detekt :measurement:detekt test` — verify: all green with **zero suppression left anywhere** (this is the human's end-state gate; any failure means a finding was missed — fix it mechanically, never re-baseline; note test sources are out of scan scope **by design** — explicit source-set pin, not a baseline, D10 — so `MeasurementTests.kt` being unflagged is the expected state, not a suppression), then commit: `chore: delete detekt baselines and wiring; pin :utils/:measurement detekt source sets (dlm band 1, skillet-dlm)`
+- [ ] 8.3 Confirm no orphan/warning-only state matters: `git status` clean, working tree matches commit 3, and the three build files contain no `baseline` references — verify: `grep -rn "baseline" app/build.gradle.kts utils/build.gradle.kts measurement/build.gradle.kts` returns nothing
+
+## 9. Closeout (Architect/Archivist — Smith reports, does not close beads)
+
+- [ ] 9.1 Report to the pipeline: the three commit hashes, final live-vs-photo deltas, per-rule final counts (all 0), `./gradlew test` result — verify: report delivered as the bead comment on `skillet-dlm`
+- [ ] 9.2 Handoff to Oracle for the validation gate: task completion list, `bd ready` output (expect: the Band 2 bead only unblocks after `skillet-dlm` closes, which requires all tasks 1.0–8.3 closed) — verify: Oracle receives the summary and the Band 2 bead (`skillet-ym4`, `discovered-from: skillet-dlm`, blocking `skillet-7ph`) is visible in the graph
+
+## 10. Band 2 = Set C design (all five rules) — bead `skillet-ym4` (design D7)
+
+Not part of the `skillet-dlm` chain: executed as a separate stream after `skillet-dlm`
+closes. `skillet-ym4` (already created; re-scoped to Set C on 2026-09-28) is the carrier;
+its description carries the B2 task list below.
+
+- [ ] B2.1 **Live measurement (first, always).** Scratch-enable all five Set-C rules in the working tree (no baselines exist — dlm deleted them), run `:app:detekt :utils:detekt :measurement:detekt`, record the full per-rule finding set in a `skillet-ym4` comment (reconcile against the 2026-09-17 baseline photo; **LongParameterList has never run — its count is unknown until this step**), restore the config. All later B2 tasks are set-driven from this measurement.
+- [ ] B2.2 **`AddEditRecipeScreen.kt` dead-parameter removal** (the 7 `UnusedParameter` findings inside the 32-parameter `AddEditRecipeContent` signature — design D7 stale-photo correction #1). Mechanical, no behavior change; if `skillet-35e` has landed first, re-measure and drop resolved items.
+- [ ] B2.3 **Remaining `:app` files** (one fix pass per file, re-measured before fixing): `RecipeScreen.kt` (LM ×4 + file TTF), `AddEditRecipeViewModel` (TTF), `CookingScreen` (LM + UP index), `RecipeListScreen` (LM), `IngredientComponent` (LM ×2), `ComposeUtils:KoinPreview` (LM — edge case 4: a signature-changing split updates `KoinPreview`'s Koin module + call sites in the same commit), `RecipeRepository`/`initFakeRecipes` (LM), `UnitSelectionBottomSheet` (LM).
+- [ ] B2.4 **`SkilletNavGraph.kt` (LM)** — the fix must not change route or deep-link behavior (deep-link tests + `./gradlew test`).
+- [ ] B2.5 **`Theme.kt` dynamicColor** — **wire it up, don't delete**: uncomment the `Build.VERSION_CODES.S` branch (min SDK 30 < S (31), so the guard stays).
+- [ ] B2.6 **`AddEditRecipeScreen.kt` structural fixes — last among `:app`** (LongMethod ×6, CyclomaticComplexMethod ×2, file TTF, LPL on the 32-parameter signature — a real extraction, not threshold tuning; re-measure against `skillet-35e`'s final state first).
+- [ ] B2.7 **`:utils`/`:measurement` — last overall** (`Fraction` TTF + CCM `unicodeFractionString`; `Measurement` TTF) — coordinate with the in-flight measurement workstream (`skillet-y5y`) before touching public API.
+- [ ] B2.8 **Final enablement (the only `detekt.yml` commit).** All five rules `active: true` with per-rule config (TTF `ignoreAnnotatedFunctions: ['Preview']`; LPL threshold + `ignoreDefaultParameters` finalized against B2.1's live set and B2.6's outcome); same commit: full green sweep (`ktfmtCheck` + detekt ×3 + `./gradlew test`). Close `skillet-ym4`.
+
+Commit hygiene (applies to B2.2–B2.7, not a task): each fix commit lands while the
+committed config still has the rules off, verified green via the scratch-enable trick
+(design D4 pattern applied to the rules); no red commits; B2.8 is the only commit that
+changes `detekt.yml`.
