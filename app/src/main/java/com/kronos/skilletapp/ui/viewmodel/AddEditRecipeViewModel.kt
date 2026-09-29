@@ -72,9 +72,7 @@ class AddEditRecipeViewModel(
         }
         _recipeState.update { it.copy(isSaveInProgress = true) }
       }
-      .onErr { error ->
-        _recipeState.update { it.copy(userMessage = error.message) }
-      }
+      .onErr { error -> _recipeState.update { it.copy(userMessage = error.message) } }
   }
 
   fun updateName(name: String) {
@@ -127,9 +125,7 @@ class AddEditRecipeViewModel(
       state.copy(
         ingredients = state.ingredients.upsert(ingredient) { it.id },
         instructions =
-          state.instructions.map { instruction ->
-            instruction.copy(ingredients = instruction.ingredients.update(ingredient) { it.id })
-          },
+          state.instructions.map { instruction -> instruction.copy(ingredients = instruction.ingredients.update(ingredient) { it.id }) },
       )
     }
     _recipeState.checkForChanges(originalRecipeState)
@@ -139,10 +135,7 @@ class AddEditRecipeViewModel(
     _recipeState.update {
       it.copy(
         ingredients = it.ingredients - ingredient,
-        instructions =
-          it.instructions.map { instruction ->
-            instruction.copy(ingredients = instruction.ingredients - ingredient)
-          },
+        instructions = it.instructions.map { instruction -> instruction.copy(ingredients = instruction.ingredients - ingredient) },
       )
     }
     _recipeState.checkForChanges(originalRecipeState)
@@ -154,9 +147,7 @@ class AddEditRecipeViewModel(
   }
 
   fun updateInstruction(instruction: Instruction) {
-    _recipeState.update { state ->
-      state.copy(instructions = state.instructions.upsert(instruction) { it.id })
-    }
+    _recipeState.update { state -> state.copy(instructions = state.instructions.upsert(instruction) { it.id }) }
     _recipeState.checkForChanges(originalRecipeState)
   }
 
@@ -171,9 +162,7 @@ class AddEditRecipeViewModel(
   }
 
   fun updateEquipment(equipment: Equipment) {
-    _recipeState.update { state ->
-      state.copy(equipment = state.equipment.upsert(equipment) { it.id })
-    }
+    _recipeState.update { state -> state.copy(equipment = state.equipment.upsert(equipment) { it.id }) }
     _recipeState.checkForChanges(originalRecipeState)
   }
 
@@ -294,8 +283,7 @@ class AddEditRecipeViewModel(
                 cookTime = scraped.cookTimeMinutes ?: 0,
                 source = scraped.sourceUrl,
                 sourceName = scraped.sourceName.orEmpty(),
-                ingredients =
-                  scraped.ingredients.map { ingredientParser.parseIngredient(text = it) },
+                ingredients = scraped.ingredients.map { ingredientParser.parseIngredient(text = it) },
                 instructions = scraped.instructions.map { Instruction(text = it) },
                 tharBeChanges = true,
               )
@@ -305,10 +293,7 @@ class AddEditRecipeViewModel(
         .onErr { error ->
           Log.e("Recipe Scraping", "Failed to scrape recipe: ${error.message}")
           _recipeState.update {
-            it.copy(
-              userMessage =
-                "Recipe could not be imported, verify the link and try again, or enter the recipe manually"
-            )
+            it.copy(userMessage = "Recipe could not be imported, verify the link and try again, or enter the recipe manually")
           }
         }
 

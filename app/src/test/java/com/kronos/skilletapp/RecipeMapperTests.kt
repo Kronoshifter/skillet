@@ -24,8 +24,7 @@ class RecipeMapperTests :
 
       // `flour` is shared: referenced at the recipe level AND inside an instruction.
       val mixDry = Instruction("Mix dry ingredients", ingredients = listOf(flour), id = "I0")
-      val addWet =
-        Instruction("Add wet ingredients", ingredients = listOf(sugar), equipment = listOf(bowl), id = "I1")
+      val addWet = Instruction("Add wet ingredients", ingredients = listOf(sugar), equipment = listOf(bowl), id = "I1")
 
       val recipe =
         Recipe(

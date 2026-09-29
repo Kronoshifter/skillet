@@ -33,23 +33,15 @@ class RecipeListViewModel(
 ) : ViewModel() {
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
-  private val args =
-    handle.toRoute<Route.RecipeList>(
-      typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true))
-    )
+  private val args = handle.toRoute<Route.RecipeList>(typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)))
 
   @OptIn(SavedStateHandleSaveableApi::class)
   var sharedRecipe by
     handle.saveable(stateSaver = saverOf<SharedRecipe?>()) {
-      mutableStateOf<SharedRecipe?>(
-        args.sharedRecipe?.let {
-          it.copy(url = URLDecoder.decode(it.url, StandardCharsets.UTF_8.toString()))
-        }
-      )
+      mutableStateOf<SharedRecipe?>(args.sharedRecipe?.let { it.copy(url = URLDecoder.decode(it.url, StandardCharsets.UTF_8.toString())) })
     }
 
-  @OptIn(SavedStateHandleSaveableApi::class)
-  var showSharedUrl by handle.saveable { mutableStateOf(true) }
+  @OptIn(SavedStateHandleSaveableApi::class) var showSharedUrl by handle.saveable { mutableStateOf(true) }
 
   val recipeListAsync: StateFlow<Async<List<RecipeSummary>>> =
     recipeRepository

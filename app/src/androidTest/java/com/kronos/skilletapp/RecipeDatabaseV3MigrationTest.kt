@@ -152,20 +152,18 @@ class RecipeDatabaseV3MigrationTest {
     assertEquals(
       1,
       this.queryInt(
-        "SELECT COUNT(*) FROM recipe WHERE id = 'recipe-1' AND name = 'V3 Migration Test Recipe' AND source_url = 'https://example.com/v3-migration-test'",
+        "SELECT COUNT(*) FROM recipe WHERE id = 'recipe-1' AND name = 'V3 Migration Test Recipe' AND source_url = 'https://example.com/v3-migration-test'"
       ),
     )
     assertEquals(
       1,
       this.queryInt(
-        "SELECT COUNT(*) FROM ingredient WHERE id = 'ing-2' AND name = 'butter' AND raw = '1/2 cup butter' AND comment = 'salted'",
+        "SELECT COUNT(*) FROM ingredient WHERE id = 'ing-2' AND name = 'butter' AND raw = '1/2 cup butter' AND comment = 'salted'"
       ),
     )
     assertEquals(
       1,
-      this.queryInt(
-        "SELECT COUNT(*) FROM instruction WHERE id = 'ins-2' AND text = 'Fold in the butter and bake for 30 minutes.'",
-      ),
+      this.queryInt("SELECT COUNT(*) FROM instruction WHERE id = 'ins-2' AND text = 'Fold in the butter and bake for 30 minutes.'"),
     )
     assertEquals(
       1,
@@ -173,15 +171,11 @@ class RecipeDatabaseV3MigrationTest {
     )
     assertEquals(
       1,
-      this.queryInt(
-        "SELECT COUNT(*) FROM instruction_ingredient WHERE instruction_id = 'ins-1' AND ingredient_id = 'ing-3'",
-      ),
+      this.queryInt("SELECT COUNT(*) FROM instruction_ingredient WHERE instruction_id = 'ins-1' AND ingredient_id = 'ing-3'"),
     )
     assertEquals(
       1,
-      this.queryInt(
-        "SELECT COUNT(*) FROM instruction_equipment WHERE instruction_id = 'ins-2' AND equipment_id = 'eq-2'",
-      ),
+      this.queryInt("SELECT COUNT(*) FROM instruction_equipment WHERE instruction_id = 'ins-2' AND equipment_id = 'eq-2'"),
     )
   }
 
@@ -195,7 +189,7 @@ class RecipeDatabaseV3MigrationTest {
         "index $name on $table must exist exactly once and be non-unique",
         1,
         this.queryInt(
-          "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = '$name' AND tbl_name = '$table' AND sql NOT LIKE '%UNIQUE%'",
+          "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = '$name' AND tbl_name = '$table' AND sql NOT LIKE '%UNIQUE%'"
         ),
       )
     }

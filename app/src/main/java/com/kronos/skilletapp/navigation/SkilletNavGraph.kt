@@ -35,8 +35,7 @@ fun SkilletNavGraph(
   modifier: Modifier = Modifier,
   navController: NavHostController = rememberNavController(),
   startDestination: Route = Route.RecipeList(),
-  navActions: SkilletNavigationActions =
-    remember(navController) { SkilletNavigationActions(navController) },
+  navActions: SkilletNavigationActions = remember(navController) { SkilletNavigationActions(navController) },
 ) {
   LaunchedEffect(intentFlow) {
     intentFlow.collectLatest { intent ->

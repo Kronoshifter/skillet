@@ -24,9 +24,7 @@ fun TimeSelectBottomSheet(
     onDismissRequest = onDismissRequest,
     modifier = Modifier.fillMaxWidth().padding(8.dp),
     title = title,
-    action = {
-      TextButton(onClick = { onTimeSelect(hours * 60 + minutes) }) { Text(text = "Save") }
-    },
+    action = { TextButton(onClick = { onTimeSelect(hours * 60 + minutes) }) { Text(text = "Save") } },
   ) {
     Row(modifier = Modifier.fillMaxWidth()) {
       val hoursOptions = (0..23).toList()

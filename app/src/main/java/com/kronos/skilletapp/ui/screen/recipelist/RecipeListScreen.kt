@@ -76,9 +76,7 @@ fun RecipeListScreen(
           //            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
           //          }
 
-          IconButton(onClick = { /*TODO*/ }) {
-            Icon(Icons.Default.MoreVert, contentDescription = "More Options")
-          }
+          IconButton(onClick = { /*TODO*/ }) { Icon(Icons.Default.MoreVert, contentDescription = "More Options") }
         },
       )
     },
@@ -91,12 +89,8 @@ fun RecipeListScreen(
           overlayVisible = !it
           speedDialState = speedDialState.toggle()
         },
-        fabClosedContent = {
-          Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options")
-        },
-        fabOpenedContent = {
-          Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options")
-        },
+        fabClosedContent = { Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options") },
+        fabOpenedContent = { Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options") },
       ) {
         item {
           Button(
@@ -168,15 +162,11 @@ fun RecipeListScreen(
         )
       }
 
-      LaunchedEffect(vm.sharedRecipe) {
-        showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl
-      }
+      LaunchedEffect(vm.sharedRecipe) { showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl }
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
-      var url by remember {
-        mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "")
-      }
+      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "") }
 
       if (showImportRecipeBottomSheet) {
         var isValidUrl = isValidUrl(url)
@@ -211,8 +201,7 @@ fun RecipeListScreen(
             onValueChange = { url = it },
             label = { Text(text = "URL") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions =
-              KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
             keyboardActions =
               KeyboardActions(
                 onDone = {
@@ -248,9 +237,7 @@ private fun RecipeListContent(
   gridPadding: PaddingValues = PaddingValues(8.dp),
 ) {
   if (recipes.isEmpty()) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-      Text(text = "No Recipes", color = MaterialTheme.colorScheme.secondary)
-    }
+    Box(modifier = modifier, contentAlignment = Alignment.Center) { Text(text = "No Recipes", color = MaterialTheme.colorScheme.secondary) }
     return
   }
 
@@ -299,8 +286,7 @@ fun RecipeCard(
           painter = painter,
           contentDescription = recipe.name,
           contentScale = ContentScale.Crop,
-          modifier =
-            Modifier.fillMaxWidth().defaultMinSize(minHeight = 1.dp).align(Alignment.Center),
+          modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 1.dp).align(Alignment.Center),
         )
       }
         ?: Canvas(modifier = Modifier.height(192.dp).fillMaxWidth()) {

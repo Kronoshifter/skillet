@@ -4,13 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.data.Async
 import com.kronos.skilletapp.data.RecipeRepository
 import com.kronos.skilletapp.domain.scaling.ScaleRecipe
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Recipe
 import com.kronos.skilletapp.model.RecipeCouldNotBeLoadedError
-import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.navigation.Route
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

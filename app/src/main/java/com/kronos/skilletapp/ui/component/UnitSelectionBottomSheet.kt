@@ -14,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kronos.skilletapp.model.Ingredient
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
+import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.utils.modifier.applyIf
 
 @Composable

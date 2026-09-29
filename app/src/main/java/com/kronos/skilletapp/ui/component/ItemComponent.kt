@@ -60,10 +60,11 @@ fun ItemRow(
           val shape = MaterialTheme.shapes.medium
           Box(
             modifier =
-              Modifier.sizeIn(minWidth = boxSize, minHeight = boxSize)
-                .clip(shape)
-                .background(detailBackgroundColor, shape)
-                .applyIf(decoration) { border(2.dp, detailContentColor, shape) },
+              Modifier.sizeIn(minWidth = boxSize, minHeight = boxSize).clip(shape).background(detailBackgroundColor, shape).applyIf(
+                decoration
+              ) {
+                border(2.dp, detailContentColor, shape)
+              },
             contentAlignment = Alignment.Center,
             content = detail,
           )
@@ -131,9 +132,7 @@ fun ItemPillPreview() {
             modifier = Modifier.padding(8.dp),
           )
         },
-        trailingIcon = {
-          IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) }
-        },
+        trailingIcon = { IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) } },
       ) {
         Text(text = "Pasta")
       }

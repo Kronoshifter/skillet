@@ -53,12 +53,12 @@ import coil3.compose.AsyncImage
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
-import com.kronos.measurement.model.Measurement
-import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.DeferredContent
@@ -286,9 +286,7 @@ fun AddEditRecipeContent(
 
       LaunchedEffect(tab) { pagerState.animateScrollToPage(tab.ordinal) }
 
-      LaunchedEffect(pagerState.targetPage) {
-        tab = AddEditRecipeContentTab.entries[pagerState.targetPage]
-      }
+      LaunchedEffect(pagerState.targetPage) { tab = AddEditRecipeContentTab.entries[pagerState.targetPage] }
 
       HorizontalPager(
         state = pagerState,
@@ -458,8 +456,7 @@ private fun RecipeInfoContent(
             label = { Text("Name") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            keyboardActions =
-              KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
+            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
             modifier = Modifier.fillMaxWidth(),
           )
 
@@ -519,17 +516,14 @@ private fun RecipeInfoContent(
               verticalAlignment = Alignment.CenterVertically,
               horizontalArrangement = Arrangement.End,
             ) {
-              IconButton(
-                onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
-              ) {
+              IconButton(onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }) {
                 Icon(
                   imageVector = Icons.Filled.ImageSearch,
                   contentDescription = "Choose new image from gallery",
                   tint = MaterialTheme.colorScheme.primary,
                   modifier =
                     Modifier.sharedElement(
-                      sharedContentState =
-                        rememberSharedContentState(key = "image-controls-gallery"),
+                      sharedContentState = rememberSharedContentState(key = "image-controls-gallery"),
                       animatedVisibilityScope = this@AnimatedVisibility,
                     ),
                 )
@@ -542,8 +536,7 @@ private fun RecipeInfoContent(
                   tint = MaterialTheme.colorScheme.primary,
                   modifier =
                     Modifier.sharedElement(
-                      sharedContentState =
-                        rememberSharedContentState(key = "image-controls-camera"),
+                      sharedContentState = rememberSharedContentState(key = "image-controls-camera"),
                       animatedVisibilityScope = this@AnimatedVisibility,
                     ),
                 )
@@ -590,8 +583,7 @@ private fun RecipeInfoContent(
                     contentDescription = "Choose from gallery",
                     modifier =
                       Modifier.sharedElement(
-                        sharedContentState =
-                          rememberSharedContentState(key = "image-controls-gallery"),
+                        sharedContentState = rememberSharedContentState(key = "image-controls-gallery"),
                         animatedVisibilityScope = this@AnimatedContent,
                       ),
                   )
@@ -615,8 +607,7 @@ private fun RecipeInfoContent(
                     contentDescription = "Take a photo",
                     modifier =
                       Modifier.sharedElement(
-                        sharedContentState =
-                          rememberSharedContentState(key = "image-controls-camera"),
+                        sharedContentState = rememberSharedContentState(key = "image-controls-camera"),
                         animatedVisibilityScope = this@AnimatedContent,
                       ),
                   )
@@ -674,10 +665,7 @@ private fun RecipeInfoContent(
         }
       ) {
         Text(
-          text =
-            servings.let { n ->
-              if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings"
-            },
+          text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings" },
           style = MaterialTheme.typography.titleMedium,
         )
       }
@@ -887,10 +875,7 @@ private fun IngredientsContent(
 
   val scope = rememberCoroutineScope()
   val lazyListState = rememberLazyListState()
-  val reorderableLazyListState =
-    rememberReorderableLazyListState(lazyListState) { from, to ->
-      onMoveIngredient(from.index, to.index)
-    }
+  val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to -> onMoveIngredient(from.index, to.index) }
 
   var reordering by remember { mutableStateOf(false) }
 
@@ -920,8 +905,7 @@ private fun IngredientsContent(
           key = ingredient.id,
         ) { isDragging ->
           var editing by remember { mutableStateOf(false) }
-          val elevation by
-            animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+          val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
 
           Surface(
             shadowElevation = elevation,
@@ -948,12 +932,8 @@ private fun IngredientsContent(
                         onClick = {},
                         modifier =
                           Modifier.draggableHandle(
-                            onDragStarted = {
-                              view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
-                            },
-                            onDragStopped = {
-                              view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
-                            },
+                            onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                            onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) },
                           ),
                       ) {
                         Icon(
@@ -1019,9 +999,7 @@ private fun IngredientsContent(
             placeholder = { Text(text = "Add an ingredient") },
             trailingIcon = {
               if (ingredientInput.isNotBlank()) {
-                IconButton(onClick = { ingredientInput = "" }) {
-                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
-                }
+                IconButton(onClick = { ingredientInput = "" }) { Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear") }
               }
             },
             singleLine = true,
@@ -1162,8 +1140,7 @@ fun InstructionsContent(
           state = reorderableLazyListState,
           key = instruction.id,
         ) { isDragging ->
-          val elevation by
-            animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+          val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
           var expanded by remember { mutableStateOf(true) }
 
           Surface(shadowElevation = elevation) {
@@ -1199,9 +1176,7 @@ fun InstructionsContent(
             placeholder = { Text(text = "Add an instruction") },
             trailingIcon = {
               if (instructionInput.isNotBlank()) {
-                IconButton(onClick = { instructionInput = "" }) {
-                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
-                }
+                IconButton(onClick = { instructionInput = "" }) { Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear") }
               }
             },
             minLines = 3,
@@ -1211,10 +1186,7 @@ fun InstructionsContent(
                 onDone = {
                   if (instructionInput.isNotBlank()) {
                     if (instructionInput.contains("\n")) {
-                      instructionInput
-                        .split("\n")
-                        .map { Instruction(it) }
-                        .forEach { onInstructionChanged(it) }
+                      instructionInput.split("\n").map { Instruction(it) }.forEach { onInstructionChanged(it) }
                     } else {
                       val instruction = Instruction(instructionInput)
                       onInstructionChanged(instruction)
@@ -1255,14 +1227,12 @@ fun InstructionComponent(
 
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier =
-      Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp).then(modifier),
+    modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp).then(modifier),
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween,
-      modifier =
-        Modifier.fillMaxWidth().clickable(enabled = !reordering) { onToggleExpanded(!expanded) },
+      modifier = Modifier.fillMaxWidth().clickable(enabled = !reordering) { onToggleExpanded(!expanded) },
     ) {
       Text(
         text = "Step $step",
@@ -1271,8 +1241,7 @@ fun InstructionComponent(
         modifier = Modifier.wrapContentWidth(Alignment.Start),
       )
 
-      AnimatedContent(targetState = reordering, label = "Swap between drag handle delete button") {
-        isReordering ->
+      AnimatedContent(targetState = reordering, label = "Swap between drag handle delete button") { isReordering ->
         if (!isReordering) {
           IconButton(
             onClick = { onRemoveInstruction(instruction) },
@@ -1289,12 +1258,8 @@ fun InstructionComponent(
               with(reorderScope) {
                 Modifier.wrapContentWidth(Alignment.End)
                   .draggableHandle(
-                    onDragStarted = {
-                      view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
-                    },
-                    onDragStopped = {
-                      view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
-                    },
+                    onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                    onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) },
                   )
               },
           ) {
@@ -1374,9 +1339,7 @@ fun InstructionComponent(
                 val visible = remember { MutableTransitionState(true) }
 
                 if (!visible.targetState && !visible.currentState && visible.isIdle) {
-                  onInstructionChanged(
-                    instruction.copy(ingredients = instruction.ingredients - ingredient)
-                  )
+                  onInstructionChanged(instruction.copy(ingredients = instruction.ingredients - ingredient))
                 }
 
                 AnimatedVisibility(
@@ -1398,10 +1361,7 @@ fun InstructionComponent(
                   ) {
                     Text(
                       text = ingredient.name,
-                      modifier =
-                        Modifier.applyIf(ingredient.measurement.quantity <= 0) {
-                          padding(start = 8.dp)
-                        },
+                      modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
                     )
                   }
                 }
@@ -1506,8 +1466,7 @@ fun InstructionComponent(
           ) {
             Text(
               text = ingredient.name,
-              modifier =
-                Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
+              modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
             )
           }
         }
@@ -1533,12 +1492,7 @@ private fun IngredientQuantity(ingredient: Ingredient) {
   var minWidth by remember { mutableStateOf(Dp.Unspecified) }
   val density = LocalDensity.current
 
-  Box(
-    modifier =
-      Modifier.onPlaced { minWidth = with(density) { it.size.height.toDp() } }
-        .widthIn(min = minWidth)
-        .fillMaxHeight()
-  ) {
+  Box(modifier = Modifier.onPlaced { minWidth = with(density) { it.size.height.toDp() } }.widthIn(min = minWidth).fillMaxHeight()) {
     Text(
       text = quantity,
       color = MaterialTheme.colorScheme.onPrimary,
@@ -1661,8 +1615,7 @@ fun IngredientsTabPreview() {
 @Preview
 @Composable
 fun IngredientEditPreview() {
-  val ingredients =
-    mutableListOf(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
+  val ingredients = mutableListOf(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
   ingredients.add(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
 
   Surface {

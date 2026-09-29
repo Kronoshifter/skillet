@@ -17,12 +17,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
-import com.kronos.measurement.model.MeasurementUnit
-import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.AsyncContent
+import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
@@ -71,22 +71,20 @@ fun CookingScreen(
         TopAppBar(
           title = { Text(text = recipe.name) },
           navigationIcon = {
-            IconButton(onClick = onBack) {
-              Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
+            IconButton(onClick = onBack) { Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
           },
         )
       }
     ) { paddingValues ->
-        CookingContent(
-          recipe = recipe,
-          scaledIngredients = uiState.scaledIngredients,
-          originalIngredients = recipe.ingredients,
-          selectedUnits = uiState.selectedUnits,
-          onUnitSelect = vm::selectUnit,
-          onBack = onBack,
-          modifier = Modifier.fillMaxSize().padding(paddingValues),
-        )
+      CookingContent(
+        recipe = recipe,
+        scaledIngredients = uiState.scaledIngredients,
+        originalIngredients = recipe.ingredients,
+        selectedUnits = uiState.selectedUnits,
+        onUnitSelect = vm::selectUnit,
+        onBack = onBack,
+        modifier = Modifier.fillMaxSize().padding(paddingValues),
+      )
     }
   }
 }
@@ -137,9 +135,7 @@ fun CookingContent(
 
       LaunchedEffect(tab) { pagerState.animateScrollToPage(tab.index(recipe)) }
 
-      LaunchedEffect(pagerState.targetPage) {
-        tab = CookingContentTab.fromIndex(index = pagerState.targetPage, recipe = recipe)
-      }
+      LaunchedEffect(pagerState.targetPage) { tab = CookingContentTab.fromIndex(index = pagerState.targetPage, recipe = recipe) }
 
       HorizontalPager(
         state = pagerState,

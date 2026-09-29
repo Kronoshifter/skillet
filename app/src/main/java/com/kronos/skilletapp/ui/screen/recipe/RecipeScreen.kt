@@ -62,9 +62,9 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kronos.skilletapp.model.*
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
+import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.ui.AsyncContent
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
@@ -119,11 +119,9 @@ fun RecipeScreen(
   val isFabExpanded by remember {
     derivedStateOf {
       (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal &&
-        (ingredientListState.firstVisibleItemIndex == 0 ||
-          !ingredientListState.canScrollForward)) ||
+        (ingredientListState.firstVisibleItemIndex == 0 || !ingredientListState.canScrollForward)) ||
         (pagerState.currentPage == RecipeContentTab.Instructions.ordinal &&
-          (instructionsListState.firstVisibleItemIndex == 0 ||
-            !instructionsListState.canScrollForward))
+          (instructionsListState.firstVisibleItemIndex == 0 || !instructionsListState.canScrollForward))
     }
   }
 
@@ -133,17 +131,11 @@ fun RecipeScreen(
     topBar = {
       TopAppBar(
         title = { /*Intentionally left empty*/ },
-        navigationIcon = {
-          IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-          }
-        },
+        navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
         actions = {
           IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
 
-          IconButton(onClick = { /*TODO*/ }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
-          }
+          IconButton(onClick = { /*TODO*/ }) { Icon(Icons.Filled.MoreVert, contentDescription = "More Options") }
         },
         scrollBehavior = scrollBehavior,
       )
@@ -153,11 +145,7 @@ fun RecipeScreen(
         visible = { isVisible -> isVisible },
         enter = scaleIn(),
         exit = scaleOut(),
-        modifier =
-          Modifier.clip(
-            if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape
-            else FloatingActionButtonDefaults.shape
-          ),
+        modifier = Modifier.clip(if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape else FloatingActionButtonDefaults.shape),
       ) {
         ExtendedFloatingActionButton(
           text = { Text("Cook") },
@@ -172,20 +160,20 @@ fun RecipeScreen(
       async = recipeAsync,
       modifier = Modifier.fillMaxSize().padding(paddingValues),
     ) { recipe ->
-        RecipeContent(
-          recipe = recipe,
-          currentServings = uiState.currentServings,
-          selectedUnits = uiState.selectedUnits,
-          onScalingChanged = vm::setScaling,
-          onUnitSelect = vm::selectUnit,
-          scaledIngredients = uiState.scaledIngredients,
-          originalIngredients = recipe.ingredients,
-          pagerState = pagerState,
-          ingredientListState = ingredientListState,
-          instructionsListState = instructionsListState,
-          topAppBarScrollBehavior = scrollBehavior,
-          modifier = Modifier.fillMaxSize(),
-        )
+      RecipeContent(
+        recipe = recipe,
+        currentServings = uiState.currentServings,
+        selectedUnits = uiState.selectedUnits,
+        onScalingChanged = vm::setScaling,
+        onUnitSelect = vm::selectUnit,
+        scaledIngredients = uiState.scaledIngredients,
+        originalIngredients = recipe.ingredients,
+        pagerState = pagerState,
+        ingredientListState = ingredientListState,
+        instructionsListState = instructionsListState,
+        topAppBarScrollBehavior = scrollBehavior,
+        modifier = Modifier.fillMaxSize(),
+      )
     }
   }
 }
@@ -204,8 +192,7 @@ private fun RecipeContent(
   pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size },
   ingredientListState: LazyListState = rememberLazyListState(),
   instructionsListState: LazyListState = rememberLazyListState(),
-  topAppBarScrollBehavior: TopAppBarScrollBehavior =
-    TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
+  topAppBarScrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
 ) {
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
 
@@ -213,9 +200,7 @@ private fun RecipeContent(
 
   Column(modifier = modifier) {
     // TODO: add notes
-    val expanded by remember {
-      derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f }
-    }
+    val expanded by remember { derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f } }
 
     RecipeContentHeader(
       expanded = expanded,
@@ -276,10 +261,8 @@ private fun RecipeContent(
               selectedUnits = selectedUnits,
               onUnitSelect = onUnitSelect,
               listState = ingredientListState,
-              listPadding =
-                PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
-              modifier =
-                Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+              listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
+              modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
             )
 
           RecipeContentTab.Instructions ->
@@ -290,8 +273,7 @@ private fun RecipeContent(
               onUnitSelect = onUnitSelect,
               listState = instructionsListState,
               listPadding = PaddingValues(top = 8.dp, bottom = FabPadding),
-              modifier =
-                Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+              modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
             )
         }
       }
@@ -349,10 +331,8 @@ private fun RecipeContentHeader(
       },
   ) {
     image?.let { imageUri ->
-      val slideSpec =
-        spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
-      val scaleSpec =
-        spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
+      val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
+      val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
 
       transition.AnimatedVisibility(
         visible = { isExpanded -> isExpanded },
@@ -370,9 +350,7 @@ private fun RecipeContentHeader(
           modifier =
             Modifier.fillMaxWidth()
               .aspectRatio(2f, matchHeightConstraintsFirst = true)
-              .clip(
-                MaterialTheme.shapes.large
-              ), // .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
+              .clip(MaterialTheme.shapes.large), // .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
         )
       }
     }
@@ -390,12 +368,8 @@ private fun RecipeContentHeader(
           Text(
             text =
               buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                  append("Prep: ")
-                }
-                withStyle(
-                  SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                ) {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Prep: ") }
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
                   append("${time.preparation} min")
                 }
               }
@@ -404,12 +378,8 @@ private fun RecipeContentHeader(
           Text(
             text =
               buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                  append("Cook: ")
-                }
-                withStyle(
-                  SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                ) {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Cook: ") }
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
                   append("${time.cooking} min")
                 }
               }
@@ -422,9 +392,7 @@ private fun RecipeContentHeader(
             text = source.name,
             color = MaterialTheme.colorScheme.primary,
           )
-          if (
-            source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)
-          ) {
+          if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
             Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
           }
         }
@@ -508,8 +476,7 @@ private fun ScalingControls(
           onClick = { onScalingChanged(targetServings) },
           shape =
             when (option) {
-              scaleOptions.first() ->
-                RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
+              scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
               scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
               else -> RectangleShape
             },
@@ -685,9 +652,7 @@ private fun RecipeContentPreview() {
           recipe = recipe,
           currentServings = currentServings,
           selectedUnits = selectedUnits,
-          onScalingChanged = { newServings ->
-            currentServings = newServings
-          },
+          onScalingChanged = { newServings -> currentServings = newServings },
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
           //          topAppBarScrollBehavior = scrollBehavior
         )

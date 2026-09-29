@@ -10,21 +10,11 @@ class IngredientParser {
 
   fun parseIngredient(text: String): Ingredient =
     IngredientVisitor()
-      .visitIngredient(
-        IngredientGrammarParser(
-            CommonTokenStream(IngredientGrammarLexer(CharStreams.fromString("$text\n")))
-          )
-          .ingredient()
-      )
+      .visitIngredient(IngredientGrammarParser(CommonTokenStream(IngredientGrammarLexer(CharStreams.fromString("$text\n")))).ingredient())
 
   fun parseIngredients(text: String): List<Ingredient> =
     IngredientVisitor()
-      .visitIngredients(
-        IngredientGrammarParser(
-            CommonTokenStream(IngredientGrammarLexer(CharStreams.fromString("$text\n")))
-          )
-          .recipe()
-      )
+      .visitIngredients(IngredientGrammarParser(CommonTokenStream(IngredientGrammarLexer(CharStreams.fromString("$text\n")))).recipe())
 }
 
 // TODO: investigate using Chaquopy to use ingredient-parser-nlp

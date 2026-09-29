@@ -98,7 +98,5 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   }
 }
 
-val LocalNavigationActions =
-  compositionLocalOf<SkilletNavigationActions> { error("No SkilletNavigationActions provided") }
-val LocalNavController =
-  compositionLocalOf<NavHostController> { error("No NavController provided") }
+val LocalNavigationActions = compositionLocalOf<SkilletNavigationActions> { error("No SkilletNavigationActions provided") }
+val LocalNavController = compositionLocalOf<NavHostController> { error("No NavController provided") }

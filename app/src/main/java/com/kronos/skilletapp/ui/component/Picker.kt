@@ -29,9 +29,7 @@ fun <T> InfiniteScrollingPicker(
   modifier: Modifier = Modifier,
   visibleItemCount: Int = 3,
   itemHeight: Dp = 40.dp,
-  divider: @Composable (offset: Dp) -> Unit = {
-    HorizontalDivider(modifier = Modifier.offset(y = it))
-  },
+  divider: @Composable (offset: Dp) -> Unit = { HorizontalDivider(modifier = Modifier.offset(y = it)) },
   optionContent: @Composable BoxScope.(T) -> Unit = { Text(text = it.toString()) },
 ) {
   require(visibleItemCount % 2 == 1) { "visibleItemCount must be an odd number" }

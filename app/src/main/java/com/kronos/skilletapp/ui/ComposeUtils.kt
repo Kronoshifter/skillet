@@ -27,11 +27,11 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.Companion.DefaultTransform
 import coil3.compose.AsyncImagePainter.State
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.data.Async
 import com.kronos.skilletapp.model.*
 import com.kronos.skilletapp.model.SkilletError
-import com.kronos.measurement.model.Measurement
-import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.DefaultRecipeScraper
 import com.kronos.utils.fromJson
@@ -296,6 +296,5 @@ val FabSpacing = 16.dp
 val FabHeight = 56.dp
 val FabPadding = FabSpacing + FabHeight + FabSpacing
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
+@OptIn(ExperimentalSharedTransitionApi::class) val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
 val LocalNavAnimatedVisibilityScope = compositionLocalOf<AnimatedVisibilityScope?> { null }

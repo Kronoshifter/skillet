@@ -7,25 +7,26 @@ import com.kronos.skilletapp.model.RecipeScrapeError
 import com.kronos.skilletapp.scraping.RecipeScraper
 import kotlin.time.Duration
 
-class ScrapeRecipe(
-  private val scraper: RecipeScraper,
-) {
+class ScrapeRecipe(private val scraper: RecipeScraper) {
   suspend operator fun invoke(url: String): Result<ScrapedRecipe, RecipeScrapeError> {
-    return scraper.scrapeRecipe(url).map { scrape ->
-      ScrapedRecipe(
-        name = scrape.recipe.name,
-        description = scrape.recipe.description,
-        servings = extractServings(scrape.recipe.recipeYield),
-        prepTimeMinutes = scrape.recipe.prepTime.parseMinutes(),
-        cookTimeMinutes = scrape.recipe.cookTime.parseMinutes(),
-        sourceUrl = url,
-        sourceName = scrape.website?.name ?: extractSourceName(url),
-        ingredients = scrape.recipe.ingredients,
-        instructions = scrape.recipe.instructions.map { it.text },
-      )
-    }.onErr {
-      // Error is already in the Result type; logging handled at UI layer
-    }
+    return scraper
+      .scrapeRecipe(url)
+      .map { scrape ->
+        ScrapedRecipe(
+          name = scrape.recipe.name,
+          description = scrape.recipe.description,
+          servings = extractServings(scrape.recipe.recipeYield),
+          prepTimeMinutes = scrape.recipe.prepTime.parseMinutes(),
+          cookTimeMinutes = scrape.recipe.cookTime.parseMinutes(),
+          sourceUrl = url,
+          sourceName = scrape.website?.name ?: extractSourceName(url),
+          ingredients = scrape.recipe.ingredients,
+          instructions = scrape.recipe.instructions.map { it.text },
+        )
+      }
+      .onErr {
+        // Error is already in the Result type; logging handled at UI layer
+      }
   }
 
   private fun extractServings(recipeYield: List<String>): Int? {

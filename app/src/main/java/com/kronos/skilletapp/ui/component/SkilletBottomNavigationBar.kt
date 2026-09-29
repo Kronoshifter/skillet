@@ -38,9 +38,7 @@ enum class BottomNavigationBarVisibility {
   fun isHidden() = this == Hidden
 }
 
-class SkilletBottomNavigationBarState(
-  initialVisibility: BottomNavigationBarVisibility = BottomNavigationBarVisibility.Visible
-) {
+class SkilletBottomNavigationBarState(initialVisibility: BottomNavigationBarVisibility = BottomNavigationBarVisibility.Visible) {
   var visibility by mutableStateOf(initialVisibility)
     private set
 
@@ -80,13 +78,9 @@ fun rememberBottomNavigationBarState(
 }
 
 val LocalSkilletBottomNavigationBarVisibility =
-  compositionLocalOf<BottomNavigationBarVisibility> {
-    error("No BottomNavigationBarVisibility provided")
-  }
+  compositionLocalOf<BottomNavigationBarVisibility> { error("No BottomNavigationBarVisibility provided") }
 val LocalSkilletBottomNavigationBarState =
-  compositionLocalOf<SkilletBottomNavigationBarState> {
-    error("No BottomNavigationBarState provided")
-  }
+  compositionLocalOf<SkilletBottomNavigationBarState> { error("No BottomNavigationBarState provided") }
 
 @Composable
 fun SkilletBottomNavigationBar(
@@ -97,19 +91,14 @@ fun SkilletBottomNavigationBar(
 ) {
   if (state.isVisible) {
     NavigationBar {
-      var selectedScreen by remember {
-        mutableStateOf<SkilletBottomNavigationBarItems<*>>(
-          SkilletBottomNavigationBarItems.RecipeList
-        )
-      }
+      var selectedScreen by remember { mutableStateOf<SkilletBottomNavigationBarItems<*>>(SkilletBottomNavigationBarItems.RecipeList) }
 
       val navBackStackEntry by navController.currentBackStackEntryAsState()
       val currentDestination = navBackStackEntry?.destination
 
       screens.forEach { screen ->
         //        val isSelected = screen == selectedScreen
-        val isSelected =
-          currentDestination?.hierarchy?.any { it.hasRoute(screen.route::class) } == true
+        val isSelected = currentDestination?.hierarchy?.any { it.hasRoute(screen.route::class) } == true
         NavigationBarItem(
           icon = { screen.SelectableIcon(isSelected) },
           label = { Text(text = screen.label) },

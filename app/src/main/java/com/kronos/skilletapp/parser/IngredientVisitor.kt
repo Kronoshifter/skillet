@@ -1,16 +1,15 @@
 package com.kronos.skilletapp.parser
 
-import com.kronos.skilletapp.model.Ingredient
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
+import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.parser.grammar.IngredientGrammarBaseVisitor
 import com.kronos.skilletapp.parser.grammar.IngredientGrammarParser
-import com.kronos.utils.Fraction
 import com.kronos.skilletapp.utils.removePunctuation
+import com.kronos.utils.Fraction
 
 class IngredientVisitor : IngredientGrammarBaseVisitor<Ingredient>() {
-  fun visitIngredients(ctx: IngredientGrammarParser.RecipeContext) =
-    ctx.ingredient().map { visitIngredient(it) }
+  fun visitIngredients(ctx: IngredientGrammarParser.RecipeContext) = ctx.ingredient().map { visitIngredient(it) }
 
   override fun visitIngredient(ctx: IngredientGrammarParser.IngredientContext): Ingredient {
     val name = ctx.name()?.text ?: ""
