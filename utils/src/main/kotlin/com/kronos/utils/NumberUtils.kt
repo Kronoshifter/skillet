@@ -3,20 +3,20 @@ package com.kronos.utils
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
-import kotlin.math.*
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
-// fun Double.roundToEighth(): BigDecimal {
-//  val result = toBigDecimal().setScale(3, RoundingMode.CEILING) * BigDecimal(8)
-//  val rounded = result.setScale(0, RoundingMode.HALF_UP)
-//  return rounded.setScale(3, RoundingMode.CEILING) / BigDecimal(8).setScale(3,
-// RoundingMode.CEILING)
-// }
+private const val EIGHTH_SCALE = 8.0
+private const val THIRD_SCALE = 3.0
+private const val CLOSE_TO_ZERO_TOLERANCE = 0.001f
 
-fun Double.roundToEighth() = (this * 8.0).roundToInt() / 8.0
+fun Double.roundToEighth() = (this * EIGHTH_SCALE).roundToInt() / EIGHTH_SCALE
 
-fun Double.roundToThird() = (this * 3.0).roundToInt() / 3.0
+fun Double.roundToThird() = (this * THIRD_SCALE).roundToInt() / THIRD_SCALE
 
 fun Float.roundToNth(n: Number) = (this * n.toFloat()).roundToInt() / n.toFloat()
+
+fun Float.isCloseEnoughToZero() = this.absoluteValue < CLOSE_TO_ZERO_TOLERANCE
 
 val Float.nearestEighth
   get() = roundToNth(8)

@@ -27,6 +27,7 @@ style:
   UnusedPrivateFunction:
     active: true
     allowedNames: ''
+    ignoreAnnotated: ['Preview']
   UnusedPrivateProperty:
     active: true
     allowedNames: 'ignored|expected|serialVersionUID'

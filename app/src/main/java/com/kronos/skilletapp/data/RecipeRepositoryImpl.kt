@@ -8,7 +8,13 @@ import com.kronos.skilletapp.database.dao.EquipmentDao
 import com.kronos.skilletapp.database.dao.IngredientDao
 import com.kronos.skilletapp.database.dao.InstructionDao
 import com.kronos.skilletapp.database.dao.RecipeDao
-import com.kronos.skilletapp.model.*
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.model.RecipeSource
+import com.kronos.skilletapp.model.RecipeSummary
+import com.kronos.skilletapp.model.RecipeTime
+import com.kronos.skilletapp.model.toSummary
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -204,7 +210,8 @@ class RecipeRepositoryImpl(
 
     upsert(recipe)
 
-    repeat(10) { upsert(recipe.copy(id = "recipe-$it", name = "Recipe $it")) }
+    val sampleRecipeCount = 10
+    repeat(sampleRecipeCount) { upsert(recipe.copy(id = "recipe-$it", name = "Recipe $it")) }
   }
 }
 

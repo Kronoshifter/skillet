@@ -94,6 +94,9 @@ data class Fraction(val numerator: Int, val denominator: Int) {
   val nearest: Fraction
     get() = roundToNearestOf(3, 8)
 
+  // MagicNumber suppressed: the branch discriminators are fraction-component → Unicode-glyph
+  // mapping data, not tunable constants.
+  @Suppress("MagicNumber")
   private fun unicodeFractionString(numerator: Int, denominator: Int) =
     when (denominator) {
       2 -> if (numerator == 1) "\u00BD" else simpleFractionString(numerator, denominator)

@@ -28,6 +28,7 @@ detekt {
   config.setFrom("$rootDir/detekt.yml")
   buildUponDefaultConfig = true
   allRules = false
+  source.setFrom("src/main/kotlin")
   failOnSeverity = FailOnSeverity.Error
   baseline = file("$rootDir/utils/detekt-baseline.xml")
 }

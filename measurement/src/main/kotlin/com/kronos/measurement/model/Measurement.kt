@@ -5,6 +5,7 @@ import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.toResultOr
 import com.kronos.utils.fraction
 import com.kronos.utils.haveSameTypes
+import com.kronos.utils.isCloseEnoughToZero
 import com.kronos.utils.nearestEighth
 import kotlinx.serialization.Serializable
 
@@ -50,15 +51,17 @@ data class Measurement(
   operator fun compareTo(other: Measurement): Int {
     val result = this - other
     return when {
-      result.quantity in -0.001..0.001 -> 0
+      result.quantity.isCloseEnoughToZero() -> 0
       result.quantity < 0 -> -1
       else -> 1
     }
   }
 
   override fun toString(): String {
+    val maxMetricLength = 4
     return when (unit) {
-      is MeasurementSystem.Metric -> "${quantity.toString().take(4).removeSuffix(".")} ${unit.name}"
+      is MeasurementSystem.Metric ->
+        "${quantity.toString().take(maxMetricLength).removeSuffix(".")} ${unit.name}"
       else -> "${quantity.fraction.roundToNearestFraction().reduce()} ${unit.name}"
     }
   }
@@ -146,7 +149,7 @@ infix fun Measurement.isEquivalentTo(other: Measurement): Boolean =
     unit is MeasurementUnit.Custom &&
       other.unit is MeasurementUnit.Custom &&
       unit.name != other.unit.name -> false
-    unit == other.unit -> (quantity - other.quantity) in -0.001f..0.001f
-    unit hasSameDimensionAs other.unit -> (this - other).quantity in -0.001f..0.001f
+    unit == other.unit -> (quantity - other.quantity).isCloseEnoughToZero()
+    unit hasSameDimensionAs other.unit -> (this - other).quantity.isCloseEnoughToZero()
     else -> false
   }

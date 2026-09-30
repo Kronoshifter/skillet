@@ -37,7 +37,9 @@ import org.koin.core.module.dsl.withOptions
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.dsl.onClose
-import org.koin.plugin.module.dsl.*
+import org.koin.plugin.module.dsl.create
+import org.koin.plugin.module.dsl.modules
+import org.koin.plugin.module.dsl.single
 
 class SkilletApp : Application() {
 
