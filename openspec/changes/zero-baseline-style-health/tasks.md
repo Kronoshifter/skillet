@@ -32,7 +32,7 @@ Band 2 handoff (design D7). One commit per concern, deletion last (design D3/D5)
 
 ## 5. Mechanical detekt fixes — MaxLineLength (R4, part of commit 2)
 
-- [ ] 5.1 Split every live `MaxLineLength` string literal from the 1.3 superseding record (photo: 6 — `ui/ComposeUtils.kt` ×3, `data/RecipeRepository.kt` ×3 — fake/preview data strings; cross-check only) into concatenated segments under 140 chars, preserving exact values — verify: no line over 140 chars in any `src/main` (e.g. `awk 'length > 140'` across the three source roots), 0 MaxLineLength in the 1.1-style measurement, `./gradlew test` green (value preservation)
+- [x] 5.1 Split every live `MaxLineLength` string literal from the 1.3 superseding record (photo: 6 — `ui/ComposeUtils.kt` ×3, `data/RecipeRepository.kt` ×3 — fake/preview data strings; cross-check only) into concatenated segments under 140 chars, preserving exact values — verify: no line over 140 chars in any `src/main` (e.g. `awk 'length > 140'` across the three source roots), 0 MaxLineLength in the 1.1-style measurement, `./gradlew test` green (value preservation)
 
 ## 6. TODO migration to bd (part of commit 2, human option (b))
 
