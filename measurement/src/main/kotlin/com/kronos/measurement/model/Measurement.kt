@@ -23,9 +23,7 @@ data class Measurement(
   operator fun plus(other: Number) = copy(quantity = quantity + other.toFloat())
 
   operator fun plus(other: Measurement): Measurement {
-    require(unit hasSameDimensionAs other.unit) {
-      "Units must measure the same dimension to properly add"
-    }
+    require(unit hasSameDimensionAs other.unit) { "Units must measure the same dimension to properly add" }
     return when (unit) {
       other.unit -> copy(quantity = quantity + other.quantity)
       else -> copy(quantity = quantity + other.convertTo(unit).quantity)
@@ -35,9 +33,7 @@ data class Measurement(
   operator fun minus(other: Number) = copy(quantity = quantity - other.toFloat())
 
   operator fun minus(other: Measurement): Measurement {
-    require(unit hasSameDimensionAs other.unit) {
-      "Units must measure the same dimension to properly subtract"
-    }
+    require(unit hasSameDimensionAs other.unit) { "Units must measure the same dimension to properly subtract" }
     return when (unit) {
       other.unit -> copy(quantity = quantity - other.quantity)
       else -> copy(quantity = quantity - other.convertTo(unit).quantity)
@@ -60,8 +56,7 @@ data class Measurement(
   override fun toString(): String {
     val maxMetricLength = 4
     return when (unit) {
-      is MeasurementSystem.Metric ->
-        "${quantity.toString().take(maxMetricLength).removeSuffix(".")} ${unit.name}"
+      is MeasurementSystem.Metric -> "${quantity.toString().take(maxMetricLength).removeSuffix(".")} ${unit.name}"
       else -> "${quantity.fraction.roundToNearestFraction().reduce()} ${unit.name}"
     }
   }
@@ -71,22 +66,16 @@ data class Measurement(
   fun normalized(filter: ((MeasurementUnit) -> Boolean)? = null): Measurement {
     var normalized = copy()
 
-    while (
-      normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh
-    ) {
+    while (normalized.quantity !in normalized.unit.normalizationLow..<normalized.unit.normalizationHigh) {
       with(normalized) {
         if (quantity <= unit.normalizationLow) {
           normalized =
             normalized convertTo
-              unit.previous(filter).expect {
-                "No previous unit, normalization range for ${unit.name} configured incorrectly"
-              }
+              unit.previous(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
         } else if (quantity >= unit.normalizationHigh) {
           normalized =
             normalized convertTo
-              unit.next(filter).expect {
-                "No previous unit, normalization range for ${unit.name} configured incorrectly"
-              }
+              unit.next(filter).expect { "No previous unit, normalization range for ${unit.name} configured incorrectly" }
         }
       }
     }
@@ -108,25 +97,15 @@ data class Measurement(
   }
 }
 
-fun MeasurementUnit.next(
-  filter: ((MeasurementUnit) -> Boolean)? = null
-): Result<MeasurementUnit, Unit> {
+fun MeasurementUnit.next(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
   val filtered =
-    MeasurementUnit.values
-      .filter { it hasSameDimensionAs this }
-      .filter { it hasSameSystemAs this }
-      .filter { filter?.invoke(it) != false }
+    MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) + 1).toResultOr {}
 }
 
-fun MeasurementUnit.previous(
-  filter: ((MeasurementUnit) -> Boolean)? = null
-): Result<MeasurementUnit, Unit> {
+fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Result<MeasurementUnit, Unit> {
   val filtered =
-    MeasurementUnit.values
-      .filter { it hasSameDimensionAs this }
-      .filter { it hasSameSystemAs this }
-      .filter { filter?.invoke(it) != false }
+    MeasurementUnit.values.filter { it hasSameDimensionAs this }.filter { it hasSameSystemAs this }.filter { filter?.invoke(it) != false }
   return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr {}
 }
 
@@ -146,9 +125,7 @@ infix fun Measurement.isEquivalentTo(other: Measurement): Boolean =
   when {
     isNone() -> other.isNone()
     other.isNone() -> isNone()
-    unit is MeasurementUnit.Custom &&
-      other.unit is MeasurementUnit.Custom &&
-      unit.name != other.unit.name -> false
+    unit is MeasurementUnit.Custom && other.unit is MeasurementUnit.Custom && unit.name != other.unit.name -> false
     unit == other.unit -> (quantity - other.quantity).isCloseEnoughToZero()
     unit hasSameDimensionAs other.unit -> (this - other).quantity.isCloseEnoughToZero()
     else -> false

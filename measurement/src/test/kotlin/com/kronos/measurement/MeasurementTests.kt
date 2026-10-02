@@ -244,9 +244,7 @@ class MeasurementTests :
         context("Measurement.convertBy") {
           test("Volume to Mass") {
             val tablespoonsButter = Measurement(2f, MeasurementUnit.Tablespoon)
-            val gramsButter = tablespoonsButter.convertBy {
-              (1 of MeasurementUnit.Tablespoon) to (14 of MeasurementUnit.Gram)
-            }
+            val gramsButter = tablespoonsButter.convertBy { (1 of MeasurementUnit.Tablespoon) to (14 of MeasurementUnit.Gram) }
 
             gramsButter.unit shouldBe MeasurementUnit.Gram
             gramsButter.quantity shouldBe (28f plusOrMinus 0.001f)
@@ -254,9 +252,7 @@ class MeasurementTests :
 
           test("Mass to Volume") {
             val gramsButter = Measurement(28f, MeasurementUnit.Gram)
-            val tablespoonsButter = gramsButter.convertBy {
-              (14 of MeasurementUnit.Gram) to (1 of MeasurementUnit.Tablespoon)
-            }
+            val tablespoonsButter = gramsButter.convertBy { (14 of MeasurementUnit.Gram) to (1 of MeasurementUnit.Tablespoon) }
 
             tablespoonsButter.unit shouldBe MeasurementUnit.Tablespoon
             tablespoonsButter.quantity shouldBe (2f plusOrMinus 0.001f)
@@ -289,9 +285,7 @@ class MeasurementTests :
 
           test("None to volume") {
             val coconut = Measurement(2f, MeasurementUnit.None)
-            val quarterCupCoconut = coconut.convertBy {
-              (1 of MeasurementUnit.None) to (0.25f of MeasurementUnit.Cup)
-            }
+            val quarterCupCoconut = coconut.convertBy { (1 of MeasurementUnit.None) to (0.25f of MeasurementUnit.Cup) }
 
             quarterCupCoconut.unit shouldBe MeasurementUnit.Cup
             quarterCupCoconut.quantity shouldBe (0.5f plusOrMinus 0.001f)
@@ -375,9 +369,7 @@ class MeasurementTests :
           test("Custom to Mass") {
             val garlic = Measurement(1f, MeasurementUnit.Custom("cloves"))
             val gramsGarlic =
-              withConverter({
-                (1 of MeasurementUnit.Custom("cloves")) to (3 of MeasurementUnit.Gram)
-              }) {
+              withConverter({ (1 of MeasurementUnit.Custom("cloves")) to (3 of MeasurementUnit.Gram) }) {
                 garlic convertTo MeasurementUnit.Gram
               }
 
@@ -389,9 +381,7 @@ class MeasurementTests :
             val unit = MeasurementUnit.Custom("cloves")
             val clovesGarlic = Measurement(2f, unit)
             val teaspoonsGarlic =
-              withConverter({ (1 of unit) to (0.5 of MeasurementUnit.Teaspoon) }) {
-                clovesGarlic convertTo MeasurementUnit.Teaspoon
-              }
+              withConverter({ (1 of unit) to (0.5 of MeasurementUnit.Teaspoon) }) { clovesGarlic convertTo MeasurementUnit.Teaspoon }
 
             teaspoonsGarlic.unit shouldBe MeasurementUnit.Teaspoon
             teaspoonsGarlic.quantity shouldBe (1f plusOrMinus 0.001f)
@@ -399,10 +389,7 @@ class MeasurementTests :
 
           test("None to mass") {
             val coconut = Measurement(1f, MeasurementUnit.None)
-            val gramsCoconut =
-              withConverter({ coconut to (400 of MeasurementUnit.Gram) }) {
-                coconut convertTo MeasurementUnit.Gram
-              }
+            val gramsCoconut = withConverter({ coconut to (400 of MeasurementUnit.Gram) }) { coconut convertTo MeasurementUnit.Gram }
 
             gramsCoconut.unit shouldBe MeasurementUnit.Gram
             gramsCoconut.quantity shouldBe (400f plusOrMinus 0.001f)
@@ -411,9 +398,7 @@ class MeasurementTests :
           test("None to volume") {
             val coconut = Measurement(2f, MeasurementUnit.None)
             val quarterCupCoconut =
-              withConverter({ (1f of MeasurementUnit.None) to (0.25f of MeasurementUnit.Cup) }) {
-                coconut convertTo MeasurementUnit.Cup
-              }
+              withConverter({ (1f of MeasurementUnit.None) to (0.25f of MeasurementUnit.Cup) }) { coconut convertTo MeasurementUnit.Cup }
 
             quarterCupCoconut.unit shouldBe MeasurementUnit.Cup
             quarterCupCoconut.quantity shouldBe (0.5f plusOrMinus 0.001f)
@@ -422,13 +407,9 @@ class MeasurementTests :
       }
 
       context("Improper Conversions") {
-        test("Improper Volume to Mass") {
-          shouldThrow<IllegalArgumentException> { teaspoon convertTo MeasurementUnit.Gram }
-        }
+        test("Improper Volume to Mass") { shouldThrow<IllegalArgumentException> { teaspoon convertTo MeasurementUnit.Gram } }
 
-        test("Improper Mass to Volume") {
-          shouldThrow<IllegalArgumentException> { grams convertTo MeasurementUnit.Teaspoon }
-        }
+        test("Improper Mass to Volume") { shouldThrow<IllegalArgumentException> { grams convertTo MeasurementUnit.Teaspoon } }
       }
 
       context("Misc") {
@@ -456,10 +437,7 @@ class MeasurementTests :
         }
 
         test("Cup to Tablespoon") {
-          val normalized =
-            Measurement(1f / 16f, MeasurementUnit.Cup).normalized {
-              it !is MeasurementUnit.FluidOunce
-            }
+          val normalized = Measurement(1f / 16f, MeasurementUnit.Cup).normalized { it !is MeasurementUnit.FluidOunce }
           normalized.unit shouldBe MeasurementUnit.Tablespoon
           normalized.quantity shouldBe (1f plusOrMinus 0.001f)
         }

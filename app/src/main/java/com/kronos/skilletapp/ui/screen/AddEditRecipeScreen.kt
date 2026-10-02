@@ -952,7 +952,7 @@ private fun IngredientsContent(
   onRemoveIngredient: (Ingredient) -> Unit,
   onMoveIngredient: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
-  parser: IngredientParser = koinInject(), // TODO: move this into the viewmodel
+  parser: IngredientParser = koinInject(),
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
   val view = LocalView.current
@@ -1075,7 +1075,6 @@ private fun IngredientsContent(
         item(key = "Ingredient Input") {
           var ingredientInput by remember { mutableStateOf("") }
 
-          // TODO: find some sort of onPaste callback
           OutlinedTextField(
             value = ingredientInput,
             onValueChange = { ingredientInput = it },
@@ -1091,7 +1090,6 @@ private fun IngredientsContent(
             keyboardActions =
               KeyboardActions(
                 onDone = {
-                  // TODO: parse multiple ingredients when a list is pasted in
                   if (ingredientInput.isNotBlank()) {
                     if (ingredientInput.contains("\n")) {
                       runCatching { parser.parseIngredients(ingredientInput) }
@@ -1572,7 +1570,6 @@ private fun IngredientQuantity(ingredient: Ingredient) {
       }
     }
 
-  // TODO: this works for now, but it should use a custom layout to avoid recomposition
   var minWidth by remember { mutableStateOf(Dp.Unspecified) }
   val density = LocalDensity.current
 

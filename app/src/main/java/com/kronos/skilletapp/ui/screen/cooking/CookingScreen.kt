@@ -305,9 +305,6 @@ fun InstructionTabContent(
       )
     }
 
-    // TODO: parse instruction for timers
-    // TODO: implement recipe timer
-
     if (instruction.ingredients.isNotEmpty()) {
       item { HorizontalDivider() }
 
@@ -350,7 +347,6 @@ fun CompleteTabContent(
   onBack: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  // TODO: display cover or 'take a photo'
 
   Box(modifier = modifier) {
     Column(
@@ -366,8 +362,6 @@ fun CompleteTabContent(
 
       Button(onClick = onBack) { Text(text = "All Done!") }
     }
-
-    // TODO: possibly allow for adding notes here
   }
 }
 

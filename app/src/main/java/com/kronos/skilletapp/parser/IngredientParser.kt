@@ -17,8 +17,6 @@ class IngredientParser {
       .visitIngredients(IngredientGrammarParser(CommonTokenStream(IngredientGrammarLexer(CharStreams.fromString("$text\n")))).recipe())
 }
 
-// TODO: investigate using Chaquopy to use ingredient-parser-nlp
-
 // >>> ingredient = {
 //  ... "name": parsed.name.text,
 //  ... "raw": parsed.sentence,

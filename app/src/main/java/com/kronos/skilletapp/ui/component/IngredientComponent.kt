@@ -257,7 +257,6 @@ fun IngredientPill(
             }
           }
 
-        // TODO: this works for now, but it should use a custom layout to avoid recomposition
         var minWidth by remember { mutableStateOf(Dp.Unspecified) }
         val density = LocalDensity.current
 

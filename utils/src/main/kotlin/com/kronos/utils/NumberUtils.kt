@@ -29,8 +29,7 @@ val Double.fraction
 val Float.fraction
   get() = Fraction((this * 1000).toInt(), 1000).reduce()
 
-fun Double.roundToSignificantFigures(places: Int) =
-  toBigDecimal().round(MathContext(places, RoundingMode.HALF_UP)).toDouble()
+fun Double.roundToSignificantFigures(places: Int) = toBigDecimal().round(MathContext(places, RoundingMode.HALF_UP)).toDouble()
 
 val ONE_EIGHTH = (BigDecimal(1) / BigDecimal(8)).setScale(3, RoundingMode.HALF_UP)
 

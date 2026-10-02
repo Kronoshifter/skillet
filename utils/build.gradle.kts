@@ -41,7 +41,7 @@ tasks.withType<Detekt>().configureEach {
 ktfmt {
   googleStyle()
   removeUnusedImports = true
-  maxWidth = 100
+  maxWidth = 140
   trailingCommaManagementStrategy = TrailingCommaManagementStrategy.COMPLETE
 }
 

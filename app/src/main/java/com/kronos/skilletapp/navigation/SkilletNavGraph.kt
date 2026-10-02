@@ -53,7 +53,6 @@ fun SkilletNavGraph(
         val json = sharedRecipe?.toJson()
         val uri = Route.RecipeList::class.buildUri(json)
 
-        // TODO: encapsulate in SkilletNavigationActions
         navController.navigate(
           request =
             navDeepLinkRequest(uri = uri) {

@@ -37,7 +37,7 @@ sealed interface MeasurementSystem {
 sealed interface MeasurementUnit {
   val name: String
   val abbreviation: String
-  val aliases: List<String> // TODO: potentially replace aliases here with lookup table
+  val aliases: List<String>
   val normalizationLow: Float
   val normalizationHigh: Float
   val baseUnit: MeasurementUnit
@@ -70,8 +70,7 @@ sealed interface MeasurementUnit {
 
   @Serializable
   @SerialName("custom")
-  data class Custom(override val name: String) :
-    MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
+  data class Custom(override val name: String) : MeasurementUnit, MeasurementSystem.None, MeasurementDimension.None {
     override val abbreviation: String
       get() = name
 
@@ -337,10 +336,6 @@ sealed interface MeasurementUnit {
     }
 
     fun fromName(unit: String?) =
-      unit?.let {
-        values.firstOrNull {
-          it.name == unit || it.abbreviation == unit || it.aliases.contains(unit)
-        } ?: Custom(unit)
-      } ?: None
+      unit?.let { values.firstOrNull { it.name == unit || it.abbreviation == unit || it.aliases.contains(unit) } ?: Custom(unit) } ?: None
   }
 }

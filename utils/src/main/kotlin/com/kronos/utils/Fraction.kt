@@ -31,13 +31,11 @@ data class Fraction(val numerator: Int, val denominator: Int) {
 
   operator fun minus(other: Fraction): Fraction = this + (-other)
 
-  operator fun times(other: Fraction): Fraction =
-    Fraction(numerator * other.numerator, denominator * other.denominator)
+  operator fun times(other: Fraction): Fraction = Fraction(numerator * other.numerator, denominator * other.denominator)
 
   operator fun times(other: Int): Fraction = Fraction(numerator * other, denominator)
 
-  operator fun div(other: Fraction): Fraction =
-    Fraction(numerator * other.denominator, denominator * other.numerator)
+  operator fun div(other: Fraction): Fraction = Fraction(numerator * other.denominator, denominator * other.numerator)
 
   operator fun div(other: Int): Fraction = Fraction(numerator, denominator * other)
 
@@ -66,8 +64,7 @@ data class Fraction(val numerator: Int, val denominator: Int) {
     return Fraction(numerator / gcd, denominator / gcd)
   }
 
-  fun roundToNth(n: Int): Fraction =
-    Fraction(((numerator * n).toFloat() / denominator).roundToInt(), n)
+  fun roundToNth(n: Int): Fraction = Fraction(((numerator * n).toFloat() / denominator).roundToInt(), n)
 
   val nearestEighth: Fraction
     get() = roundToNth(8)

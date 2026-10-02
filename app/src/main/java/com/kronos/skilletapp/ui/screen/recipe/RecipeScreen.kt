@@ -246,7 +246,6 @@ private fun RecipeContent(
   val scale = currentServings / recipe.servings.toFloat()
 
   Column(modifier = modifier) {
-    // TODO: add notes
     val expanded by remember { derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f } }
     val scaleOptions = listOf(0.5f, 1f, 2f)
 
@@ -434,7 +433,6 @@ private fun RecipeContentHeader(
           )
         }
 
-        // TODO: make this clickable to open source in browser, if source is a url
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
           Text(
             text = source.name,

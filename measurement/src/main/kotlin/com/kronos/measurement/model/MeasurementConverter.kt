@@ -9,8 +9,7 @@ class MeasurementConverter(val ratio: MeasurementRatio) {
 
   fun reverse(quantity: Float): Measurement = convert(quantity, ratio.invert())
 
-  private fun convert(quantity: Float, ratio: MeasurementRatio) =
-    with(ratio) { Measurement(quantity * decimal, right.unit) }
+  private fun convert(quantity: Float, ratio: MeasurementRatio) = with(ratio) { Measurement(quantity * decimal, right.unit) }
 
   val from
     get() = ratio.left.unit
@@ -63,10 +62,9 @@ class MeasurementConverter(val ratio: MeasurementRatio) {
   }
 }
 
-private fun MeasurementUnit.baseConverter(baseUnitQuantity: Number): MeasurementConverter =
-  converter {
-    (1 of this@baseConverter) to (baseUnitQuantity of baseUnit)
-  }
+private fun MeasurementUnit.baseConverter(baseUnitQuantity: Number): MeasurementConverter = converter {
+  (1 of this@baseConverter) to (baseUnitQuantity of baseUnit)
+}
 
 fun MeasurementUnit.isBaseUnit(): Boolean = this == baseUnit
 
@@ -102,9 +100,7 @@ fun Measurement.convertToBaseUnit(): Measurement {
   if (unit.isBaseUnit()) return this
 
   val converter =
-    requireNotNull(MeasurementConverter.baseConverters.find { it.from == unit }) {
-      "No base unit converter found for ${unit.name}"
-    }
+    requireNotNull(MeasurementConverter.baseConverters.find { it.from == unit }) { "No base unit converter found for ${unit.name}" }
 
   return withConverter(converter) { this@convertToBaseUnit convertTo unit.baseUnit }
 }
@@ -145,9 +141,7 @@ class RatioBuilder {
   }
 
   fun build(): MeasurementRatio {
-    check(ratio != MeasurementRatio.None) {
-      "Ratio must be initialized, did you call ratio with an empty block?"
-    }
+    check(ratio != MeasurementRatio.None) { "Ratio must be initialized, did you call ratio with an empty block?" }
     return ratio
   }
 }
@@ -161,9 +155,7 @@ sealed interface MeasurementRatio {
   fun invert(): MeasurementRatio
 
   fun checkMeasurementsAreSet() =
-    check(left.isNotNone() && right.isNotNone()) {
-      "Measurements must be initialized before getting the ratio"
-    }
+    check(left.isNotNone() && right.isNotNone()) { "Measurements must be initialized before getting the ratio" }
 
   data class Unit(
     override val left: Measurement = Measurement.None,
@@ -213,8 +205,7 @@ interface MeasurementConversionScope {
   infix fun Measurement.convertTo(to: MeasurementUnit): Measurement
 }
 
-private class MeasurementConversionScopeImpl(val converter: MeasurementConverter) :
-  MeasurementConversionScope {
+private class MeasurementConversionScopeImpl(val converter: MeasurementConverter) : MeasurementConversionScope {
   override fun Measurement.convertTo(to: MeasurementUnit): Measurement {
     require(unit hasSameDimensionAs converter.ratio.left.unit) {
       """
@@ -244,11 +235,9 @@ private class MeasurementConversionScopeImpl(val converter: MeasurementConverter
     }
   }
 
-  private infix fun Measurement.convertWith(converter: MeasurementConverter) =
-    converter.convert(quantity)
+  private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
 
-  private infix fun Measurement.reverseWith(converter: MeasurementConverter) =
-    converter.reverse(quantity)
+  private infix fun Measurement.reverseWith(converter: MeasurementConverter) = converter.reverse(quantity)
 }
 
 @DslMarker annotation class MeasurementUnitConverterDsl
