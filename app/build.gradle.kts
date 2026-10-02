@@ -67,7 +67,6 @@ detekt {
   allRules = false
   source.setFrom("src/main/kotlin", "src/main/java")
   failOnSeverity = FailOnSeverity.Error
-  baseline = file("$rootDir/detekt-baseline.xml")
 }
 
 ktfmt {

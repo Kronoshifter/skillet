@@ -46,7 +46,6 @@ detekt {
   allRules = false
   source.setFrom("src/main/kotlin")
   failOnSeverity = FailOnSeverity.Error
-  baseline = file("$rootDir/measurement/detekt-baseline.xml")
 }
 
 tasks.withType<Detekt>().configureEach {
