@@ -184,7 +184,6 @@ fun CookingContent(
 
             is CookingContentTab.Instruction ->
               InstructionTabContent(
-                index = page.instruction,
                 instruction = recipe.instructions[page.instruction],
                 scaledIngredients = scaledIngredients,
                 originalIngredients = originalIngredients,
@@ -281,7 +280,6 @@ fun OverviewTabContent(
 
 @Composable
 fun InstructionTabContent(
-  index: Int,
   instruction: Instruction,
   scaledIngredients: List<Ingredient>,
   originalIngredients: List<Ingredient>,
@@ -404,7 +402,6 @@ fun InstructionContentPreview() {
     SkilletAppTheme {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         InstructionTabContent(
-          index = 0,
           instruction = recipe.instructions.first(),
           scaledIngredients = recipe.ingredients,
           originalIngredients = recipe.ingredients,
