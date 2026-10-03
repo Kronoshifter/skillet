@@ -355,6 +355,50 @@ baseline unwiring — the only commit that touches build files. Task 8.2's green
 re-proves it with the baselines deleted: test sources are out of scan scope **by design**
 (explicit source-set pin, not a baseline), and the zero-suppression gate stands unchanged.
 
+## D11 — LongParameterList gate topology (B2.1 mechanism finding, addendum 2026-10-03)
+
+**Mechanism finding (B2.1, `skillet-ym4.1`, closed; corroborated against on-disk reports).**
+LongParameterList is the **only one of the five Set-C rules** annotated
+`@RequiresAnalysisApi` in detekt 2.0.0-alpha.6 — LongMethod, TooManyFunctions,
+CyclomaticComplexMethod and UnusedParameter are pure PSI. detekt-core
+(`RuleDescriptor.kt`) force-disables `RequiresAnalysisApi` rules under
+`AnalysisMode.light`, which is how the plain per-module `detekt` tasks run
+(no classpath). B2.1's two-pass measurement is the evidence: Pass 1 (plain
+`:app:detekt :utils:detekt :measurement:detekt`, light mode) reported **0 LPL
+findings — a non-execution artifact, not an empty finding set** (log line:
+"requires type resolution but it was run without it"); Pass 2 (type-resolution
+`:app:detektMain :utils:detektMain :measurement:detektMain`, full mode) reported
+**26 LPL findings, all `:app`** (largest: `AddEditRecipeContent`, 32 params), 0 in
+`:utils`/`:measurement`. The four PSI rules re-ran in full mode with counts
+identical to Pass 1, confirming mode-independence.
+
+**Gate split (supersedes any reading of the Band 2 gate as "plain `detekt`
+0/0/0 across all five rules"; D7's scope, fix ordering and per-rule settings are
+unchanged — this decides only the verification surface).**
+- The plain tasks (`:app:detekt :utils:detekt :measurement:detekt`) enforce the
+  **four PSI rules** (LongMethod, TooManyFunctions, CyclomaticComplexMethod,
+  UnusedParameter) under the existing zero-baseline **0/0/0 invariant**.
+- **LongParameterList is enforced ONLY on the type-resolution surface**: per-rule
+  LPL finding count = 0 in `:app:detektMain`'s full-mode reports
+  (`app/build/reports/detekt/debug.xml` **and** `release.xml` — identical content,
+  no variant-specific sources) and in `:utils:detektMain` /
+  `:measurement:detektMain` (`main.xml` each).
+- **Overall `detektMain` green is explicitly NOT a gate**: full-mode runs carry
+  pre-existing out-of-scope findings (B2.1 side observation — `:app`
+  UnusedPrivateProperty x6, NoNameShadowing x9, UnusedVariable x3, UseOrEmpty x5,
+  InjectDispatcher + 2x UnusedImport in `SkilletApp.kt`; `:utils` UnusedImport in
+  `MiscUtils.kt`; HasPlatformType/SpreadOperator/UseCheckNotNull across modules).
+  The LPL gate is per-rule against that pre-existing noise, not whole-surface green.
+
+**Effect on B2.8's enablement edit.** Flipping LongParameterList `active: true` in
+`detekt.yml` (with `ignoreDefaultParameters: true` and the B2.8-tuned
+`functionThreshold`) remains **required and correct** — it is what enables LPL on the
+type-resolution surface — even though the flip is **inert on the plain tasks** (they
+cannot see or enforce LPL at any threshold). The threshold/tolerance VALUES are still
+decided at B2.8 runtime against the B2.1 record (initial values per D7:
+`functionThreshold: 8` + `ignoreDefaultParameters: true`); this addendum moves only
+the gate surface, not the values and not the five-rule scope.
+
 ## Risks
 
 - **K1 — New findings in task 1.** The room3/entity-split merges changed files since the
