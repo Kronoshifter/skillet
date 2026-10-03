@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
@@ -175,32 +176,9 @@ fun RecipeScreen(
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
   Scaffold(
-    topBar = {
-      TopAppBar(
-        title = { /*Intentionally left empty*/ },
-        navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-        actions = {
-          IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
-
-          IconButton(onClick = { /*TODO*/ }) { Icon(Icons.Filled.MoreVert, contentDescription = "More Options") }
-        },
-        scrollBehavior = scrollBehavior,
-      )
-    },
+    topBar = { RecipeTopBar(onBack = onBack, onEdit = onEdit, scrollBehavior = scrollBehavior) },
     floatingActionButton = {
-      fabTransition.AnimatedVisibility(
-        visible = { isVisible -> isVisible },
-        enter = scaleIn(),
-        exit = scaleOut(),
-        modifier = Modifier.clip(if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape else FloatingActionButtonDefaults.shape),
-      ) {
-        ExtendedFloatingActionButton(
-          text = { Text("Cook") },
-          icon = { Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook") },
-          onClick = { onCook(uiState.currentServings) },
-          expanded = isFabExpanded,
-        )
-      }
+      RecipeCookFab(fabTransition = fabTransition, isExpanded = isFabExpanded, onClick = { onCook(uiState.currentServings) })
     },
   ) { paddingValues ->
     AsyncContent(
@@ -222,6 +200,46 @@ fun RecipeScreen(
         modifier = Modifier.fillMaxSize(),
       )
     }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecipeTopBar(
+  onBack: () -> Unit,
+  onEdit: () -> Unit,
+  scrollBehavior: TopAppBarScrollBehavior,
+) {
+  TopAppBar(
+    title = { /*Intentionally left empty*/ },
+    navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+    actions = {
+      IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
+
+      IconButton(onClick = { /*TODO*/ }) { Icon(Icons.Filled.MoreVert, contentDescription = "More Options") }
+    },
+    scrollBehavior = scrollBehavior,
+  )
+}
+
+@Composable
+private fun RecipeCookFab(
+  fabTransition: Transition<Boolean>,
+  isExpanded: Boolean,
+  onClick: () -> Unit,
+) {
+  fabTransition.AnimatedVisibility(
+    visible = { isVisible -> isVisible },
+    enter = scaleIn(),
+    exit = scaleOut(),
+    modifier = Modifier.clip(if (isExpanded) FloatingActionButtonDefaults.extendedFabShape else FloatingActionButtonDefaults.shape),
+  ) {
+    ExtendedFloatingActionButton(
+      text = { Text("Cook") },
+      icon = { Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook") },
+      onClick = onClick,
+      expanded = isExpanded,
+    )
   }
 }
 
@@ -291,38 +309,66 @@ private fun RecipeContent(
 
     LaunchedEffect(pagerState.targetPage) { tab = RecipeContentTab.entries[pagerState.targetPage] }
 
-    HorizontalPager(
-      state = pagerState,
-      modifier = Modifier.fillMaxWidth(),
-    ) {
-      val page = RecipeContentTab.entries[it]
-      Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-      ) {
-        when (page) {
-          RecipeContentTab.Ingredients ->
-            IngredientsList(
-              scaledIngredients = scaledIngredients,
-              originalIngredients = originalIngredients,
-              selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect,
-              listState = ingredientListState,
-              listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
-              modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
-            )
+    ContentPager(
+      pagerState = pagerState,
+      recipe = recipe,
+      scale = scale,
+      selectedUnits = selectedUnits,
+      onUnitSelect = onUnitSelect,
+      scaledIngredients = scaledIngredients,
+      originalIngredients = originalIngredients,
+      ingredientListState = ingredientListState,
+      instructionsListState = instructionsListState,
+      topAppBarScrollBehavior = topAppBarScrollBehavior,
+    )
+  }
+}
 
-          RecipeContentTab.Instructions ->
-            InstructionsList(
-              instructions = recipe.instructions,
-              scale = scale,
-              selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect,
-              listState = instructionsListState,
-              listPadding = PaddingValues(top = 8.dp, bottom = FabPadding),
-              modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
-            )
-        }
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+private fun ContentPager(
+  pagerState: PagerState,
+  recipe: Recipe,
+  scale: Float,
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  scaledIngredients: List<Ingredient> = emptyList(),
+  originalIngredients: List<Ingredient> = emptyList(),
+  ingredientListState: LazyListState,
+  instructionsListState: LazyListState,
+  topAppBarScrollBehavior: TopAppBarScrollBehavior,
+) {
+  HorizontalPager(
+    state = pagerState,
+    modifier = Modifier.fillMaxWidth(),
+  ) {
+    val page = RecipeContentTab.entries[it]
+    Box(
+      modifier = Modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center,
+    ) {
+      when (page) {
+        RecipeContentTab.Ingredients ->
+          IngredientsList(
+            scaledIngredients = scaledIngredients,
+            originalIngredients = originalIngredients,
+            selectedUnits = selectedUnits,
+            onUnitSelect = onUnitSelect,
+            listState = ingredientListState,
+            listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
+            modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+          )
+
+        RecipeContentTab.Instructions ->
+          InstructionsList(
+            instructions = recipe.instructions,
+            scale = scale,
+            selectedUnits = selectedUnits,
+            onUnitSelect = onUnitSelect,
+            listState = instructionsListState,
+            listPadding = PaddingValues(top = 8.dp, bottom = FabPadding),
+            modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+          )
       }
     }
   }
@@ -377,73 +423,7 @@ private fun RecipeContentHeader(
         )
       },
   ) {
-    image?.let { imageUri ->
-      val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
-      val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
-
-      transition.AnimatedVisibility(
-        visible = { isExpanded -> isExpanded },
-        enter =
-          slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) +
-            expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
-        exit =
-          slideOutVertically(animationSpec = slideSpec, targetOffsetY = { -it }) +
-            shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
-      ) {
-        AsyncImage(
-          model = imageUri,
-          contentDescription = "Recipe image",
-          contentScale = ContentScale.FillWidth,
-          modifier =
-            Modifier.fillMaxWidth()
-              .aspectRatio(2f, matchHeightConstraintsFirst = true)
-              .clip(MaterialTheme.shapes.large), // .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
-        )
-      }
-    }
-
-    transition.AnimatedVisibility(
-      visible = { isExpanded -> isExpanded },
-      enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-      exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
-    ) {
-      Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-      ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-          Text(
-            text =
-              buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Prep: ") }
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                  append("${time.preparation} min")
-                }
-              }
-          )
-
-          Text(
-            text =
-              buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Cook: ") }
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                  append("${time.cooking} min")
-                }
-              }
-          )
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-          Text(
-            text = source.name,
-            color = MaterialTheme.colorScheme.primary,
-          )
-          if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
-            Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
-          }
-        }
-      }
-    }
+    RecipeHeaderMedia(transition = transition, image = image, source = source, time = time)
 
     if (!expanded) {
       Spacer(modifier = Modifier.height(8.dp))
@@ -452,6 +432,85 @@ private fun RecipeContentHeader(
     Text(
       text = name,
       style = MaterialTheme.typography.headlineLarge,
+    )
+  }
+}
+
+@Composable
+private fun RecipeHeaderMedia(
+  transition: Transition<Boolean>,
+  image: String?,
+  source: RecipeSource,
+  time: RecipeTime,
+) {
+  image?.let { imageUri -> RecipeHeaderImage(transition = transition, imageUri = imageUri) }
+
+  transition.AnimatedVisibility(
+    visible = { isExpanded -> isExpanded },
+    enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+  ) {
+    Row(
+      horizontalArrangement = Arrangement.SpaceBetween,
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+    ) {
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+          text =
+            buildAnnotatedString {
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Prep: ") }
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                append("${time.preparation} min")
+              }
+            }
+        )
+
+        Text(
+          text =
+            buildAnnotatedString {
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Cook: ") }
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                append("${time.cooking} min")
+              }
+            }
+        )
+      }
+
+      Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+          text = source.name,
+          color = MaterialTheme.colorScheme.primary,
+        )
+        if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
+          Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun RecipeHeaderImage(transition: Transition<Boolean>, imageUri: String) {
+  val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
+  val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
+
+  transition.AnimatedVisibility(
+    visible = { isExpanded -> isExpanded },
+    enter =
+      slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) +
+        expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
+    exit =
+      slideOutVertically(animationSpec = slideSpec, targetOffsetY = { -it }) +
+        shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
+  ) {
+    AsyncImage(
+      model = imageUri,
+      contentDescription = "Recipe image",
+      contentScale = ContentScale.FillWidth,
+      modifier =
+        Modifier.fillMaxWidth()
+          .aspectRatio(2f, matchHeightConstraintsFirst = true)
+          .clip(MaterialTheme.shapes.large), // .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
     )
   }
 }
@@ -466,52 +525,12 @@ private fun ScalingControls(
   onScalingChanged: (currentServings: Int) -> Unit,
   scaleOptions: List<Float> = DEFAULT_SCALE_OPTIONS,
 ) {
-  val scale = currentServings / baseServings.toFloat()
-
   Row(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier.padding(8.dp).fillMaxWidth().height(IntrinsicSize.Min),
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-      OutlinedIconButton(
-        onClick = {
-          val newServings = (currentServings - 1).coerceAtLeast(1)
-          onScalingChanged(newServings)
-        },
-        enabled = currentServings > 1,
-      ) {
-        Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
-      }
-
-      val textMeasurer = rememberTextMeasurer()
-      val result =
-        textMeasurer.measure(
-          AnnotatedString("00 servings"),
-          style = LocalTextStyle.current,
-        )
-      val textWidth = with(LocalDensity.current) { result.size.width.toDp() }
-
-      Text(
-        text = "$currentServings servings",
-        maxLines = 1,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.width(textWidth),
-      )
-
-      OutlinedIconButton(
-        onClick = {
-          val newServings = currentServings + 1
-          onScalingChanged(newServings)
-        }
-        //        modifier = Modifier.weight(1f)
-      ) {
-        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-      }
-    }
+    ServingsStepper(currentServings = currentServings, onScalingChanged = onScalingChanged)
 
     SingleChoiceSegmentedButtonRow(modifier = Modifier.width(IntrinsicSize.Min).weight(1f)) {
       scaleOptions.forEach { option ->
@@ -544,6 +563,51 @@ private fun ScalingControls(
           )
         }
       }
+    }
+  }
+}
+
+@Composable
+private fun ServingsStepper(
+  currentServings: Int,
+  onScalingChanged: (currentServings: Int) -> Unit,
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    OutlinedIconButton(
+      onClick = {
+        val newServings = (currentServings - 1).coerceAtLeast(1)
+        onScalingChanged(newServings)
+      },
+      enabled = currentServings > 1,
+    ) {
+      Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
+    }
+
+    val textMeasurer = rememberTextMeasurer()
+    val result =
+      textMeasurer.measure(
+        AnnotatedString("00 servings"),
+        style = LocalTextStyle.current,
+      )
+    val textWidth = with(LocalDensity.current) { result.size.width.toDp() }
+
+    Text(
+      text = "$currentServings servings",
+      maxLines = 1,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.width(textWidth),
+    )
+
+    OutlinedIconButton(
+      onClick = {
+        val newServings = currentServings + 1
+        onScalingChanged(newServings)
+      }
+    ) {
+      Icon(imageVector = Icons.Filled.Add, contentDescription = null)
     }
   }
 }

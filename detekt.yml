@@ -26,7 +26,6 @@ style:
     active: true
   UnusedPrivateFunction:
     active: true
-    allowedNames: ''
     ignoreAnnotated: ['Preview']
   UnusedPrivateProperty:
     active: true
@@ -34,7 +33,7 @@ style:
   UnusedPrivateClass:
     active: false
   UnusedParameter:
-    active: false
+    active: true
   ForbiddenComment:
     active: true
     comments:
@@ -103,10 +102,19 @@ exceptions:
 
 complexity:
   CyclomaticComplexMethod:
-    active: false
+    active: true
   LongMethod:
-    active: false
+    active: true
+    allowedLines: 100
   LongParameterList:
-    active: false
+    active: true
+    allowedFunctionParameters: 12
+    ignoreDefaultParameters: true
   TooManyFunctions:
-    active: false
+    active: true
+    ignoreAnnotatedFunctions: ['Preview']
+    allowedFunctionsPerFile: 20
+    allowedFunctionsPerClass: 16
+    allowedFunctionsPerInterface: 16
+    allowedFunctionsPerObject: 16
+    allowedFunctionsPerEnum: 16
