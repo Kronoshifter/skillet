@@ -42,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -89,6 +90,7 @@ import com.kronos.skilletapp.utils.isNotNullOrBlank
 import com.leinardi.android.speeddial.compose.SpeedDial
 import com.leinardi.android.speeddial.compose.SpeedDialOverlay
 import com.leinardi.android.speeddial.compose.SpeedDialState
+import kotlinx.coroutines.CoroutineScope
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -120,54 +122,13 @@ fun RecipeListScreen(
     },
     bottomBar = { SkilletBottomNavigationBar() },
     floatingActionButton = {
-      SpeedDial(
-        state = speedDialState,
-        reverseAnimationOnClose = true,
-        onFabClick = {
-          overlayVisible = !it
-          speedDialState = speedDialState.toggle()
-        },
-        fabClosedContent = { Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options") },
-        fabOpenedContent = { Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options") },
-      ) {
-        item {
-          Button(
-            onClick = {
-              onNewRecipe()
-              overlayVisible = false
-              speedDialState = speedDialState.toggle()
-            },
-            colors =
-              ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              ),
-          ) {
-            Text(text = "Create new recipe")
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(imageVector = Icons.Default.Add, contentDescription = "Create new recipe")
-          }
-        }
-
-        item {
-          Button(
-            onClick = {
-              showImportRecipeBottomSheet = true
-              overlayVisible = false
-              speedDialState = speedDialState.toggle()
-            },
-            colors =
-              ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              ),
-          ) {
-            Text(text = "Import from URL")
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(imageVector = Icons.Default.Link, contentDescription = "Import from URL")
-          }
-        }
-      }
+      RecipeSpeedDial(
+        speedDialState = speedDialState,
+        onFabToggle = { speedDialState = it },
+        onOverlayDismiss = { overlayVisible = false },
+        onNewRecipe = onNewRecipe,
+        onImportFromUrl = { showImportRecipeBottomSheet = true },
+      )
     },
     floatingActionButtonPosition = FabPosition.End,
   ) { padding ->
@@ -207,63 +168,142 @@ fun RecipeListScreen(
       var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "") }
 
       if (showImportRecipeBottomSheet) {
-        var isValidUrl = isValidUrl(url)
-
-        ActionBottomSheet(
+        ImportRecipeBottomSheet(
+          url = url,
+          onUrlChange = { url = it },
+          scope = scope,
           sheetState = sheetState,
-          modifier = Modifier.fillMaxWidth().padding(8.dp),
-          onDismissRequest = {
-            url = ""
+          onImport = { imported -> onNewRecipeByUrl(imported) },
+          onDismiss = {
             vm.showSharedUrl = false
             showImportRecipeBottomSheet = false
           },
-          title = { Text(text = "Import Recipe") },
-          action = {
-            TextButton(
-              onClick = {
-                onNewRecipeByUrl(url)
-                url = ""
-                vm.showSharedUrl = false
-                sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-              },
-              enabled = isValidUrl,
-            ) {
-              Text(text = "Import")
-            }
-          },
-        ) {
-          val keyboard = LocalSoftwareKeyboardController.current
-
-          OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
-            label = { Text(text = "URL") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
-            keyboardActions =
-              KeyboardActions(
-                onDone = {
-                  if (isValidUrl) {
-                    onNewRecipeByUrl(url)
-                    url = ""
-                    vm.showSharedUrl = false
-                    sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-                  }
-
-                  keyboard?.hide()
-                }
-              ),
-            singleLine = true,
-            isError = !isValidUrl && url.isNotBlank(),
-            supportingText = {
-              if (!isValidUrl && url.isNotBlank()) {
-                Text(text = "Invalid URL")
-              }
-            },
-          )
-        }
+        )
       }
     }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@Composable
+private fun RecipeSpeedDial(
+  speedDialState: SpeedDialState,
+  onFabToggle: (SpeedDialState) -> Unit,
+  onOverlayDismiss: () -> Unit,
+  onNewRecipe: () -> Unit,
+  onImportFromUrl: () -> Unit,
+) {
+  SpeedDial(
+    state = speedDialState,
+    reverseAnimationOnClose = true,
+    onFabClick = {
+      onOverlayDismiss()
+      onFabToggle(speedDialState.toggle())
+    },
+    fabClosedContent = { Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options") },
+    fabOpenedContent = { Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options") },
+  ) {
+    item {
+      Button(
+        onClick = {
+          onNewRecipe()
+          onOverlayDismiss()
+          onFabToggle(speedDialState.toggle())
+        },
+        colors =
+          ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          ),
+      ) {
+        Text(text = "Create new recipe")
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(imageVector = Icons.Default.Add, contentDescription = "Create new recipe")
+      }
+    }
+
+    item {
+      Button(
+        onClick = {
+          onImportFromUrl()
+          onOverlayDismiss()
+          onFabToggle(speedDialState.toggle())
+        },
+        colors =
+          ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          ),
+      ) {
+        Text(text = "Import from URL")
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(imageVector = Icons.Default.Link, contentDescription = "Import from URL")
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ImportRecipeBottomSheet(
+  url: String,
+  onUrlChange: (String) -> Unit,
+  scope: CoroutineScope,
+  sheetState: SheetState,
+  onImport: (String) -> Unit,
+  onDismiss: () -> Unit,
+) {
+  val isValidUrl = isValidUrl(url)
+
+  ActionBottomSheet(
+    sheetState = sheetState,
+    modifier = Modifier.fillMaxWidth().padding(8.dp),
+    onDismissRequest = {
+      onUrlChange("")
+      onDismiss()
+    },
+    title = { Text(text = "Import Recipe") },
+    action = {
+      TextButton(
+        onClick = {
+          onImport(url)
+          onUrlChange("")
+          sheetState.dismiss(scope) { onDismiss() }
+        },
+        enabled = isValidUrl,
+      ) {
+        Text(text = "Import")
+      }
+    },
+  ) {
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    OutlinedTextField(
+      value = url,
+      onValueChange = onUrlChange,
+      label = { Text(text = "URL") },
+      modifier = Modifier.fillMaxWidth(),
+      keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
+      keyboardActions =
+        KeyboardActions(
+          onDone = {
+            if (isValidUrl) {
+              onImport(url)
+              onUrlChange("")
+              sheetState.dismiss(scope) { onDismiss() }
+            }
+
+            keyboard?.hide()
+          }
+        ),
+      singleLine = true,
+      isError = !isValidUrl && url.isNotBlank(),
+      supportingText = {
+        if (!isValidUrl && url.isNotBlank()) {
+          Text(text = "Invalid URL")
+        }
+      },
+    )
   }
 }
 
