@@ -49,8 +49,10 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
+import org.koin.core.KoinApplication
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.koinConfiguration
 import org.koin.dsl.module
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -114,116 +116,116 @@ fun DisableRipple(content: @Composable () -> Unit) =
 fun KoinPreview(content: @Composable () -> Unit) {
   val context = LocalContext.current
 
-  val previewModule = module {
-    factory<Recipe> {
-      val ingredients =
-        listOf(
-          Ingredient(
-            "Mini Shells Pasta",
-            measurement = Measurement(8f, MeasurementUnit.Ounce),
-            "8 oz Mini Shells Pasta",
-          ),
-          Ingredient(
-            "Olive Oil",
-            measurement = Measurement(1f, MeasurementUnit.Tablespoon),
-            "1 tbsp Olive Oil",
-          ),
-          Ingredient(
-            "Butter",
-            measurement = Measurement(1f, MeasurementUnit.Tablespoon),
-            "1 tbsp Butter",
-          ),
-          Ingredient(
-            name = "Garlic",
-            measurement = Measurement(2f, MeasurementUnit.Custom("clove")),
-            raw = "2 cloves Garlic",
-          ),
-          Ingredient(
-            "Flour",
-            measurement = Measurement(2f, MeasurementUnit.Tablespoon),
-            raw = "2 tbsp Flour",
-          ),
-          Ingredient(
-            "Chicken Broth",
-            measurement = Measurement(0.75f, MeasurementUnit.Cup),
-            raw = "3/4 cup chicken broth",
-          ),
-          Ingredient(
-            "Milk",
-            measurement = Measurement(2.5f, MeasurementUnit.Cup),
-            raw = "2 1/2 cups milk",
-            comment = "separated",
-          ),
-          Ingredient(
-            "Salt",
-            measurement = Measurement(0f, MeasurementUnit.None),
-            raw = "Salt, to taste",
-            comment = "to taste",
-          ),
-        )
-
-      val instructions =
-        listOf(
-          Instruction(
-            text = "Cook pasta in a pot of salted boiling water until al dente",
-            ingredients = ingredients.take(1),
-          ),
-          Instruction(
-            text =
-              """
-              Return pot to stove over medium heat then ass butter and olive oil.
-              Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn.
-              Sprinkle in flour then whisk and saute for 1 minute.
-              Slowly pour in chicken broth and milk while whisking until mixture is smooth.
-              Season with salt and pepper then switch to a wooden spoon and
-              stir constantly until mixture is thick and bubbly, 4.-5 minutes.
-              """
-                .trimIndent(),
-            ingredients = ingredients.slice(1..6),
-          ),
-          Instruction(
-            text =
-              """
-              Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth.
-              Add cooked pasta then stir to combine.
-              Taste then adjust salt and pepper if necessary, and then serve.
-              """
-                .trimIndent(),
-            ingredients = emptyList(),
-          ),
-        )
-
-      val recipe =
-        Recipe(
-          id = "test",
-          name = "Creamy Garlic Pasta Shells",
-          ingredients = ingredients,
-          instructions = instructions,
-          equipment = emptyList(),
-          servings = 4,
-          description =
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          time = RecipeTime(15, 15),
-          source = RecipeSource("My Brain", "My Brain"),
-          notes =
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        )
-
-      recipe
-    }
-
-    singleOf(::IngredientParser)
-    factoryOf(::DefaultRecipeScraper)
-  }
-
   KoinApplication(
-    application = {
+    configuration = koinConfiguration {
       androidContext(context)
       modules(previewModule)
     },
-    content = content,
+    content = content
   )
 }
+
+private val previewModule = module {
+  factory { buildPreviewRecipe() }
+  singleOf(::IngredientParser)
+  factoryOf(::DefaultRecipeScraper)
+}
+
+private fun buildPreviewRecipe(): Recipe {
+  val ingredients = previewIngredients
+  val recipe =
+    Recipe(
+      id = "test",
+      name = "Creamy Garlic Pasta Shells",
+      ingredients = ingredients,
+      instructions = previewInstructions(ingredients),
+      equipment = emptyList(),
+      servings = 4,
+      description =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      time = RecipeTime(15, 15),
+      source = RecipeSource("My Brain", "My Brain"),
+      notes = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    )
+  return recipe
+}
+
+private val previewIngredients: List<Ingredient>
+  get() = listOf(
+    Ingredient(
+      "Mini Shells Pasta",
+      measurement = Measurement(8f, MeasurementUnit.Ounce),
+      "8 oz Mini Shells Pasta",
+    ),
+    Ingredient(
+      "Olive Oil",
+      measurement = Measurement(1f, MeasurementUnit.Tablespoon),
+      "1 tbsp Olive Oil",
+    ),
+    Ingredient(
+      "Butter",
+      measurement = Measurement(1f, MeasurementUnit.Tablespoon),
+      "1 tbsp Butter",
+    ),
+    Ingredient(
+      name = "Garlic",
+      measurement = Measurement(2f, MeasurementUnit.Custom("clove")),
+      raw = "2 cloves Garlic",
+    ),
+    Ingredient(
+      "Flour",
+      measurement = Measurement(2f, MeasurementUnit.Tablespoon),
+      raw = "2 tbsp Flour",
+    ),
+    Ingredient(
+      "Chicken Broth",
+      measurement = Measurement(0.75f, MeasurementUnit.Cup),
+      raw = "3/4 cup chicken broth",
+    ),
+    Ingredient(
+      "Milk",
+      measurement = Measurement(2.5f, MeasurementUnit.Cup),
+      raw = "2 1/2 cups milk",
+      comment = "separated",
+    ),
+    Ingredient(
+      "Salt",
+      measurement = Measurement(0f, MeasurementUnit.None),
+      raw = "Salt, to taste",
+      comment = "to taste",
+    ),
+  )
+
+private fun previewInstructions(ingredients: List<Ingredient>): List<Instruction> =
+  listOf(
+    Instruction(
+      text = "Cook pasta in a pot of salted boiling water until al dente",
+      ingredients = ingredients.take(1),
+    ),
+    Instruction(
+      text =
+        """
+        Return pot to stove over medium heat then ass butter and olive oil.
+        Once melted, add garlic then saute until light golden brown, about 30 seconds, being very careful not to burn.
+        Sprinkle in flour then whisk and saute for 1 minute.
+        Slowly pour in chicken broth and milk while whisking until mixture is smooth.
+        Season with salt and pepper then switch to a wooden spoon and
+        stir constantly until mixture is thick and bubbly, 4.-5 minutes.
+        """
+          .trimIndent(),
+      ingredients = ingredients.slice(1..6),
+    ),
+    Instruction(
+      text =
+        """
+        Remove pot from heat then stir in parmesan cheese, garlic powder, and parsley flakes until smooth.
+        Add cooked pasta then stir to combine.
+        Taste then adjust salt and pepper if necessary, and then serve.
+        """
+          .trimIndent(),
+      ingredients = emptyList(),
+    ),
+  )
 
 @Composable
 @NonRestartableComposable
