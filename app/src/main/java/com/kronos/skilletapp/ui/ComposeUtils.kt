@@ -49,7 +49,6 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
-import org.koin.core.KoinApplication
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.koinConfiguration
@@ -117,11 +116,12 @@ fun KoinPreview(content: @Composable () -> Unit) {
   val context = LocalContext.current
 
   KoinApplication(
-    configuration = koinConfiguration {
-      androidContext(context)
-      modules(previewModule)
-    },
-    content = content
+    configuration =
+      koinConfiguration {
+        androidContext(context)
+        modules(previewModule)
+      },
+    content = content,
   )
 }
 
@@ -151,50 +151,51 @@ private fun buildPreviewRecipe(): Recipe {
 }
 
 private val previewIngredients: List<Ingredient>
-  get() = listOf(
-    Ingredient(
-      "Mini Shells Pasta",
-      measurement = Measurement(8f, MeasurementUnit.Ounce),
-      "8 oz Mini Shells Pasta",
-    ),
-    Ingredient(
-      "Olive Oil",
-      measurement = Measurement(1f, MeasurementUnit.Tablespoon),
-      "1 tbsp Olive Oil",
-    ),
-    Ingredient(
-      "Butter",
-      measurement = Measurement(1f, MeasurementUnit.Tablespoon),
-      "1 tbsp Butter",
-    ),
-    Ingredient(
-      name = "Garlic",
-      measurement = Measurement(2f, MeasurementUnit.Custom("clove")),
-      raw = "2 cloves Garlic",
-    ),
-    Ingredient(
-      "Flour",
-      measurement = Measurement(2f, MeasurementUnit.Tablespoon),
-      raw = "2 tbsp Flour",
-    ),
-    Ingredient(
-      "Chicken Broth",
-      measurement = Measurement(0.75f, MeasurementUnit.Cup),
-      raw = "3/4 cup chicken broth",
-    ),
-    Ingredient(
-      "Milk",
-      measurement = Measurement(2.5f, MeasurementUnit.Cup),
-      raw = "2 1/2 cups milk",
-      comment = "separated",
-    ),
-    Ingredient(
-      "Salt",
-      measurement = Measurement(0f, MeasurementUnit.None),
-      raw = "Salt, to taste",
-      comment = "to taste",
-    ),
-  )
+  get() =
+    listOf(
+      Ingredient(
+        name = "Mini Shells Pasta",
+        measurement = Measurement(8f, MeasurementUnit.Ounce),
+        raw = "8 oz Mini Shells Pasta",
+      ),
+      Ingredient(
+        name = "Olive Oil",
+        measurement = Measurement(1f, MeasurementUnit.Tablespoon),
+        raw = "1 tbsp Olive Oil",
+      ),
+      Ingredient(
+        name = "Butter",
+        measurement = Measurement(1f, MeasurementUnit.Tablespoon),
+        raw = "1 tbsp Butter",
+      ),
+      Ingredient(
+        name = "Garlic",
+        measurement = Measurement(2f, MeasurementUnit.Custom("clove")),
+        raw = "2 cloves Garlic",
+      ),
+      Ingredient(
+        name = "Flour",
+        measurement = Measurement(2f, MeasurementUnit.Tablespoon),
+        raw = "2 tbsp Flour",
+      ),
+      Ingredient(
+        name = "Chicken Broth",
+        measurement = Measurement(0.75f, MeasurementUnit.Cup),
+        raw = "3/4 cup chicken broth",
+      ),
+      Ingredient(
+        name = "Milk",
+        measurement = Measurement(2.5f, MeasurementUnit.Cup),
+        raw = "2 1/2 cups milk",
+        comment = "separated",
+      ),
+      Ingredient(
+        name = "Salt",
+        measurement = Measurement(0f, MeasurementUnit.None),
+        raw = "Salt, to taste",
+        comment = "to taste",
+      ),
+    )
 
 private fun previewInstructions(ingredients: List<Ingredient>): List<Instruction> =
   listOf(
