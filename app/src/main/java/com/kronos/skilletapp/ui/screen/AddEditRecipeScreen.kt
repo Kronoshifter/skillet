@@ -132,7 +132,6 @@ import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
-import com.kronos.skilletapp.model.Equipment
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
@@ -225,7 +224,6 @@ fun AddEditRecipeScreen(
     ) {
       AddEditRecipeContent(
         name = recipeState.name,
-        description = recipeState.description,
         notes = recipeState.notes,
         servings = recipeState.servings,
         prepTime = recipeState.prepTime,
@@ -235,9 +233,7 @@ fun AddEditRecipeScreen(
         image = recipeState.image,
         ingredients = recipeState.ingredients,
         instructions = recipeState.instructions,
-        equipment = recipeState.equipment,
         onNameChanged = vm::updateName,
-        onDescriptionChanged = vm::updateDescription,
         onServingsChanged = vm::updateServings,
         onPrepTimeChanged = vm::updatePrepTime,
         onCookTimeChanged = vm::updateCookTime,
@@ -251,9 +247,6 @@ fun AddEditRecipeScreen(
         onInstructionChanged = vm::updateInstruction,
         onRemoveInstruction = vm::removeInstruction,
         onMoveInstruction = vm::moveInstruction,
-        onEquipmentChanged = vm::updateEquipment,
-        onRemoveEquipment = vm::removeEquipment,
-        onMoveEquipment = vm::moveEquipment,
         onUserMessage = vm::showMessage,
       )
 
@@ -302,7 +295,6 @@ fun AddEditRecipeScreen(
 @Composable
 fun AddEditRecipeContent(
   name: String,
-  description: String,
   notes: String,
   servings: Int,
   prepTime: Int,
@@ -312,9 +304,7 @@ fun AddEditRecipeContent(
   image: String?,
   ingredients: List<Ingredient>,
   instructions: List<Instruction>,
-  equipment: List<Equipment>,
   onNameChanged: (String) -> Unit,
-  onDescriptionChanged: (String) -> Unit,
   onNotesChanged: (String) -> Unit,
   onServingsChanged: (Int) -> Unit,
   onPrepTimeChanged: (Int) -> Unit,
@@ -328,9 +318,6 @@ fun AddEditRecipeContent(
   onInstructionChanged: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   onMoveInstruction: (Int, Int) -> Unit,
-  onEquipmentChanged: (Equipment) -> Unit,
-  onRemoveEquipment: (Equipment) -> Unit,
-  onMoveEquipment: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -388,7 +375,6 @@ fun AddEditRecipeContent(
                 source = source,
                 sourceName = sourceName,
                 image = image,
-                description = description,
                 servings = servings,
                 prepTime = prepTime,
                 cookTime = cookTime,
@@ -397,7 +383,6 @@ fun AddEditRecipeContent(
                 onSourceChanged = onSourceChanged,
                 onSourceNameChanged = onSourceNameChanged,
                 onImageChanged = onImageChanged,
-                onDescriptionChanged = onDescriptionChanged,
                 onServingsChanged = onServingsChanged,
                 onPrepTimeChanged = onPrepTimeChanged,
                 onCookTimeChanged = onCookTimeChanged,
@@ -420,7 +405,6 @@ fun AddEditRecipeContent(
                 onInstructionChanged = onInstructionChanged,
                 onRemoveInstruction = onRemoveInstruction,
                 onMoveInstruction = onMoveInstruction,
-                onUserMessage = onUserMessage,
               )
 
           //            AddEditRecipeContentTab.Equipment -> {}
@@ -439,7 +423,6 @@ private fun RecipeInfoContent(
   source: String,
   sourceName: String,
   image: String?,
-  description: String,
   servings: Int,
   prepTime: Int,
   cookTime: Int,
@@ -448,7 +431,6 @@ private fun RecipeInfoContent(
   onSourceChanged: (String) -> Unit,
   onSourceNameChanged: (String) -> Unit,
   onImageChanged: (String?) -> Unit,
-  onDescriptionChanged: (String) -> Unit,
   onServingsChanged: (Int) -> Unit,
   onPrepTimeChanged: (Int) -> Unit,
   onCookTimeChanged: (Int) -> Unit,
@@ -1181,7 +1163,6 @@ fun InstructionsContent(
   onInstructionChanged: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   onMoveInstruction: (Int, Int) -> Unit,
-  onUserMessage: (String) -> Unit,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
@@ -1634,10 +1615,8 @@ fun AddEditRecipeContentPreview() {
         AddEditRecipeContent(
           modifier = Modifier.fillMaxSize(),
           name = recipe.name,
-          description = recipe.description,
           ingredients = recipe.ingredients,
           instructions = recipe.instructions,
-          equipment = recipe.equipment,
           source = recipe.source.source,
           sourceName = recipe.source.name,
           image = recipe.cover,
@@ -1646,7 +1625,6 @@ fun AddEditRecipeContentPreview() {
           cookTime = recipe.time.cooking,
           notes = recipe.notes,
           onNameChanged = {},
-          onDescriptionChanged = {},
           onIngredientChanged = {},
           onRemoveIngredient = {},
           onUserMessage = {},
@@ -1659,11 +1637,8 @@ fun AddEditRecipeContentPreview() {
           onSourceNameChanged = {},
           onImageChanged = {},
           onRemoveInstruction = {},
-          onRemoveEquipment = {},
-          onEquipmentChanged = {},
           onMoveIngredient = { _, _ -> },
           onMoveInstruction = { _, _ -> },
-          onMoveEquipment = { _, _ -> },
         )
       }
     }
@@ -1752,7 +1727,6 @@ fun InstructionsTabPreview() {
           },
           onRemoveInstruction = { instructions = instructions - it },
           onMoveInstruction = { from, to -> instructions = instructions.move(from, to) },
-          onUserMessage = {},
         )
       }
     }
