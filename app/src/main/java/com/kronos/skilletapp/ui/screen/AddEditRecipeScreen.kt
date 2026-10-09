@@ -180,7 +180,7 @@ fun AddEditRecipeScreen(
 ) {
   var showDiscardChangesDialog by remember { mutableStateOf(false) }
 
-  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+  val recipeState by vm.recipeFormState.collectAsStateWithLifecycle()
   val isInitializing by vm.isInitializing.collectAsStateWithLifecycle()
 
   BackHandler {
@@ -233,20 +233,20 @@ fun AddEditRecipeScreen(
         image = recipeState.image,
         ingredients = recipeState.ingredients,
         instructions = recipeState.instructions,
-        onNameChanged = vm::updateName,
-        onServingsChanged = vm::updateServings,
-        onPrepTimeChanged = vm::updatePrepTime,
-        onCookTimeChanged = vm::updateCookTime,
-        onSourceChanged = vm::updateSource,
-        onSourceNameChanged = vm::updateSourceName,
-        onImageChanged = vm::updateImage,
-        onNotesChanged = vm::updateNotes,
-        onIngredientChanged = vm::updateIngredient,
-        onRemoveIngredient = vm::removeIngredient,
-        onMoveIngredient = vm::moveIngredient,
-        onInstructionChanged = vm::updateInstruction,
-        onRemoveInstruction = vm::removeInstruction,
-        onMoveInstruction = vm::moveInstruction,
+        onNameChanged = vm.recipeFormFieldOps::updateName,
+        onServingsChanged = vm.recipeFormFieldOps::updateServings,
+        onPrepTimeChanged = vm.recipeFormFieldOps::updatePrepTime,
+        onCookTimeChanged = vm.recipeFormFieldOps::updateCookTime,
+        onSourceChanged = vm.recipeFormFieldOps::updateSource,
+        onSourceNameChanged = vm.recipeFormFieldOps::updateSourceName,
+        onImageChanged = vm.recipeFormFieldOps::updateImage,
+        onNotesChanged = vm.recipeFormFieldOps::updateNotes,
+        onIngredientChanged = vm.recipeFormCollectionOps::updateIngredient,
+        onRemoveIngredient = vm.recipeFormCollectionOps::removeIngredient,
+        onMoveIngredient = vm.recipeFormCollectionOps::moveIngredient,
+        onInstructionChanged = vm.recipeFormCollectionOps::updateInstruction,
+        onRemoveInstruction = vm.recipeFormCollectionOps::removeInstruction,
+        onMoveInstruction = vm.recipeFormCollectionOps::moveInstruction,
         onUserMessage = vm::showMessage,
       )
 
