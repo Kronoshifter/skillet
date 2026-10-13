@@ -45,8 +45,8 @@ class AddEditRecipeViewModel(
   private val _recipeFormState = MutableStateFlow(RecipeFormState())
   private var originalFormState = RecipeFormState()
   val recipeFormState: StateFlow<RecipeFormState> = _recipeFormState.asStateFlow()
-  val recipeFormFieldOps = RecipeFormFieldOps(_recipeFormState, ::checkForChanges)
-  val recipeFormCollectionOps = RecipeFormCollectionOps(_recipeFormState, ::checkForChanges)
+  val recipeFormFieldOps: RecipeFormFieldOps = RecipeFormFieldOpsImpl(_recipeFormState, ::checkForChanges)
+  val recipeFormCollectionOps: RecipeFormCollectionOps = RecipeFormCollectionOpsImpl(_recipeFormState, ::checkForChanges)
 
   init {
     recipeId?.let { loadRecipe(it) } ?: recipeUrl?.let { scUrl(it) }
@@ -227,61 +227,61 @@ private fun MutableStateFlow<RecipeFormState>.checkForChanges(original: RecipeFo
  * Scalar field mutations for the add/edit form: each operation updates one field of [recipeFormState] and then reports the change through
  * [checkForChanges].
  */
-class RecipeFormFieldOps(
+private class RecipeFormFieldOpsImpl(
   private val recipeFormState: MutableStateFlow<RecipeFormState>,
   private val checkForChanges: () -> Unit,
-) {
-  fun updateName(name: String) {
+) : RecipeFormFieldOps {
+  override fun updateName(name: String) {
     recipeFormState.update { it.copy(name = name) }
     checkForChanges()
   }
 
-  fun updateDescription(description: String) {
+  override fun updateDescription(description: String) {
     recipeFormState.update { it.copy(description = description) }
     checkForChanges()
   }
 
-  fun updateNotes(notes: String) {
+  override fun updateNotes(notes: String) {
     recipeFormState.update { it.copy(notes = notes) }
     checkForChanges()
   }
 
-  fun updateServings(servings: Int) {
+  override fun updateServings(servings: Int) {
     recipeFormState.update { it.copy(servings = servings) }
     checkForChanges()
   }
 
-  fun updatePrepTime(prepTime: Int) {
+  override fun updatePrepTime(prepTime: Int) {
     recipeFormState.update { it.copy(prepTime = prepTime) }
     checkForChanges()
   }
 
-  fun updateCookTime(cookTime: Int) {
+  override fun updateCookTime(cookTime: Int) {
     recipeFormState.update { it.copy(cookTime = cookTime) }
     checkForChanges()
   }
 
-  fun updateSource(source: String) {
+  override fun updateSource(source: String) {
     recipeFormState.update { it.copy(source = source) }
     checkForChanges()
   }
 
-  fun updateSourceName(sourceName: String) {
+  override fun updateSourceName(sourceName: String) {
     recipeFormState.update { it.copy(sourceName = sourceName) }
     checkForChanges()
   }
 
-  fun updateImage(image: String?) {
+  override fun updateImage(image: String?) {
     recipeFormState.update { it.copy(image = image) }
     checkForChanges()
   }
 
-  fun showMessage(message: String) {
+  override fun showMessage(message: String) {
     recipeFormState.update { it.copy(userMessage = message) }
     checkForChanges()
   }
 
-  fun userMessageShown() {
+  override fun userMessageShown() {
     recipeFormState.update { it.copy(userMessage = null) }
     checkForChanges()
   }
@@ -291,11 +291,11 @@ class RecipeFormFieldOps(
  * Collection mutations (update/remove/move) for the add/edit form's ingredients, instructions, and equipment: each operation rewrites the
  * affected list(s) of [recipeFormState] and then reports the change through [checkForChanges].
  */
-class RecipeFormCollectionOps(
+private class RecipeFormCollectionOpsImpl(
   private val recipeFormState: MutableStateFlow<RecipeFormState>,
   private val checkForChanges: () -> Unit,
-) {
-  fun updateIngredient(ingredient: Ingredient) {
+) : RecipeFormCollectionOps {
+  override fun updateIngredient(ingredient: Ingredient) {
     recipeFormState.update { state ->
       state.copy(
         ingredients = state.ingredients.upsert(ingredient) { it.id },
@@ -306,7 +306,7 @@ class RecipeFormCollectionOps(
     checkForChanges()
   }
 
-  fun removeIngredient(ingredient: Ingredient) {
+  override fun removeIngredient(ingredient: Ingredient) {
     recipeFormState.update {
       it.copy(
         ingredients = it.ingredients - ingredient,
@@ -316,37 +316,37 @@ class RecipeFormCollectionOps(
     checkForChanges()
   }
 
-  fun moveIngredient(from: Int, to: Int) {
+  override fun moveIngredient(from: Int, to: Int) {
     recipeFormState.update { it.copy(ingredients = it.ingredients.move(from, to)) }
     checkForChanges()
   }
 
-  fun updateInstruction(instruction: Instruction) {
+  override fun updateInstruction(instruction: Instruction) {
     recipeFormState.update { state -> state.copy(instructions = state.instructions.upsert(instruction) { it.id }) }
     checkForChanges()
   }
 
-  fun removeInstruction(instruction: Instruction) {
+  override fun removeInstruction(instruction: Instruction) {
     recipeFormState.update { it.copy(instructions = it.instructions - instruction) }
     checkForChanges()
   }
 
-  fun moveInstruction(from: Int, to: Int) {
+  override fun moveInstruction(from: Int, to: Int) {
     recipeFormState.update { it.copy(instructions = it.instructions.move(from, to)) }
     checkForChanges()
   }
 
-  fun updateEquipment(equipment: Equipment) {
+  override fun updateEquipment(equipment: Equipment) {
     recipeFormState.update { state -> state.copy(equipment = state.equipment.upsert(equipment) { it.id }) }
     checkForChanges()
   }
 
-  fun removeEquipment(equipment: Equipment) {
+  override fun removeEquipment(equipment: Equipment) {
     recipeFormState.update { it.copy(equipment = it.equipment - equipment) }
     checkForChanges()
   }
 
-  fun moveEquipment(from: Int, to: Int) {
+  override fun moveEquipment(from: Int, to: Int) {
     recipeFormState.update { it.copy(equipment = it.equipment.move(from, to)) }
     checkForChanges()
   }

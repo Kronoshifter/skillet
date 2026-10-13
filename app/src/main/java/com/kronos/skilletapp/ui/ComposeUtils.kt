@@ -42,6 +42,10 @@ import com.kronos.skilletapp.model.RecipeTime
 import com.kronos.skilletapp.model.SkilletError
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.scraping.DefaultRecipeScraper
+import com.kronos.skilletapp.ui.viewmodel.PreviewRecipeFormCollectionOps
+import com.kronos.skilletapp.ui.viewmodel.PreviewRecipeFormFieldOps
+import com.kronos.skilletapp.ui.viewmodel.RecipeFormCollectionOps
+import com.kronos.skilletapp.ui.viewmodel.RecipeFormFieldOps
 import com.kronos.utils.fromJson
 import com.kronos.utils.toJson
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +57,7 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.koinConfiguration
 import org.koin.dsl.module
+import org.koin.plugin.module.dsl.single
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -129,6 +134,8 @@ private val previewModule = module {
   factory { buildPreviewRecipe() }
   singleOf(::IngredientParser)
   factoryOf(::DefaultRecipeScraper)
+  single<RecipeFormFieldOps> { PreviewRecipeFormFieldOps }
+  single<RecipeFormCollectionOps> { PreviewRecipeFormCollectionOps }
 }
 
 private fun buildPreviewRecipe(): Recipe {
