@@ -90,53 +90,21 @@ data class Fraction(val numerator: Int, val denominator: Int) {
 
   val nearest: Fraction
     get() = roundToNearestOf(3, 8)
-
-  // MagicNumber suppressed: the branch discriminators are fraction-component → Unicode-glyph
-  // mapping data, not tunable constants.
-  @Suppress("MagicNumber")
-  private fun unicodeFractionString(numerator: Int, denominator: Int) =
-    when (denominator) {
-      2 -> if (numerator == 1) "\u00BD" else simpleFractionString(numerator, denominator)
-      3 ->
-        when (numerator) {
-          1 -> "\u2153"
-          2 -> "\u2154"
-          else -> simpleFractionString(numerator, denominator)
-        }
-      4 ->
-        when (numerator) {
-          1 -> "\u00BC"
-          3 -> "\u00BE"
-          else -> simpleFractionString(numerator, denominator)
-        }
-      5 ->
-        when (numerator) {
-          1 -> "\u2155"
-          2 -> "\u2156"
-          3 -> "\u2157"
-          4 -> "\u2158"
-          else -> simpleFractionString(numerator, denominator)
-        }
-      6 ->
-        when (numerator) {
-          1 -> "\u2159"
-          5 -> "\u215A"
-          else -> simpleFractionString(numerator, denominator)
-        }
-      8 ->
-        when (numerator) {
-          1 -> "\u215B"
-          3 -> "\u215C"
-          5 -> "\u215D"
-          7 -> "\u215E"
-          else -> simpleFractionString(numerator, denominator)
-        }
-      else -> simpleFractionString(numerator, denominator)
-    }
-
-  private fun simpleFractionString(numerator: Int, denominator: Int) = "$numerator$FRAC$denominator"
-
-  companion object {
-    private const val FRAC = "\u2044"
-  }
 }
+
+private val fractionGlyphs =
+  mapOf(
+    2 to mapOf(1 to "½"),
+    3 to mapOf(1 to "⅓", 2 to "⅔"),
+    4 to mapOf(1 to "¼", 3 to "¾"),
+    5 to mapOf(1 to "⅕", 2 to "⅖", 3 to "⅗", 4 to "⅘"),
+    6 to mapOf(1 to "⅙", 5 to "⅚"),
+    8 to mapOf(1 to "⅛", 3 to "⅜", 5 to "⅝", 7 to "⅞"),
+  )
+
+private fun unicodeFractionString(numerator: Int, denominator: Int) =
+  fractionGlyphs[denominator]?.get(numerator) ?: simpleFractionString(numerator, denominator)
+
+private fun simpleFractionString(numerator: Int, denominator: Int) = "$numerator$FRAC$denominator"
+
+private const val FRAC = "⁄"
