@@ -1,8 +1,5 @@
 package com.kronos.utils
 
-import java.math.BigDecimal
-import java.math.MathContext
-import java.math.RoundingMode
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -28,10 +25,6 @@ val Double.fraction
 
 val Float.fraction
   get() = Fraction((this * 1000).toInt(), 1000).reduce()
-
-fun Double.roundToSignificantFigures(places: Int) = toBigDecimal().round(MathContext(places, RoundingMode.HALF_UP)).toDouble()
-
-val ONE_EIGHTH = (BigDecimal(1) / BigDecimal(8)).setScale(3, RoundingMode.HALF_UP)
 
 fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
 

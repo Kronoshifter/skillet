@@ -1,7 +1,6 @@
 package com.kronos.utils
 
 import kotlin.reflect.KClass
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 inline fun <reified T> T.toJson(): String = Json.encodeToString(this)
