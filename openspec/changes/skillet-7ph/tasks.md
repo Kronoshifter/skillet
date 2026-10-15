@@ -12,7 +12,7 @@ Workstream map (each task = one bead, fresh session each; Smith implements, Arch
 
 ## 1. Fix Band — measure first
 
-- [ ] **1.1** Run the fresh full type-resolution measurement (bead `skillet-7ph.1`):
+- [x] **1.1** Run the fresh full type-resolution measurement (bead `skillet-7ph.1`):
   1. `./gradlew :utils:detektMain :measurement:detektMain :app:detektDebug :app:detektRelease --rerun-tasks`
   2. Parse the checkstyle reports (`utils/build/reports/detekt/main.xml`, `measurement/build/reports/detekt/main.xml`, `app/build/reports/detekt/{debug,release}.xml`): rule, file, line, count.
   3. Repeat steps 1–2 a total of **3 times**; worklist = union across runs, with per-site occurrence counts (analysis-API flake: `NoNameShadowing`/`UseCheckNotNull`).

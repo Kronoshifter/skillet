@@ -29,8 +29,8 @@ data class CookingUiState(
 )
 
 class CookingViewModel(
-  private val recipeRepository: RecipeRepository,
-  private val handle: SavedStateHandle,
+  recipeRepository: RecipeRepository,
+  handle: SavedStateHandle,
   private val scaleRecipe: ScaleRecipe,
 ) : ViewModel() {
   private val args = handle.toRoute<Route.Cooking>()

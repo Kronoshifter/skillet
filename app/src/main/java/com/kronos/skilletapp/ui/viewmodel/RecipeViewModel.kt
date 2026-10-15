@@ -29,8 +29,8 @@ data class RecipeUiState(
 )
 
 class RecipeViewModel(
-  private val recipeRepository: RecipeRepository,
-  private val handle: SavedStateHandle,
+  recipeRepository: RecipeRepository,
+  handle: SavedStateHandle,
   private val scaleRecipe: ScaleRecipe,
 ) : ViewModel() {
 

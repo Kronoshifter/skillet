@@ -28,8 +28,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class RecipeListViewModel(
-  private val recipeRepository: RecipeRepository,
-  private val handle: SavedStateHandle,
+  recipeRepository: RecipeRepository,
+  handle: SavedStateHandle,
 ) : ViewModel() {
   private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
 
