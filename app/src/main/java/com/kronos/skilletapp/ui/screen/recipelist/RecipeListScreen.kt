@@ -100,6 +100,7 @@ fun RecipeListScreen(
   onNewRecipe: () -> Unit,
   onNewRecipeByUrl: (url: String) -> Unit,
   onRecipeClick: (id: String) -> Unit,
+  modifier: Modifier = Modifier,
   vm: RecipeListViewModel = koinViewModel(),
 ) {
   var speedDialState by rememberSaveable { mutableStateOf(SpeedDialState.Collapsed) }
@@ -108,6 +109,7 @@ fun RecipeListScreen(
   var showImportRecipeBottomSheet by rememberSaveable { mutableStateOf(false) }
 
   Scaffold(
+    modifier = modifier,
     topBar = {
       TopAppBar(
         title = { Text(text = "Recipes") },
@@ -165,7 +167,7 @@ fun RecipeListScreen(
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
-      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "") }
+      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl }.orEmpty()) }
 
       if (showImportRecipeBottomSheet) {
         ImportRecipeBottomSheet(
@@ -416,7 +418,7 @@ fun RecipeCard(
 
 @Preview(widthDp = 200)
 @Composable
-fun RecipeCardPreview() {
+private fun RecipeCardPreview() {
   KoinPreview {
     val recipe =
       RecipeSummary(
@@ -443,7 +445,7 @@ fun RecipeCardPreview() {
 
 @Preview
 @Composable
-fun RecipeListPreview() {
+private fun RecipeListPreview() {
   KoinPreview {
     val recipes =
       List(10) { i ->

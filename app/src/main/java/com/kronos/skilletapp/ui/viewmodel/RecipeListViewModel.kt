@@ -15,7 +15,6 @@ import com.kronos.skilletapp.model.RecipeSummary
 import com.kronos.skilletapp.navigation.Route
 import com.kronos.skilletapp.navigation.SharedRecipe
 import com.kronos.skilletapp.ui.saverOf
-import com.kronos.skilletapp.ui.screen.recipelist.RecipesSortType
 import com.kronos.skilletapp.utils.navTypeOf
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -31,8 +30,6 @@ class RecipeListViewModel(
   recipeRepository: RecipeRepository,
   handle: SavedStateHandle,
 ) : ViewModel() {
-  private val _savedSortType = handle.getStateFlow(RECIPES_SORT_TYPE_KEY, RecipesSortType.NAME)
-
   private val args = handle.toRoute<Route.RecipeList>(typeMap = mapOf(typeOf<SharedRecipe?>() to navTypeOf<SharedRecipe?>(true)))
 
   @OptIn(SavedStateHandleSaveableApi::class)

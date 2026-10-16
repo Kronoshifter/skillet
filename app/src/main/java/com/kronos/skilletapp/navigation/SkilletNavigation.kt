@@ -50,8 +50,8 @@ fun KClass<out Route>.toRouteString(): String {
     properties
       .groupBy { it.returnType.isMarkedNullable }
       .let { grouped ->
-        val nonNullableProperties = grouped[false] ?: emptyList()
-        val nullableProperties = grouped[true] ?: emptyList()
+        val nonNullableProperties = grouped[false].orEmpty()
+        val nullableProperties = grouped[true].orEmpty()
         var count = 0
 
         nonNullableProperties.forEach { property -> append("/${count++}") }

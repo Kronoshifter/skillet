@@ -48,11 +48,11 @@ import com.kronos.skilletapp.utils.modifier.applyIf
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ItemRow(
-  modifier: Modifier = Modifier,
   showDetail: Boolean,
+  detail: @Composable BoxScope.() -> Unit,
+  modifier: Modifier = Modifier,
   detailBackgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
   detailContentColor: Color = contentColorFor(detailBackgroundColor),
-  detail: @Composable BoxScope.() -> Unit,
   decoration: Boolean = false,
   enabled: Boolean = true,
   onClick: () -> Unit = {},
@@ -107,13 +107,13 @@ fun ItemRow(
 
 @Composable
 fun ItemPill(
+  leadingContent: @Composable RowScope.() -> Unit,
   modifier: Modifier = Modifier,
   enabled: Boolean = false,
   onClick: () -> Unit = {},
   color: Color = MaterialTheme.colorScheme.primary,
   borderColor: Color = MaterialTheme.colorScheme.primary,
   leadingContentColor: Color = contentColorFor(color),
-  leadingContent: @Composable RowScope.() -> Unit,
   trailingIcon: @Composable (() -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
@@ -145,7 +145,7 @@ fun ItemPill(
 
 @Preview
 @Composable
-fun ItemPillPreview() {
+private fun ItemPillPreview() {
   SkilletAppTheme {
     Surface {
       ItemPill(

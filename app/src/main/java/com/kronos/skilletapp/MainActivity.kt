@@ -18,7 +18,6 @@ import com.kronos.skilletapp.navigation.SkilletNavGraph
 import com.kronos.skilletapp.navigation.SkilletNavigationActions
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
-import org.koin.compose.KoinContext
 
 class MainActivity : ComponentActivity() {
   private val intentFlow = MutableSharedFlow<Intent>(extraBufferCapacity = 1)
@@ -29,23 +28,21 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
 
     setContent {
-      KoinContext() {
-        SkilletAppTheme {
-          val navController = rememberNavController()
-          val navActions = remember(navController) { SkilletNavigationActions(navController) }
+      SkilletAppTheme {
+        val navController = rememberNavController()
+        val navActions = remember(navController) { SkilletNavigationActions(navController) }
 
-          Surface {
-            CompositionLocalProvider(
-              LocalNavigationActions provides navActions,
-              LocalNavController provides navController,
-            ) {
-              SkilletNavGraph(
-                intentFlow = intentFlow,
-                modifier = Modifier.fillMaxSize(),
-                navController = navController,
-                navActions = navActions,
-              )
-            }
+        Surface {
+          CompositionLocalProvider(
+            LocalNavigationActions provides navActions,
+            LocalNavController provides navController,
+          ) {
+            SkilletNavGraph(
+              intentFlow = intentFlow,
+              modifier = Modifier.fillMaxSize(),
+              navController = navController,
+              navActions = navActions,
+            )
           }
         }
       }

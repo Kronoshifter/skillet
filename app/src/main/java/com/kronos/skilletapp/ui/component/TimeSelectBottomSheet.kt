@@ -23,10 +23,11 @@ private const val MINUTES_PER_HOUR = 60
 @Composable
 fun TimeSelectBottomSheet(
   initialTime: Int,
-  sheetState: SheetState = rememberModalBottomSheetState(),
   onDismissRequest: () -> Unit,
   onTimeSelect: (Int) -> Unit,
   title: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+  sheetState: SheetState = rememberModalBottomSheetState(),
 ) {
   var hours by remember { mutableIntStateOf(initialTime / MINUTES_PER_HOUR) }
   var minutes by remember { mutableIntStateOf(initialTime % MINUTES_PER_HOUR) }
@@ -34,7 +35,7 @@ fun TimeSelectBottomSheet(
   ActionBottomSheet(
     sheetState = sheetState,
     onDismissRequest = onDismissRequest,
-    modifier = Modifier.fillMaxWidth().padding(8.dp),
+    modifier = modifier.fillMaxWidth().padding(8.dp),
     title = title,
     action = { TextButton(onClick = { onTimeSelect(hours * MINUTES_PER_HOUR + minutes) }) { Text(text = "Save") } },
   ) {

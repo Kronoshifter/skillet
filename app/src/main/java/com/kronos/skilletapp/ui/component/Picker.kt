@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -47,7 +48,6 @@ fun <T> InfiniteScrollingPicker(
   modifier: Modifier = Modifier,
   visibleItemCount: Int = 3,
   itemHeight: Dp = 40.dp,
-  divider: @Composable (offset: Dp) -> Unit = { HorizontalDivider(modifier = Modifier.offset(y = it)) },
   optionContent: @Composable BoxScope.(T) -> Unit = { Text(text = it.toString()) },
 ) {
   require(visibleItemCount % 2 == 1) { "visibleItemCount must be an odd number" }
@@ -83,23 +83,24 @@ fun <T> InfiniteScrollingPicker(
       }
     }
 
-    divider(itemHeight * (center))
-    divider(itemHeight * (center + 1))
+    HorizontalDivider(modifier = Modifier.offset(y = itemHeight * center))
+    HorizontalDivider(modifier = Modifier.offset(y = itemHeight * (center + 1)))
   }
 
+  val currentOnSelect by rememberUpdatedState(onSelect)
   LaunchedEffect(listState) {
     snapshotFlow { listState.firstVisibleItemIndex }
       .map { index -> options[(index + center) % options.size] }
       .distinctUntilChanged()
-      .collect { onSelect(it) }
+      .collect { currentOnSelect(it) }
   }
 }
 
 @Preview
 @Composable
-fun PickerPreview() {
+private fun PickerPreview() {
   val options = 0..10
-  var selected by remember { mutableStateOf(options.first()) }
+  var selected by remember { mutableIntStateOf(options.first()) }
 
   SkilletAppTheme {
     Surface {
@@ -121,7 +122,7 @@ fun PickerPreview() {
 
 @Preview
 @Composable
-fun DoublePickerPreview() {
+private fun DoublePickerPreview() {
   SkilletAppTheme {
     Surface {
       Column {

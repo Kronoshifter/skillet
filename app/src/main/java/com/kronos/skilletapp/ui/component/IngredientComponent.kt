@@ -203,8 +203,8 @@ fun IngredientListItem(
   if (showBottomSheet) {
     UnitSelectionBottomSheet(
       onDismissRequest = { showBottomSheet = false },
-      onUnitSelect = {
-        onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
+      onUnitSelect = { unit ->
+        onUnitSelect(ingredient, unit.takeIf { selectedUnit != it })
         sheetState.dismiss(scope) { showBottomSheet = false }
       },
       ingredient = ingredient,
@@ -219,6 +219,7 @@ fun IngredientListItem(
 @OptIn(ExperimentalMaterial3Api::class)
 fun IngredientPill(
   ingredient: Ingredient,
+  modifier: Modifier = Modifier,
   scale: Float = 1f,
   //  selectedUnits: Map<Ingredient, MeasurementUnit?> = mapOf(),
   selectedUnit: MeasurementUnit? = null,
@@ -237,6 +238,7 @@ fun IngredientPill(
   val borderColor = selectedUnit?.let { contentColor } ?: bgColor
 
   ItemPill(
+    modifier = modifier,
     enabled = measurements.isNotEmpty(),
     onClick = { showBottomSheet = true },
     color = bgColor,
@@ -282,8 +284,8 @@ fun IngredientPill(
   if (showBottomSheet) {
     UnitSelectionBottomSheet(
       onDismissRequest = { showBottomSheet = false },
-      onUnitSelect = {
-        onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
+      onUnitSelect = { unit ->
+        onUnitSelect(ingredient, unit.takeIf { selectedUnit != it })
         sheetState.dismiss(scope) { showBottomSheet = false }
       },
       ingredient = ingredient,
@@ -316,7 +318,7 @@ private fun IngredientRowPreview() {
 
 @Preview
 @Composable
-fun IngredientRowCheckablePreview() {
+private fun IngredientRowCheckablePreview() {
   val ingredient =
     Ingredient(
       name = "Pasta",
@@ -345,7 +347,7 @@ fun IngredientRowCheckablePreview() {
 
 @Preview
 @Composable
-fun IngredientListItemPreview() {
+private fun IngredientListItemPreview() {
   val ingredient =
     Ingredient(
       name = "Pasta",
@@ -388,7 +390,7 @@ private fun IngredientPillPreview() {
 
 @Preview
 @Composable
-fun IngredientPillNoQuantityPreview() {
+private fun IngredientPillNoQuantityPreview() {
   val ingredient =
     Ingredient(
       name = "Salt",
@@ -409,7 +411,7 @@ fun IngredientPillNoQuantityPreview() {
 
 @Preview
 @Composable
-fun IngredientPillNoMeasurementPreview() {
+private fun IngredientPillNoMeasurementPreview() {
   val ingredient =
     Ingredient(
       name = "Pepe",

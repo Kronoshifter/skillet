@@ -82,6 +82,7 @@ private sealed class CookingContentTab {
 @Composable
 fun CookingScreen(
   onBack: () -> Unit,
+  modifier: Modifier = Modifier,
   vm: CookingViewModel = koinViewModel(),
 ) {
   val cookingAsync by vm.cookingAsync.collectAsStateWithLifecycle()
@@ -89,7 +90,7 @@ fun CookingScreen(
 
   AsyncContent(
     async = cookingAsync,
-    modifier = Modifier.fillMaxSize(),
+    modifier = modifier.fillMaxSize(),
   ) { recipe ->
     Scaffold(
       topBar = {
@@ -371,7 +372,7 @@ fun CompleteTabContent(
 
 @Preview
 @Composable
-fun OverviewContentPreview() {
+private fun OverviewContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -393,7 +394,7 @@ fun OverviewContentPreview() {
 
 @Preview
 @Composable
-fun InstructionContentPreview() {
+private fun InstructionContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -415,7 +416,7 @@ fun InstructionContentPreview() {
 
 @Preview
 @Composable
-fun CompleteContentPreview() {
+private fun CompleteContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 

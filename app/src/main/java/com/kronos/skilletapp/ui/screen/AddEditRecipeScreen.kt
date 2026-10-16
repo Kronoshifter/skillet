@@ -226,7 +226,7 @@ fun AddEditRecipeScreen(
         onUserMessage = vm::showMessage,
       )
 
-      LaunchedEffect(recipeState.isRecipeSaved) {
+      LaunchedEffect(recipeState.isRecipeSaved, onRecipeUpdate) {
         if (recipeState.isRecipeSaved) {
           onRecipeUpdate(vm.getRecipeId())
         }
@@ -346,7 +346,7 @@ fun AddEditRecipeContent(
             AddEditRecipeContentTab.Ingredients ->
               IngredientsContent(
                 ingredients = state.ingredients,
-                onIngredientChanged = collectionOps::updateIngredient,
+                onIngredientChange = collectionOps::updateIngredient,
                 onRemoveIngredient = collectionOps::removeIngredient,
                 onMoveIngredient = collectionOps::moveIngredient,
                 onUserMessage = onUserMessage,
@@ -356,7 +356,7 @@ fun AddEditRecipeContent(
               InstructionsContent(
                 instructions = state.instructions,
                 ingredients = state.ingredients,
-                onInstructionChanged = collectionOps::updateInstruction,
+                onInstructionChange = collectionOps::updateInstruction,
                 onRemoveInstruction = collectionOps::removeInstruction,
                 onMoveInstruction = collectionOps::moveInstruction,
               )
@@ -404,15 +404,15 @@ private fun RecipeInfoContent(
     RecipeSourceSection(
       source = state.source,
       sourceName = state.sourceName,
-      onSourceChanged = fieldOps::updateSource,
-      onSourceNameChanged = fieldOps::updateSourceName,
+      onSourceChange = fieldOps::updateSource,
+      onSourceNameChange = fieldOps::updateSourceName,
     )
 
     HorizontalDivider()
 
     RecipeImageSection(
       image = state.image,
-      onImageChanged = fieldOps::updateImage,
+      onImageChange = fieldOps::updateImage,
     )
 
     HorizontalDivider()
@@ -424,7 +424,7 @@ private fun RecipeInfoContent(
     //
     //    OutlinedTextField(
     //      value = description,
-    //      onValueChange = onDescriptionChanged,
+    //      onValueChange = onDescriptionChange,
     //      modifier = Modifier.fillMaxWidth(),
     //      minLines = 3,
     //      keyboardOptions = KeyboardOptions(
@@ -438,7 +438,7 @@ private fun RecipeInfoContent(
 
     RecipeServingsField(
       servings = state.servings,
-      onServingsChanged = fieldOps::updateServings,
+      onServingsChange = fieldOps::updateServings,
     )
 
     HorizontalDivider()
@@ -448,7 +448,7 @@ private fun RecipeInfoContent(
       description = "How long does this recipe take to prepare?",
       placeholder = "Set prep time",
       timeMinutes = state.prepTime,
-      onTimeChanged = fieldOps::updatePrepTime,
+      onTimeChange = fieldOps::updatePrepTime,
     )
 
     HorizontalDivider()
@@ -458,7 +458,7 @@ private fun RecipeInfoContent(
       description = "How long does this recipe take to cook?",
       placeholder = "Set cook time",
       timeMinutes = state.cookTime,
-      onTimeChanged = fieldOps::updateCookTime,
+      onTimeChange = fieldOps::updateCookTime,
     )
 
     HorizontalDivider()
@@ -489,8 +489,8 @@ private fun RecipeInfoContent(
 private fun RecipeSourceSection(
   source: String,
   sourceName: String,
-  onSourceChanged: (String) -> Unit,
-  onSourceNameChanged: (String) -> Unit,
+  onSourceChange: (String) -> Unit,
+  onSourceNameChange: (String) -> Unit,
 ) {
   Column {
     Text(
@@ -532,8 +532,8 @@ private fun RecipeSourceSection(
         action = {
           TextButton(
             onClick = {
-              onSourceChanged(sourceInput)
-              onSourceNameChanged(sourceNameInput)
+              onSourceChange(sourceInput)
+              onSourceNameChange(sourceNameInput)
 
               sheetState.dismiss(scope) { showSourceSheet = false }
             }
@@ -580,7 +580,7 @@ private fun RecipeSourceSection(
 @Composable
 private fun RecipeImageSection(
   image: String?,
-  onImageChanged: (String?) -> Unit,
+  onImageChange: (String?) -> Unit,
 ) {
   SharedTransitionLayout {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -590,7 +590,7 @@ private fun RecipeImageSection(
           if (uri != null) {
             val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, flag)
-            onImageChanged(uri.toString())
+            onImageChange(uri.toString())
           } else {
             Log.d("PhotoPicker", "No media selected")
           }
@@ -642,7 +642,7 @@ private fun RecipeImageSection(
               )
             }
 
-            IconButton(onClick = { onImageChanged(null) }) {
+            IconButton(onClick = { onImageChange(null) }) {
               Icon(
                 imageVector = Icons.Filled.Delete,
                 contentDescription = "Delete Image",
@@ -744,7 +744,7 @@ private fun RecipeImageDisplay(
 @Composable
 private fun RecipeServingsField(
   servings: Int,
-  onServingsChanged: (Int) -> Unit,
+  onServingsChange: (Int) -> Unit,
 ) {
   Column {
     Text(
@@ -780,7 +780,7 @@ private fun RecipeServingsField(
         action = {
           TextButton(
             onClick = {
-              onServingsChanged(servingsSelect)
+              onServingsChange(servingsSelect)
               sheetState.dismiss(scope) { showServingsPicker = false }
             }
           ) {
@@ -807,7 +807,7 @@ private fun RecipeTimeField(
   description: String,
   placeholder: String,
   timeMinutes: Int,
-  onTimeChanged: (Int) -> Unit,
+  onTimeChange: (Int) -> Unit,
 ) {
   Column {
     Text(
@@ -851,7 +851,7 @@ private fun RecipeTimeField(
         onDismissRequest = { showTimePicker = false },
         title = { Text(label) },
         onTimeSelect = {
-          onTimeChanged(it)
+          onTimeChange(it)
           sheetState.dismiss(scope) { showTimePicker = false }
         },
       )
@@ -899,7 +899,7 @@ private fun SquareIconButton(
 @Composable
 private fun IngredientsContent(
   ingredients: List<Ingredient>,
-  onIngredientChanged: (Ingredient) -> Unit,
+  onIngredientChange: (Ingredient) -> Unit,
   onRemoveIngredient: (Ingredient) -> Unit,
   onMoveIngredient: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
@@ -938,7 +938,7 @@ private fun IngredientsContent(
           state = reorderableLazyListState,
           ingredient = ingredient,
           reordering = reordering,
-          onIngredientChanged = onIngredientChanged,
+          onIngredientChange = onIngredientChange,
           onRemoveIngredient = onRemoveIngredient,
           onUserMessage = onUserMessage,
         )
@@ -967,7 +967,7 @@ private fun IngredientsContent(
                     if (ingredientInput.contains("\n")) {
                       runCatching { parser.parseIngredients(ingredientInput) }
                         .onOk { newIngredients ->
-                          newIngredients.forEach { onIngredientChanged(it) }
+                          newIngredients.forEach { onIngredientChange(it) }
                           ingredientInput = ""
                           scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
                         }
@@ -975,7 +975,7 @@ private fun IngredientsContent(
                     } else {
                       runCatching { parser.parseIngredient(ingredientInput) }
                         .onOk {
-                          onIngredientChanged(it)
+                          onIngredientChange(it)
                           ingredientInput = ""
                           scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
                         }
@@ -998,7 +998,7 @@ private fun LazyItemScope.ReorderableIngredientItem(
   state: ReorderableLazyListState,
   ingredient: Ingredient,
   reordering: Boolean,
-  onIngredientChanged: (Ingredient) -> Unit,
+  onIngredientChange: (Ingredient) -> Unit,
   onRemoveIngredient: (Ingredient) -> Unit,
   onUserMessage: (String) -> Unit,
 ) {
@@ -1068,7 +1068,7 @@ private fun LazyItemScope.ReorderableIngredientItem(
                 }
                 .focusRequester(focusRequester),
             onEdit = {
-              onIngredientChanged(it)
+              onIngredientChange(it)
               editing = false
             },
             onRemove = {
@@ -1094,10 +1094,10 @@ private fun LazyItemScope.ReorderableIngredientItem(
 @Composable
 private fun IngredientEdit(
   ingredient: Ingredient,
+  onUserMessage: (String) -> Unit,
   modifier: Modifier = Modifier,
   onEdit: (Ingredient) -> Unit = {},
   onRemove: (Ingredient) -> Unit = {},
-  onUserMessage: (String) -> Unit,
   parser: IngredientParser = koinInject(),
 ) {
   var ingredientInput by remember {
@@ -1150,9 +1150,10 @@ private fun IngredientEdit(
 fun InstructionsContent(
   instructions: List<Instruction>,
   ingredients: List<Ingredient>,
-  onInstructionChanged: (Instruction) -> Unit,
+  onInstructionChange: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   onMoveInstruction: (Int, Int) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
@@ -1168,7 +1169,7 @@ fun InstructionsContent(
 
   var reordering by remember { mutableStateOf(false) }
 
-  Column {
+  Column(modifier = modifier) {
     TextButton(
       onClick = { reordering = !reordering },
       enabled = instructions.size > 1,
@@ -1205,8 +1206,8 @@ fun InstructionsContent(
                 reorderScope = this@ReorderableItem,
                 instruction = instruction,
                 ingredients = ingredients,
-                onToggleExpanded = { expanded = it },
-                onInstructionChanged = onInstructionChanged,
+                onToggleExpand = { expanded = it },
+                onInstructionChange = onInstructionChange,
                 onRemoveInstruction = onRemoveInstruction,
               )
 
@@ -1239,10 +1240,10 @@ fun InstructionsContent(
                 onDone = {
                   if (instructionInput.isNotBlank()) {
                     if (instructionInput.contains("\n")) {
-                      instructionInput.split("\n").map { Instruction(it) }.forEach { onInstructionChanged(it) }
+                      instructionInput.split("\n").map { Instruction(it) }.forEach { onInstructionChange(it) }
                     } else {
                       val instruction = Instruction(instructionInput)
-                      onInstructionChanged(instruction)
+                      onInstructionChange(instruction)
                     }
                     instructionInput = ""
                     scope.launch { lazyListState.animateScrollToItem(instructions.size) }
@@ -1266,8 +1267,8 @@ fun InstructionComponent(
   reorderScope: ReorderableCollectionItemScope,
   instruction: Instruction,
   ingredients: List<Ingredient>,
-  onToggleExpanded: (Boolean) -> Unit,
-  onInstructionChanged: (Instruction) -> Unit,
+  onToggleExpand: (Boolean) -> Unit,
+  onInstructionChange: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -1287,8 +1288,8 @@ fun InstructionComponent(
       reordering = reordering,
       reorderScope = reorderScope,
       instruction = instruction,
-      onToggleExpanded = onToggleExpanded,
-      onInstructionChanged = onInstructionChanged,
+      onToggleExpand = onToggleExpand,
+      onInstructionChange = onInstructionChange,
       onRemoveInstruction = onRemoveInstruction,
     )
 
@@ -1296,64 +1297,64 @@ fun InstructionComponent(
       instruction = instruction,
       ingredients = ingredients,
       isExpanded = isExpanded,
-      onInstructionChanged = onInstructionChanged,
+      onInstructionChange = onInstructionChange,
       onShowIngredientSheet = { showBottomSheet = true },
     )
-  }
 
-  if (showBottomSheet) {
-    val newIngredients = remember { instruction.ingredients.toMutableStateList() }
+    if (showBottomSheet) {
+      val newIngredients = remember { instruction.ingredients.toMutableStateList() }
 
-    ActionBottomSheet(
-      onDismissRequest = { showBottomSheet = false },
-      sheetState = sheetState,
-      modifier = Modifier.fillMaxWidth().padding(8.dp),
-      title = { Text(text = "Select Ingredients") },
-      action = {
-        TextButton(
-          onClick = {
-            onInstructionChanged(instruction.copy(ingredients = newIngredients))
-            sheetState.dismiss(scope) { showBottomSheet = false }
-          }
-        ) {
-          Text(text = "Save")
-        }
-      },
-    ) {
-      LazyColumn(
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.wrapContentSize(),
-      ) {
-        items(ingredients) { ingredient ->
-          ItemPill(
-            modifier = Modifier.fillMaxWidth(),
-            leadingContent = {
-              if (ingredient.measurement.quantity > 0) {
-                IngredientQuantity(ingredient = ingredient)
-              }
-            },
-            trailingIcon = {
-              Checkbox(
-                checked = newIngredients.contains(ingredient),
-                onCheckedChange = null,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-              )
-            },
-            enabled = true,
+      ActionBottomSheet(
+        onDismissRequest = { showBottomSheet = false },
+        sheetState = sheetState,
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        title = { Text(text = "Select Ingredients") },
+        action = {
+          TextButton(
             onClick = {
-              if (newIngredients.contains(ingredient)) {
-                newIngredients.remove(ingredient)
-              } else {
-                newIngredients.add(ingredient)
-              }
-            },
+              onInstructionChange(instruction.copy(ingredients = newIngredients))
+              sheetState.dismiss(scope) { showBottomSheet = false }
+            }
           ) {
-            Text(
-              text = ingredient.name,
-              modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
-            )
+            Text(text = "Save")
+          }
+        },
+      ) {
+        LazyColumn(
+          contentPadding = PaddingValues(8.dp),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalAlignment = Alignment.CenterHorizontally,
+          modifier = Modifier.wrapContentSize(),
+        ) {
+          items(ingredients) { ingredient ->
+            ItemPill(
+              modifier = Modifier.fillMaxWidth(),
+              leadingContent = {
+                if (ingredient.measurement.quantity > 0) {
+                  IngredientQuantity(ingredient = ingredient)
+                }
+              },
+              trailingIcon = {
+                Checkbox(
+                  checked = newIngredients.contains(ingredient),
+                  onCheckedChange = null,
+                  modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+              },
+              enabled = true,
+              onClick = {
+                if (newIngredients.contains(ingredient)) {
+                  newIngredients.remove(ingredient)
+                } else {
+                  newIngredients.add(ingredient)
+                }
+              },
+            ) {
+              Text(
+                text = ingredient.name,
+                modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
+              )
+            }
           }
         }
       }
@@ -1368,8 +1369,8 @@ private fun InstructionStepHeader(
   reordering: Boolean,
   reorderScope: ReorderableCollectionItemScope,
   instruction: Instruction,
-  onToggleExpanded: (Boolean) -> Unit,
-  onInstructionChanged: (Instruction) -> Unit,
+  onToggleExpand: (Boolean) -> Unit,
+  onInstructionChange: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
 ) {
   var editing by remember { mutableStateOf(false) }
@@ -1379,7 +1380,7 @@ private fun InstructionStepHeader(
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.SpaceBetween,
-    modifier = Modifier.fillMaxWidth().clickable(enabled = !reordering) { onToggleExpanded(!expanded) },
+    modifier = Modifier.fillMaxWidth().clickable(enabled = !reordering) { onToggleExpand(!expanded) },
   ) {
     Text(
       text = "Step $step",
@@ -1450,7 +1451,7 @@ private fun InstructionStepHeader(
             }
             .focusRequester(focusRequester),
         onEdit = {
-          onInstructionChanged(it)
+          onInstructionChange(it)
           editing = false
         },
         onRemove = {
@@ -1476,7 +1477,7 @@ private fun InstructionIngredientsArea(
   instruction: Instruction,
   ingredients: List<Ingredient>,
   isExpanded: Boolean,
-  onInstructionChanged: (Instruction) -> Unit,
+  onInstructionChange: (Instruction) -> Unit,
   onShowIngredientSheet: () -> Unit,
 ) {
   AnimatedVisibility(
@@ -1496,7 +1497,7 @@ private fun InstructionIngredientsArea(
               val visible = remember { MutableTransitionState(true) }
 
               if (!visible.targetState && !visible.currentState && visible.isIdle) {
-                onInstructionChanged(instruction.copy(ingredients = instruction.ingredients - ingredient))
+                onInstructionChange(instruction.copy(ingredients = instruction.ingredients - ingredient))
               }
 
               AnimatedVisibility(
@@ -1640,7 +1641,7 @@ private fun TextFieldValue.isNotBlank() = text.isNotBlank()
 
 @Preview
 @Composable
-fun AddEditRecipeContentPreview() {
+private fun AddEditRecipeContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
     val formState =
@@ -1673,7 +1674,7 @@ fun AddEditRecipeContentPreview() {
 @OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
-fun IngredientsTabPreview() {
+private fun IngredientsTabPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -1683,7 +1684,7 @@ fun IngredientsTabPreview() {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         IngredientsContent(
           ingredients = ingredients,
-          onIngredientChanged = { ingredients.add(it) },
+          onIngredientChange = { ingredients.add(it) },
           onRemoveIngredient = { ingredients.remove(it) },
           onMoveIngredient = { from, to -> with(ingredients) { add(to, removeAt(from)) } },
           onUserMessage = {},
@@ -1695,7 +1696,7 @@ fun IngredientsTabPreview() {
 
 @Preview
 @Composable
-fun IngredientEditPreview() {
+private fun IngredientEditPreview() {
   val ingredients = mutableListOf(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
   ingredients.add(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
 
@@ -1730,7 +1731,7 @@ fun IngredientEditPreview() {
 
 @Preview
 @Composable
-fun InstructionsTabPreview() {
+private fun InstructionsTabPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -1742,7 +1743,7 @@ fun InstructionsTabPreview() {
         InstructionsContent(
           instructions = instructions,
           ingredients = ingredients,
-          onInstructionChanged = { instruction ->
+          onInstructionChange = { instruction ->
             instructions =
               if (instructions.any { it.id == instruction.id }) {
                 instructions.map { i -> if (i.id == instruction.id) instruction else i }

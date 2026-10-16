@@ -131,7 +131,7 @@ class AddEditRecipeViewModel(
   }
 
   private fun updateRecipe() {
-    check(recipeId != null) { "No recipe id to update" }
+    checkNotNull(recipeId) { "No recipe id to update" }
 
     viewModelScope.launch {
       val recipe = buildRecipeFromState()

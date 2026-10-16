@@ -38,6 +38,6 @@ class ScrapeRecipe(private val scraper: RecipeScraper) {
   private fun String.parseMinutes(): Int = Duration.parseIsoString(this).inWholeMinutes.toInt()
 
   private fun extractSourceName(url: String): String {
-    return """(\w+\.?)+\.\w+""".toRegex().find(url)?.value ?: ""
+    return """(\w+\.?)+\.\w+""".toRegex().find(url)?.value.orEmpty()
   }
 }

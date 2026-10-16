@@ -1,9 +1,6 @@
 package com.kronos.skilletapp.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
@@ -15,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.NonRestartableComposable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
@@ -57,7 +53,6 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.koinConfiguration
 import org.koin.dsl.module
-import org.koin.plugin.module.dsl.single
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -72,9 +67,9 @@ fun <T> AsyncContent(
   AnimatedContent(
     targetState = async,
     label = "Async",
-    modifier = Modifier.fillMaxSize(),
+    modifier = Modifier.fillMaxSize().then(modifier),
   ) { targetState ->
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
       when (targetState) {
         Async.Idle -> idle?.invoke() ?: CircularProgressIndicator()
         Async.Loading -> loading?.invoke() ?: CircularProgressIndicator()
@@ -96,9 +91,9 @@ fun DeferredContent(
   AnimatedContent(
     targetState = isDeferred,
     label = "Deferred",
-    modifier = Modifier.fillMaxSize(),
+    modifier = Modifier.fillMaxSize().then(modifier),
   ) { deferred ->
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().then(modifier)) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
       if (deferred) {
         loading?.invoke() ?: CircularProgressIndicator()
       } else {
@@ -326,6 +321,3 @@ inline fun <reified T> saverOf(): Saver<T, *> =
 val FabSpacing = 16.dp
 val FabHeight = 56.dp
 val FabPadding = FabSpacing + FabHeight + FabSpacing
-
-@OptIn(ExperimentalSharedTransitionApi::class) val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
-val LocalNavAnimatedVisibilityScope = compositionLocalOf<AnimatedVisibilityScope?> { null }

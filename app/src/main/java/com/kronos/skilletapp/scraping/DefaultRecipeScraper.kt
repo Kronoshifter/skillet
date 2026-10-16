@@ -11,10 +11,8 @@ import com.kronos.skilletapp.model.JsonParseError
 import com.kronos.skilletapp.model.RecipeScrapeError
 import it.skrape.core.htmlDocument
 import it.skrape.fetcher.AsyncFetcher
-import it.skrape.fetcher.HttpFetcher
 import it.skrape.fetcher.response
 import it.skrape.fetcher.skrape
-import it.skrape.selects.eachText
 import it.skrape.selects.html5.script
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -101,10 +99,10 @@ class DefaultRecipeScraper : RecipeScraper {
   }
 
   private fun JsonElement.findJson(key: String): JsonElement? =
-    when {
-      this is JsonObject && "@type" in this && this.getValue("@type") isOrContains key -> this
-      this is JsonObject && key !in this -> this.firstNotNullOfOrNull { it.value.findJson(key) }
-      this is JsonArray -> this.firstNotNullOfOrNull { it.findJson(key) }
+    when (this) {
+      is JsonObject if "@type" in this && this.getValue("@type") isOrContains key -> this
+      is JsonObject if key !in this -> this.firstNotNullOfOrNull { it.value.findJson(key) }
+      is JsonArray -> this.firstNotNullOfOrNull { it.findJson(key) }
       else -> null
     }
 
@@ -122,31 +120,4 @@ class DefaultRecipeScraper : RecipeScraper {
     }
       .mapError { JsonParseError("Failed to parse JSON-LD: ${it.message}") }
   }
-
-  private fun scrapeMicrodata(recipeUrl: String): Result<RecipeHtml, RecipeScrapeError> =
-    skrape(HttpFetcher) {
-      request { url = recipeUrl }
-
-      runCatching {
-        response {
-          htmlDocument {
-            relaxed = true
-
-            val name = "[itemprop=name]" { findFirst { text } }
-
-            val ingredients = "[itemprop=recipeIngredient]" { findAll { eachText } }
-
-            RecipeHtml(
-              name = name,
-              ingredients = ingredients,
-              instructions = listOf(),
-              recipeYield = listOf(),
-              prepTime = "",
-              cookTime = "",
-            )
-          }
-        }
-      }
-        .mapError { InvalidHtmlError("Failed to scrape microdata: ${it.message}") }
-    }
 }

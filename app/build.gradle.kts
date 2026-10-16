@@ -125,6 +125,10 @@ dependencies {
   // Coil
   implementation(libs.bundles.coil)
 
+  // Detekt
+  detektPlugins(libs.detekt.koin)
+  detektPlugins(libs.detekt.compose)
+
   // Testing
   testImplementation(libs.junit)
   testImplementation(libs.bundles.kotest)

@@ -47,6 +47,10 @@ ktfmt {
 dependencies {
   api(libs.kotlinx.serialization.json)
 
+  // Detekt
+  detektPlugins(libs.detekt.koin)
+  detektPlugins(libs.detekt.compose)
+
   testImplementation(libs.kotest.runner)
   testImplementation(libs.kotest.assertions)
   testImplementation(libs.kotest.property)

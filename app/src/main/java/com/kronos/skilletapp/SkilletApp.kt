@@ -25,7 +25,6 @@ import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.ui.viewmodel.RecipeViewModel
-import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -38,8 +37,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.dsl.onClose
 import org.koin.plugin.module.dsl.create
-import org.koin.plugin.module.dsl.modules
-import org.koin.plugin.module.dsl.single
 
 class SkilletApp : Application() {
 
@@ -64,7 +61,7 @@ private val fkPragmaCallback =
     }
   }
 
-private fun database(context: Context) =
+private fun database(context: Context, dispatcherProvider: DispatcherProvider) =
   Room.databaseBuilder(
       context = context,
       klass = RecipeDatabase::class.java,
@@ -72,7 +69,7 @@ private fun database(context: Context) =
     )
     .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
     .addCallback(fkPragmaCallback)
-    .setQueryCoroutineContext(Dispatchers.IO)
+    .setQueryCoroutineContext(dispatcherProvider.io)
     .setDriver(AndroidSQLiteDriver())
     .build()
 
@@ -88,6 +85,8 @@ private fun imageLoader(context: Context) = ImageLoader.Builder(context).crossfa
 
 val appModule = module {
   //  single { IngredientAiParser(androidContext()) }
+
+  singleOf(::DefaultDispatcherProvider) bind DispatcherProvider::class
 
   single { create(::database) } withOptions { createdAtStart() } onClose { it?.close() }
   single { create(::recipeDao) } withOptions { createdAtStart() }

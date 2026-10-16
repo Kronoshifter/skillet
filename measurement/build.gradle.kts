@@ -34,6 +34,10 @@ dependencies {
   // Shared utilities
   implementation(project(":utils"))
 
+  // Detekt
+  detektPlugins(libs.detekt.koin)
+  detektPlugins(libs.detekt.compose)
+
   // Testing
   testImplementation(libs.kotest.runner)
   testImplementation(libs.kotest.assertions)

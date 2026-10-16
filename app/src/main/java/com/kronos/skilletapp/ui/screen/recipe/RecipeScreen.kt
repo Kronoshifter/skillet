@@ -143,6 +143,7 @@ fun RecipeScreen(
   onBack: () -> Unit,
   onEdit: () -> Unit,
   onCook: (currentServings: Int) -> Unit,
+  modifier: Modifier = Modifier,
   vm: RecipeViewModel = koinViewModel(),
 ) {
   val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()
@@ -176,6 +177,7 @@ fun RecipeScreen(
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
   Scaffold(
+    modifier = modifier,
     topBar = { RecipeTopBar(onBack = onBack, onEdit = onEdit, scrollBehavior = scrollBehavior) },
     floatingActionButton = {
       RecipeCookFab(fabTransition = fabTransition, isExpanded = isFabExpanded, onClick = { onCook(uiState.currentServings) })
@@ -189,7 +191,7 @@ fun RecipeScreen(
         recipe = recipe,
         currentServings = uiState.currentServings,
         selectedUnits = uiState.selectedUnits,
-        onScalingChanged = vm::setScaling,
+        onScalingChange = vm::setScaling,
         onUnitSelect = vm::selectUnit,
         scaledIngredients = uiState.scaledIngredients,
         originalIngredients = recipe.ingredients,
@@ -248,10 +250,10 @@ private fun RecipeCookFab(
 private fun RecipeContent(
   recipe: Recipe,
   currentServings: Int,
+  onScalingChange: (currentServings: Int) -> Unit,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
   selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
-  onScalingChanged: (currentServings: Int) -> Unit,
-  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   scaledIngredients: List<Ingredient> = emptyList(),
   originalIngredients: List<Ingredient> = emptyList(),
   pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size },
@@ -280,7 +282,7 @@ private fun RecipeContent(
     ScalingControls(
       currentServings = currentServings,
       baseServings = recipe.servings,
-      onScalingChanged = onScalingChanged,
+      onScalingChange = onScalingChange,
       scaleOptions = scaleOptions,
     )
 
@@ -310,6 +312,7 @@ private fun RecipeContent(
     LaunchedEffect(pagerState.targetPage) { tab = RecipeContentTab.entries[pagerState.targetPage] }
 
     ContentPager(
+      modifier = Modifier.fillMaxWidth(),
       pagerState = pagerState,
       recipe = recipe,
       scale = scale,
@@ -332,15 +335,16 @@ private fun ContentPager(
   scale: Float,
   selectedUnits: Map<Ingredient, MeasurementUnit?>,
   onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
-  scaledIngredients: List<Ingredient> = emptyList(),
-  originalIngredients: List<Ingredient> = emptyList(),
   ingredientListState: LazyListState,
   instructionsListState: LazyListState,
   topAppBarScrollBehavior: TopAppBarScrollBehavior,
+  modifier: Modifier = Modifier,
+  scaledIngredients: List<Ingredient> = emptyList(),
+  originalIngredients: List<Ingredient> = emptyList(),
 ) {
   HorizontalPager(
     state = pagerState,
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier,
   ) {
     val page = RecipeContentTab.entries[it]
     Box(
@@ -522,7 +526,7 @@ private val DEFAULT_SCALE_OPTIONS = listOf(1f, 2f, 3f)
 private fun ScalingControls(
   currentServings: Int,
   baseServings: Int,
-  onScalingChanged: (currentServings: Int) -> Unit,
+  onScalingChange: (currentServings: Int) -> Unit,
   scaleOptions: List<Float> = DEFAULT_SCALE_OPTIONS,
 ) {
   Row(
@@ -530,7 +534,7 @@ private fun ScalingControls(
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier.padding(8.dp).fillMaxWidth().height(IntrinsicSize.Min),
   ) {
-    ServingsStepper(currentServings = currentServings, onScalingChanged = onScalingChanged)
+    ServingsStepper(currentServings = currentServings, onScalingChange = onScalingChange)
 
     SingleChoiceSegmentedButtonRow(modifier = Modifier.width(IntrinsicSize.Min).weight(1f)) {
       scaleOptions.forEach { option ->
@@ -540,7 +544,7 @@ private fun ScalingControls(
         SegmentedButton(
           selected = selected,
           enabled = enabled,
-          onClick = { onScalingChanged(targetServings) },
+          onClick = { onScalingChange(targetServings) },
           shape =
             when (option) {
               scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
@@ -570,7 +574,7 @@ private fun ScalingControls(
 @Composable
 private fun ServingsStepper(
   currentServings: Int,
-  onScalingChanged: (currentServings: Int) -> Unit,
+  onScalingChange: (currentServings: Int) -> Unit,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
@@ -579,7 +583,7 @@ private fun ServingsStepper(
     OutlinedIconButton(
       onClick = {
         val newServings = (currentServings - 1).coerceAtLeast(1)
-        onScalingChanged(newServings)
+        onScalingChange(newServings)
       },
       enabled = currentServings > 1,
     ) {
@@ -604,7 +608,7 @@ private fun ServingsStepper(
     OutlinedIconButton(
       onClick = {
         val newServings = currentServings + 1
-        onScalingChanged(newServings)
+        onScalingChange(newServings)
       }
     ) {
       Icon(imageVector = Icons.Filled.Add, contentDescription = null)
@@ -764,7 +768,7 @@ private fun RecipeContentPreview() {
           recipe = recipe,
           currentServings = currentServings,
           selectedUnits = selectedUnits,
-          onScalingChanged = { newServings -> currentServings = newServings },
+          onScalingChange = { newServings -> currentServings = newServings },
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
           //          topAppBarScrollBehavior = scrollBehavior
         )

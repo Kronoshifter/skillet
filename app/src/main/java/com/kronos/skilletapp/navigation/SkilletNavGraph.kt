@@ -86,8 +86,8 @@ fun SkilletNavGraph(
       val args = it.toRoute<Route.RecipeList>()
       RecipeListScreen(
         onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
-        onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },
-        onRecipeClick = { navActions.navigateToRecipe(it) },
+        onNewRecipeByUrl = { url -> navActions.navigateToAddEditRecipe(title = "Add Recipe", url = url) },
+        onRecipeClick = { recipeId -> navActions.navigateToRecipe(recipeId) },
         vm = koinViewModel(key = args.sharedRecipe.toString()),
       )
     }
@@ -115,9 +115,6 @@ fun SkilletNavGraph(
       )
     }
 
-    composable<Route.Cooking> { backStackEntry ->
-      val args = backStackEntry.toRoute<Route.Cooking>()
-      CookingScreen(onBack = { navController.navigateUp() })
-    }
+    composable<Route.Cooking> { CookingScreen(onBack = { navController.navigateUp() }) }
   }
 }
