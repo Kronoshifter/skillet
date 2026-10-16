@@ -46,7 +46,6 @@ ktfmt {
 
 dependencies {
   api(libs.kotlinx.serialization.json)
-  implementation(libs.kotlin.reflect)
 
   testImplementation(libs.kotest.runner)
   testImplementation(libs.kotest.assertions)

@@ -1,6 +1,5 @@
 package com.kronos.measurement.model
 
-import com.kronos.measurement.model.MeasurementUnit.None.baseUnit
 import com.kronos.utils.mutateUnless
 import kotlin.div
 
@@ -236,8 +235,6 @@ private class MeasurementConversionScopeImpl(val converter: MeasurementConverter
   }
 
   private infix fun Measurement.convertWith(converter: MeasurementConverter) = converter.convert(quantity)
-
-  private infix fun Measurement.reverseWith(converter: MeasurementConverter) = converter.reverse(quantity)
 }
 
 @DslMarker annotation class MeasurementUnitConverterDsl

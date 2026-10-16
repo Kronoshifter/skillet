@@ -4,7 +4,6 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.expect
 import com.github.michaelbull.result.toResultOr
 import com.kronos.utils.fraction
-import com.kronos.utils.haveSameTypes
 import com.kronos.utils.isCloseEnoughToZero
 import com.kronos.utils.nearestEighth
 import kotlinx.serialization.Serializable
@@ -109,11 +108,11 @@ fun MeasurementUnit.previous(filter: ((MeasurementUnit) -> Boolean)? = null): Re
   return filtered.getOrNull(filtered.indexOf(this) - 1).toResultOr {}
 }
 
-infix fun MeasurementUnit.hasSameDimensionAs(other: MeasurementUnit) =
-  (this to other).haveSameTypes(*MeasurementDimension::class.nestedClasses.toTypedArray())
+infix fun MeasurementUnit.hasSameDimensionAs(other: MeasurementUnit): Boolean =
+  MeasurementDimension::class.nestedClasses.any { it.isInstance(this) && it.isInstance(other) }
 
-infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit) =
-  (this to other).haveSameTypes(*MeasurementSystem::class.nestedClasses.toTypedArray())
+infix fun MeasurementUnit.hasSameSystemAs(other: MeasurementUnit): Boolean =
+  MeasurementSystem::class.nestedClasses.any { it.isInstance(this) && it.isInstance(other) }
 
 infix fun Number.of(unit: MeasurementUnit): Measurement = Measurement(this.toFloat(), unit)
 

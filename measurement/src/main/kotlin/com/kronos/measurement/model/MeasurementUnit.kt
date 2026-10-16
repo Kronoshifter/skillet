@@ -336,6 +336,6 @@ sealed interface MeasurementUnit {
     }
 
     fun fromName(unit: String?) =
-      unit?.let { values.firstOrNull { it.name == unit || it.abbreviation == unit || it.aliases.contains(unit) } ?: Custom(unit) } ?: None
+      unit?.let { values.firstOrNull { u -> u.name == unit || u.abbreviation == unit || u.aliases.contains(unit) } ?: Custom(unit) } ?: None
   }
 }
