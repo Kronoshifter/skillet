@@ -28,7 +28,7 @@ Workstream map (each task = one bead, fresh session each; Smith implements, Arch
 
 ## 3. Fix Band — re-measure gate
 
-- [ ] **3.1** Full re-measure, 3 consecutive green passes (bead `skillet-7ph.5`): (1) `./gradlew :utils:detektMain :measurement:detektMain :app:detektMain` exit 0; (2) `./gradlew :utils:ktfmtCheck :measurement:ktfmtCheck :app:ktfmtCheck` green; (3) `./gradlew :utils:test :measurement:test :app:testDebugUnitTest` green (default properties — quarantine on); (4) plain `detekt` on all three modules stays 0. **Acceptance**: all three passes identical-green (a pass that differs from its siblings is a flake signal — investigate before closing); no source files modified.
+- [x] **3.1** Full re-measure, 3 consecutive green passes (bead `skillet-7ph.5`): (1) `./gradlew :utils:detektMain :measurement:detektMain :app:detektMain` exit 0; (2) `./gradlew :utils:ktfmtCheck :measurement:ktfmtCheck :app:ktfmtCheck` green; (3) `./gradlew :utils:test :measurement:test :app:testDebugUnitTest` green (default properties — quarantine on); (4) plain `detekt` on all three modules stays 0. **Acceptance**: all three passes identical-green (a pass that differs from its siblings is a flake signal — investigate before closing); no source files modified.
 
 ## 4. Test quarantine (D2 = Q-A)
 
