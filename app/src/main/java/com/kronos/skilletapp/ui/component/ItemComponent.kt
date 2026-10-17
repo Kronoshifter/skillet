@@ -1,15 +1,40 @@
 package com.kronos.skilletapp.ui.component
 
-import android.R.attr.onClick
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,11 +48,11 @@ import com.kronos.skilletapp.utils.modifier.applyIf
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ItemRow(
-  modifier: Modifier = Modifier,
   showDetail: Boolean,
+  detail: @Composable BoxScope.() -> Unit,
+  modifier: Modifier = Modifier,
   detailBackgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
   detailContentColor: Color = contentColorFor(detailBackgroundColor),
-  detail: @Composable BoxScope.() -> Unit,
   decoration: Boolean = false,
   enabled: Boolean = true,
   onClick: () -> Unit = {},
@@ -60,10 +85,11 @@ fun ItemRow(
           val shape = MaterialTheme.shapes.medium
           Box(
             modifier =
-              Modifier.sizeIn(minWidth = boxSize, minHeight = boxSize)
-                .clip(shape)
-                .background(detailBackgroundColor, shape)
-                .applyIf(decoration) { border(2.dp, detailContentColor, shape) },
+              Modifier.sizeIn(minWidth = boxSize, minHeight = boxSize).clip(shape).background(detailBackgroundColor, shape).applyIf(
+                decoration
+              ) {
+                border(2.dp, detailContentColor, shape)
+              },
             contentAlignment = Alignment.Center,
             content = detail,
           )
@@ -81,13 +107,13 @@ fun ItemRow(
 
 @Composable
 fun ItemPill(
+  leadingContent: @Composable RowScope.() -> Unit,
   modifier: Modifier = Modifier,
   enabled: Boolean = false,
   onClick: () -> Unit = {},
   color: Color = MaterialTheme.colorScheme.primary,
   borderColor: Color = MaterialTheme.colorScheme.primary,
   leadingContentColor: Color = contentColorFor(color),
-  leadingContent: @Composable RowScope.() -> Unit,
   trailingIcon: @Composable (() -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
@@ -119,7 +145,7 @@ fun ItemPill(
 
 @Preview
 @Composable
-fun ItemPillPreview() {
+private fun ItemPillPreview() {
   SkilletAppTheme {
     Surface {
       ItemPill(
@@ -131,9 +157,7 @@ fun ItemPillPreview() {
             modifier = Modifier.padding(8.dp),
           )
         },
-        trailingIcon = {
-          IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) }
-        },
+        trailingIcon = { IconButton(onClick = {}) { Icon(Icons.Filled.Clear, contentDescription = null) } },
       ) {
         Text(text = "Pasta")
       }

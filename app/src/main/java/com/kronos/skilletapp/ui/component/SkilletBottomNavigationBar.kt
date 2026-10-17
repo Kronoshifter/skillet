@@ -12,13 +12,12 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -38,9 +37,7 @@ enum class BottomNavigationBarVisibility {
   fun isHidden() = this == Hidden
 }
 
-class SkilletBottomNavigationBarState(
-  initialVisibility: BottomNavigationBarVisibility = BottomNavigationBarVisibility.Visible
-) {
+class SkilletBottomNavigationBarState(initialVisibility: BottomNavigationBarVisibility = BottomNavigationBarVisibility.Visible) {
   var visibility by mutableStateOf(initialVisibility)
     private set
 
@@ -79,37 +76,22 @@ fun rememberBottomNavigationBarState(
   }
 }
 
-val LocalSkilletBottomNavigationBarVisibility =
-  compositionLocalOf<BottomNavigationBarVisibility> {
-    error("No BottomNavigationBarVisibility provided")
-  }
-val LocalSkilletBottomNavigationBarState =
-  compositionLocalOf<SkilletBottomNavigationBarState> {
-    error("No BottomNavigationBarState provided")
-  }
-
 @Composable
 fun SkilletBottomNavigationBar(
+  modifier: Modifier = Modifier,
   state: SkilletBottomNavigationBarState = rememberBottomNavigationBarState(),
   navController: NavHostController = LocalNavController.current,
   navActions: SkilletNavigationActions = LocalNavigationActions.current,
   screens: List<SkilletBottomNavigationBarItems<*>> = SkilletBottomNavigationBarItems.values,
 ) {
   if (state.isVisible) {
-    NavigationBar {
-      var selectedScreen by remember {
-        mutableStateOf<SkilletBottomNavigationBarItems<*>>(
-          SkilletBottomNavigationBarItems.RecipeList
-        )
-      }
-
+    NavigationBar(modifier = modifier) {
       val navBackStackEntry by navController.currentBackStackEntryAsState()
       val currentDestination = navBackStackEntry?.destination
 
       screens.forEach { screen ->
         //        val isSelected = screen == selectedScreen
-        val isSelected =
-          currentDestination?.hierarchy?.any { it.hasRoute(screen.route::class) } == true
+        val isSelected = currentDestination?.hierarchy?.any { it.hasRoute(screen.route::class) } == true
         NavigationBarItem(
           icon = { screen.SelectableIcon(isSelected) },
           label = { Text(text = screen.label) },
@@ -131,8 +113,12 @@ sealed class SkilletBottomNavigationBarItems<T : Route>(
   private val selectedIcon: ImageVector,
 ) {
   @Composable
-  fun SelectableIcon(isSelected: Boolean) {
+  fun SelectableIcon(
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+  ) {
     AnimatedContent(
+      modifier = modifier,
       targetState = isSelected,
       transitionSpec = { fadeIn() togetherWith fadeOut() },
     ) {

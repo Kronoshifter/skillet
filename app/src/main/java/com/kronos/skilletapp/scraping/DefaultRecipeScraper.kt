@@ -1,19 +1,29 @@
 package com.kronos.skilletapp.scraping
 
-import com.github.michaelbull.result.*
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.andThen
+import com.github.michaelbull.result.map
+import com.github.michaelbull.result.mapError
+import com.github.michaelbull.result.runCatching
+import com.github.michaelbull.result.toResultOr
 import com.kronos.skilletapp.model.InvalidHtmlError
 import com.kronos.skilletapp.model.JsonParseError
 import com.kronos.skilletapp.model.RecipeScrapeError
 import it.skrape.core.htmlDocument
 import it.skrape.fetcher.AsyncFetcher
-import it.skrape.fetcher.HttpFetcher
 import it.skrape.fetcher.response
 import it.skrape.fetcher.skrape
-import it.skrape.selects.eachText
 import it.skrape.selects.html5.script
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
 data class RecipeHtml(
@@ -89,10 +99,10 @@ class DefaultRecipeScraper : RecipeScraper {
   }
 
   private fun JsonElement.findJson(key: String): JsonElement? =
-    when {
-      this is JsonObject && "@type" in this && this.getValue("@type") isOrContains key -> this
-      this is JsonObject && key !in this -> this.firstNotNullOfOrNull { it.value.findJson(key) }
-      this is JsonArray -> this.firstNotNullOfOrNull { it.findJson(key) }
+    when (this) {
+      is JsonObject if "@type" in this && this.getValue("@type") isOrContains key -> this
+      is JsonObject if key !in this -> this.firstNotNullOfOrNull { it.value.findJson(key) }
+      is JsonArray -> this.firstNotNullOfOrNull { it.findJson(key) }
       else -> null
     }
 
@@ -110,31 +120,4 @@ class DefaultRecipeScraper : RecipeScraper {
     }
       .mapError { JsonParseError("Failed to parse JSON-LD: ${it.message}") }
   }
-
-  private fun scrapeMicrodata(recipeUrl: String): Result<RecipeHtml, RecipeScrapeError> =
-    skrape(HttpFetcher) {
-      request { url = recipeUrl }
-
-      runCatching {
-        response {
-          htmlDocument {
-            relaxed = true
-
-            val name = "[itemprop=name]" { findFirst { text } }
-
-            val ingredients = "[itemprop=recipeIngredient]" { findAll { eachText } }
-
-            RecipeHtml(
-              name = name,
-              ingredients = ingredients,
-              instructions = listOf(),
-              recipeYield = listOf(),
-              prepTime = "",
-              cookTime = "",
-            )
-          }
-        }
-      }
-        .mapError { InvalidHtmlError("Failed to scrape microdata: ${it.message}") }
-    }
 }

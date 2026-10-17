@@ -1,28 +1,53 @@
 package com.kronos.skilletapp.ui.screen.cooking
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
-import com.kronos.measurement.model.MeasurementUnit
-import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.AsyncContent
+import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.IngredientListItem
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.CookingViewModel
@@ -57,6 +82,7 @@ private sealed class CookingContentTab {
 @Composable
 fun CookingScreen(
   onBack: () -> Unit,
+  modifier: Modifier = Modifier,
   vm: CookingViewModel = koinViewModel(),
 ) {
   val cookingAsync by vm.cookingAsync.collectAsStateWithLifecycle()
@@ -64,29 +90,27 @@ fun CookingScreen(
 
   AsyncContent(
     async = cookingAsync,
-    modifier = Modifier.fillMaxSize(),
+    modifier = modifier.fillMaxSize(),
   ) { recipe ->
     Scaffold(
       topBar = {
         TopAppBar(
           title = { Text(text = recipe.name) },
           navigationIcon = {
-            IconButton(onClick = onBack) {
-              Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
+            IconButton(onClick = onBack) { Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
           },
         )
       }
     ) { paddingValues ->
-        CookingContent(
-          recipe = recipe,
-          scaledIngredients = uiState.scaledIngredients,
-          originalIngredients = recipe.ingredients,
-          selectedUnits = uiState.selectedUnits,
-          onUnitSelect = vm::selectUnit,
-          onBack = onBack,
-          modifier = Modifier.fillMaxSize().padding(paddingValues),
-        )
+      CookingContent(
+        recipe = recipe,
+        scaledIngredients = uiState.scaledIngredients,
+        originalIngredients = recipe.ingredients,
+        selectedUnits = uiState.selectedUnits,
+        onUnitSelect = vm::selectUnit,
+        onBack = onBack,
+        modifier = Modifier.fillMaxSize().padding(paddingValues),
+      )
     }
   }
 }
@@ -137,9 +161,7 @@ fun CookingContent(
 
       LaunchedEffect(tab) { pagerState.animateScrollToPage(tab.index(recipe)) }
 
-      LaunchedEffect(pagerState.targetPage) {
-        tab = CookingContentTab.fromIndex(index = pagerState.targetPage, recipe = recipe)
-      }
+      LaunchedEffect(pagerState.targetPage) { tab = CookingContentTab.fromIndex(index = pagerState.targetPage, recipe = recipe) }
 
       HorizontalPager(
         state = pagerState,
@@ -163,7 +185,6 @@ fun CookingContent(
 
             is CookingContentTab.Instruction ->
               InstructionTabContent(
-                index = page.instruction,
                 instruction = recipe.instructions[page.instruction],
                 scaledIngredients = scaledIngredients,
                 originalIngredients = originalIngredients,
@@ -260,7 +281,6 @@ fun OverviewTabContent(
 
 @Composable
 fun InstructionTabContent(
-  index: Int,
   instruction: Instruction,
   scaledIngredients: List<Ingredient>,
   originalIngredients: List<Ingredient>,
@@ -283,9 +303,6 @@ fun InstructionTabContent(
         modifier = Modifier.fillMaxWidth(),
       )
     }
-
-    // TODO: parse instruction for timers
-    // TODO: implement recipe timer
 
     if (instruction.ingredients.isNotEmpty()) {
       item { HorizontalDivider() }
@@ -329,7 +346,6 @@ fun CompleteTabContent(
   onBack: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  // TODO: display cover or 'take a photo'
 
   Box(modifier = modifier) {
     Column(
@@ -345,8 +361,6 @@ fun CompleteTabContent(
 
       Button(onClick = onBack) { Text(text = "All Done!") }
     }
-
-    // TODO: possibly allow for adding notes here
   }
 }
 
@@ -358,7 +372,7 @@ fun CompleteTabContent(
 
 @Preview
 @Composable
-fun OverviewContentPreview() {
+private fun OverviewContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -380,7 +394,7 @@ fun OverviewContentPreview() {
 
 @Preview
 @Composable
-fun InstructionContentPreview() {
+private fun InstructionContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -389,7 +403,6 @@ fun InstructionContentPreview() {
     SkilletAppTheme {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         InstructionTabContent(
-          index = 0,
           instruction = recipe.instructions.first(),
           scaledIngredients = recipe.ingredients,
           originalIngredients = recipe.ingredients,
@@ -403,7 +416,7 @@ fun InstructionContentPreview() {
 
 @Preview
 @Composable
-fun CompleteContentPreview() {
+private fun CompleteContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 

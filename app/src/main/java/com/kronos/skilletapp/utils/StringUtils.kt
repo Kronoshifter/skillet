@@ -10,8 +10,6 @@ fun String.normalizeWhitespace(): String {
   return whitespacePattern.matcher(this).replaceAll(" ")
 }
 
-fun String.pluralize(count: Int, pluralizer: (String) -> String) = let {
-  if (count == 1) this else pluralizer(this)
-}
+fun String.pluralize(count: Int, pluralizer: (String) -> String) = let { if (count == 1) this else pluralizer(this) }
 
 fun CharSequence?.isNotNullOrBlank() = !isNullOrBlank()

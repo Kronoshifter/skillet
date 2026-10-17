@@ -81,7 +81,6 @@ All bindings in `appModule` in `SkilletApp.kt`. Room/DAO/repository use `created
 
 ## Gotchas
 
-- **No domain/use case layer** — repository is both data access and domain. Don't look for one.
 - **Room schema** lives in `app/schemas/` (configured via `room3 { schemaDirectory("$projectDir/schemas") }` in `app/build.gradle.kts`); at version 3 — v1→v2 is an explicit destructive migration (`MIGRATION_1_2`) and v2→v3 adds the 8 non-unique indexes (`MIGRATION_2_3`), both in `com.kronos.skilletapp.database.migrations`, registered via `.addMigrations(MIGRATION_1_2, MIGRATION_2_3)` in `SkilletApp.kt`; `@Database` carries an empty `autoMigrations` list.
 - **ANTLR parser** generates Java files — don't edit them manually; regenerate from grammar.
 - **Compose previews** require `KoinPreview` (not standard `@Preview`) because ViewModels are Koin-injected.

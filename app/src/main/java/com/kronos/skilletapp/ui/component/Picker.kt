@@ -2,11 +2,30 @@ package com.kronos.skilletapp.ui.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,9 +48,6 @@ fun <T> InfiniteScrollingPicker(
   modifier: Modifier = Modifier,
   visibleItemCount: Int = 3,
   itemHeight: Dp = 40.dp,
-  divider: @Composable (offset: Dp) -> Unit = {
-    HorizontalDivider(modifier = Modifier.offset(y = it))
-  },
   optionContent: @Composable BoxScope.(T) -> Unit = { Text(text = it.toString()) },
 ) {
   require(visibleItemCount % 2 == 1) { "visibleItemCount must be an odd number" }
@@ -67,23 +83,24 @@ fun <T> InfiniteScrollingPicker(
       }
     }
 
-    divider(itemHeight * (center))
-    divider(itemHeight * (center + 1))
+    HorizontalDivider(modifier = Modifier.offset(y = itemHeight * center))
+    HorizontalDivider(modifier = Modifier.offset(y = itemHeight * (center + 1)))
   }
 
+  val currentOnSelect by rememberUpdatedState(onSelect)
   LaunchedEffect(listState) {
     snapshotFlow { listState.firstVisibleItemIndex }
       .map { index -> options[(index + center) % options.size] }
       .distinctUntilChanged()
-      .collect { onSelect(it) }
+      .collect { currentOnSelect(it) }
   }
 }
 
 @Preview
 @Composable
-fun PickerPreview() {
+private fun PickerPreview() {
   val options = 0..10
-  var selected by remember { mutableStateOf(options.first()) }
+  var selected by remember { mutableIntStateOf(options.first()) }
 
   SkilletAppTheme {
     Surface {
@@ -105,7 +122,7 @@ fun PickerPreview() {
 
 @Preview
 @Composable
-fun DoublePickerPreview() {
+private fun DoublePickerPreview() {
   SkilletAppTheme {
     Surface {
       Column {

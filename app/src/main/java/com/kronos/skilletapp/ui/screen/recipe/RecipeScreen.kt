@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
@@ -19,8 +20,21 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -36,8 +50,38 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,9 +106,13 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kronos.skilletapp.model.*
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
+import com.kronos.skilletapp.model.Ingredient
+import com.kronos.skilletapp.model.Instruction
+import com.kronos.skilletapp.model.Recipe
+import com.kronos.skilletapp.model.RecipeSource
+import com.kronos.skilletapp.model.RecipeTime
 import com.kronos.skilletapp.ui.AsyncContent
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.FabPadding
@@ -95,6 +143,7 @@ fun RecipeScreen(
   onBack: () -> Unit,
   onEdit: () -> Unit,
   onCook: (currentServings: Int) -> Unit,
+  modifier: Modifier = Modifier,
   vm: RecipeViewModel = koinViewModel(),
 ) {
   val recipeAsync by vm.recipeAsync.collectAsStateWithLifecycle()
@@ -119,74 +168,80 @@ fun RecipeScreen(
   val isFabExpanded by remember {
     derivedStateOf {
       (pagerState.currentPage == RecipeContentTab.Ingredients.ordinal &&
-        (ingredientListState.firstVisibleItemIndex == 0 ||
-          !ingredientListState.canScrollForward)) ||
+        (ingredientListState.firstVisibleItemIndex == 0 || !ingredientListState.canScrollForward)) ||
         (pagerState.currentPage == RecipeContentTab.Instructions.ordinal &&
-          (instructionsListState.firstVisibleItemIndex == 0 ||
-            !instructionsListState.canScrollForward))
+          (instructionsListState.firstVisibleItemIndex == 0 || !instructionsListState.canScrollForward))
     }
   }
 
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
   Scaffold(
-    topBar = {
-      TopAppBar(
-        title = { /*Intentionally left empty*/ },
-        navigationIcon = {
-          IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-          }
-        },
-        actions = {
-          IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
-
-          IconButton(onClick = { /*TODO*/ }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = "More Options")
-          }
-        },
-        scrollBehavior = scrollBehavior,
-      )
-    },
+    modifier = modifier,
+    topBar = { RecipeTopBar(onBack = onBack, onEdit = onEdit, scrollBehavior = scrollBehavior) },
     floatingActionButton = {
-      fabTransition.AnimatedVisibility(
-        visible = { isVisible -> isVisible },
-        enter = scaleIn(),
-        exit = scaleOut(),
-        modifier =
-          Modifier.clip(
-            if (isFabExpanded) FloatingActionButtonDefaults.extendedFabShape
-            else FloatingActionButtonDefaults.shape
-          ),
-      ) {
-        ExtendedFloatingActionButton(
-          text = { Text("Cook") },
-          icon = { Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook") },
-          onClick = { onCook(uiState.currentServings) },
-          expanded = isFabExpanded,
-        )
-      }
+      RecipeCookFab(fabTransition = fabTransition, isExpanded = isFabExpanded, onClick = { onCook(uiState.currentServings) })
     },
   ) { paddingValues ->
     AsyncContent(
       async = recipeAsync,
       modifier = Modifier.fillMaxSize().padding(paddingValues),
     ) { recipe ->
-        RecipeContent(
-          recipe = recipe,
-          currentServings = uiState.currentServings,
-          selectedUnits = uiState.selectedUnits,
-          onScalingChanged = vm::setScaling,
-          onUnitSelect = vm::selectUnit,
-          scaledIngredients = uiState.scaledIngredients,
-          originalIngredients = recipe.ingredients,
-          pagerState = pagerState,
-          ingredientListState = ingredientListState,
-          instructionsListState = instructionsListState,
-          topAppBarScrollBehavior = scrollBehavior,
-          modifier = Modifier.fillMaxSize(),
-        )
+      RecipeContent(
+        recipe = recipe,
+        currentServings = uiState.currentServings,
+        selectedUnits = uiState.selectedUnits,
+        onScalingChange = vm::setScaling,
+        onUnitSelect = vm::selectUnit,
+        scaledIngredients = uiState.scaledIngredients,
+        originalIngredients = recipe.ingredients,
+        pagerState = pagerState,
+        ingredientListState = ingredientListState,
+        instructionsListState = instructionsListState,
+        topAppBarScrollBehavior = scrollBehavior,
+        modifier = Modifier.fillMaxSize(),
+      )
     }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecipeTopBar(
+  onBack: () -> Unit,
+  onEdit: () -> Unit,
+  scrollBehavior: TopAppBarScrollBehavior,
+) {
+  TopAppBar(
+    title = { /*Intentionally left empty*/ },
+    navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+    actions = {
+      IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
+
+      IconButton(onClick = { /*TODO*/ }) { Icon(Icons.Filled.MoreVert, contentDescription = "More Options") }
+    },
+    scrollBehavior = scrollBehavior,
+  )
+}
+
+@Composable
+private fun RecipeCookFab(
+  fabTransition: Transition<Boolean>,
+  isExpanded: Boolean,
+  onClick: () -> Unit,
+) {
+  fabTransition.AnimatedVisibility(
+    visible = { isVisible -> isVisible },
+    enter = scaleIn(),
+    exit = scaleOut(),
+    modifier = Modifier.clip(if (isExpanded) FloatingActionButtonDefaults.extendedFabShape else FloatingActionButtonDefaults.shape),
+  ) {
+    ExtendedFloatingActionButton(
+      text = { Text("Cook") },
+      icon = { Icon(imageVector = SkilletIcons.Filled.Skillet, contentDescription = "Cook") },
+      onClick = onClick,
+      expanded = isExpanded,
+    )
   }
 }
 
@@ -195,27 +250,24 @@ fun RecipeScreen(
 private fun RecipeContent(
   recipe: Recipe,
   currentServings: Int,
+  onScalingChange: (currentServings: Int) -> Unit,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   modifier: Modifier = Modifier,
   selectedUnits: Map<Ingredient, MeasurementUnit?> = emptyMap(),
-  onScalingChanged: (currentServings: Int) -> Unit,
-  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
   scaledIngredients: List<Ingredient> = emptyList(),
   originalIngredients: List<Ingredient> = emptyList(),
   pagerState: PagerState = rememberPagerState { RecipeContentTab.entries.size },
   ingredientListState: LazyListState = rememberLazyListState(),
   instructionsListState: LazyListState = rememberLazyListState(),
-  topAppBarScrollBehavior: TopAppBarScrollBehavior =
-    TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
+  topAppBarScrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
 ) {
   var tab by remember { mutableStateOf(RecipeContentTab.Ingredients) }
 
   val scale = currentServings / recipe.servings.toFloat()
 
   Column(modifier = modifier) {
-    // TODO: add notes
-    val expanded by remember {
-      derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f }
-    }
+    val expanded by remember { derivedStateOf { topAppBarScrollBehavior.state.collapsedFraction < 0.9f } }
+    val scaleOptions = listOf(0.5f, 1f, 2f)
 
     RecipeContentHeader(
       expanded = expanded,
@@ -230,8 +282,8 @@ private fun RecipeContent(
     ScalingControls(
       currentServings = currentServings,
       baseServings = recipe.servings,
-      onScalingChanged = onScalingChanged,
-      scaleOptions = listOf(0.5f, 1f, 2f),
+      onScalingChange = onScalingChange,
+      scaleOptions = scaleOptions,
     )
 
     HorizontalDivider(modifier = Modifier.fillMaxWidth())
@@ -259,41 +311,68 @@ private fun RecipeContent(
 
     LaunchedEffect(pagerState.targetPage) { tab = RecipeContentTab.entries[pagerState.targetPage] }
 
-    HorizontalPager(
-      state = pagerState,
+    ContentPager(
       modifier = Modifier.fillMaxWidth(),
-    ) {
-      val page = RecipeContentTab.entries[it]
-      Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-      ) {
-        when (page) {
-          RecipeContentTab.Ingredients ->
-            IngredientsList(
-              scaledIngredients = scaledIngredients,
-              originalIngredients = originalIngredients,
-              selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect,
-              listState = ingredientListState,
-              listPadding =
-                PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
-              modifier =
-                Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
-            )
+      pagerState = pagerState,
+      recipe = recipe,
+      scale = scale,
+      selectedUnits = selectedUnits,
+      onUnitSelect = onUnitSelect,
+      scaledIngredients = scaledIngredients,
+      originalIngredients = originalIngredients,
+      ingredientListState = ingredientListState,
+      instructionsListState = instructionsListState,
+      topAppBarScrollBehavior = topAppBarScrollBehavior,
+    )
+  }
+}
 
-          RecipeContentTab.Instructions ->
-            InstructionsList(
-              instructions = recipe.instructions,
-              scale = scale,
-              selectedUnits = selectedUnits,
-              onUnitSelect = onUnitSelect,
-              listState = instructionsListState,
-              listPadding = PaddingValues(top = 8.dp, bottom = FabPadding),
-              modifier =
-                Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
-            )
-        }
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+private fun ContentPager(
+  pagerState: PagerState,
+  recipe: Recipe,
+  scale: Float,
+  selectedUnits: Map<Ingredient, MeasurementUnit?>,
+  onUnitSelect: (Ingredient, MeasurementUnit?) -> Unit,
+  ingredientListState: LazyListState,
+  instructionsListState: LazyListState,
+  topAppBarScrollBehavior: TopAppBarScrollBehavior,
+  modifier: Modifier = Modifier,
+  scaledIngredients: List<Ingredient> = emptyList(),
+  originalIngredients: List<Ingredient> = emptyList(),
+) {
+  HorizontalPager(
+    state = pagerState,
+    modifier = modifier,
+  ) {
+    val page = RecipeContentTab.entries[it]
+    Box(
+      modifier = Modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center,
+    ) {
+      when (page) {
+        RecipeContentTab.Ingredients ->
+          IngredientsList(
+            scaledIngredients = scaledIngredients,
+            originalIngredients = originalIngredients,
+            selectedUnits = selectedUnits,
+            onUnitSelect = onUnitSelect,
+            listState = ingredientListState,
+            listPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = FabPadding),
+            modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+          )
+
+        RecipeContentTab.Instructions ->
+          InstructionsList(
+            instructions = recipe.instructions,
+            scale = scale,
+            selectedUnits = selectedUnits,
+            onUnitSelect = onUnitSelect,
+            listState = instructionsListState,
+            listPadding = PaddingValues(top = 8.dp, bottom = FabPadding),
+            modifier = Modifier.fillMaxSize().nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+          )
       }
     }
   }
@@ -348,88 +427,7 @@ private fun RecipeContentHeader(
         )
       },
   ) {
-    image?.let { imageUri ->
-      val slideSpec =
-        spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
-      val scaleSpec =
-        spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
-
-      transition.AnimatedVisibility(
-        visible = { isExpanded -> isExpanded },
-        enter =
-          slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) +
-            expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
-        exit =
-          slideOutVertically(animationSpec = slideSpec, targetOffsetY = { -it }) +
-            shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
-      ) {
-        AsyncImage(
-          model = imageUri,
-          contentDescription = "Recipe image",
-          contentScale = ContentScale.FillWidth,
-          modifier =
-            Modifier.fillMaxWidth()
-              .aspectRatio(2f, matchHeightConstraintsFirst = true)
-              .clip(
-                MaterialTheme.shapes.large
-              ), // .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
-        )
-      }
-    }
-
-    transition.AnimatedVisibility(
-      visible = { isExpanded -> isExpanded },
-      enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-      exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
-    ) {
-      Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-      ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-          Text(
-            text =
-              buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                  append("Prep: ")
-                }
-                withStyle(
-                  SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                ) {
-                  append("${time.preparation} min")
-                }
-              }
-          )
-
-          Text(
-            text =
-              buildAnnotatedString {
-                withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                  append("Cook: ")
-                }
-                withStyle(
-                  SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                ) {
-                  append("${time.cooking} min")
-                }
-              }
-          )
-        }
-
-        // TODO: make this clickable to open source in browser, if source is a url
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-          Text(
-            text = source.name,
-            color = MaterialTheme.colorScheme.primary,
-          )
-          if (
-            source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)
-          ) {
-            Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
-          }
-        }
-      }
-    }
+    RecipeHeaderMedia(transition = transition, image = image, source = source, time = time)
 
     if (!expanded) {
       Spacer(modifier = Modifier.height(8.dp))
@@ -442,60 +440,101 @@ private fun RecipeContentHeader(
   }
 }
 
+@Composable
+private fun RecipeHeaderMedia(
+  transition: Transition<Boolean>,
+  image: String?,
+  source: RecipeSource,
+  time: RecipeTime,
+) {
+  image?.let { imageUri -> RecipeHeaderImage(transition = transition, imageUri = imageUri) }
+
+  transition.AnimatedVisibility(
+    visible = { isExpanded -> isExpanded },
+    enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+  ) {
+    Row(
+      horizontalArrangement = Arrangement.SpaceBetween,
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+    ) {
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+          text =
+            buildAnnotatedString {
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Prep: ") }
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                append("${time.preparation} min")
+              }
+            }
+        )
+
+        Text(
+          text =
+            buildAnnotatedString {
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Cook: ") }
+              withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
+                append("${time.cooking} min")
+              }
+            }
+        )
+      }
+
+      Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+          text = source.name,
+          color = MaterialTheme.colorScheme.primary,
+        )
+        if (source.name != source.source && source.source.isNotBlank() && !isValidUrl(source.source)) {
+          Text(text = source.source, color = MaterialTheme.colorScheme.secondary)
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun RecipeHeaderImage(transition: Transition<Boolean>, imageUri: String) {
+  val slideSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntOffset.VisibilityThreshold)
+  val scaleSpec = spring(stiffness = Spring.StiffnessLow, visibilityThreshold = IntSize.VisibilityThreshold)
+
+  transition.AnimatedVisibility(
+    visible = { isExpanded -> isExpanded },
+    enter =
+      slideInVertically(animationSpec = slideSpec, initialOffsetY = { -it }) +
+        expandVertically(animationSpec = scaleSpec, expandFrom = Alignment.Top),
+    exit =
+      slideOutVertically(animationSpec = slideSpec, targetOffsetY = { -it }) +
+        shrinkVertically(animationSpec = scaleSpec, shrinkTowards = Alignment.Top),
+  ) {
+    AsyncImage(
+      model = imageUri,
+      contentDescription = "Recipe image",
+      contentScale = ContentScale.FillWidth,
+      modifier =
+        Modifier.fillMaxWidth()
+          .aspectRatio(2f, matchHeightConstraintsFirst = true)
+          .clip(MaterialTheme.shapes.large), // .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)))
+    )
+  }
+}
+
+private val DEFAULT_SCALE_OPTIONS = listOf(1f, 2f, 3f)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ScalingControls(
   currentServings: Int,
   baseServings: Int,
-  onScalingChanged: (currentServings: Int) -> Unit,
-  scaleOptions: List<Float> = listOf(1f, 2f, 3f),
+  onScalingChange: (currentServings: Int) -> Unit,
+  scaleOptions: List<Float> = DEFAULT_SCALE_OPTIONS,
 ) {
-  val scale = currentServings / baseServings.toFloat()
-
   Row(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier.padding(8.dp).fillMaxWidth().height(IntrinsicSize.Min),
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-      OutlinedIconButton(
-        onClick = {
-          val newServings = (currentServings - 1).coerceAtLeast(1)
-          onScalingChanged(newServings)
-        },
-        enabled = currentServings > 1,
-      ) {
-        Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
-      }
-
-      val textMeasurer = rememberTextMeasurer()
-      val result =
-        textMeasurer.measure(
-          AnnotatedString("00 servings"),
-          style = LocalTextStyle.current,
-        )
-      val textWidth = with(LocalDensity.current) { result.size.width.toDp() }
-
-      Text(
-        text = "$currentServings servings",
-        maxLines = 1,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.width(textWidth),
-      )
-
-      OutlinedIconButton(
-        onClick = {
-          val newServings = currentServings + 1
-          onScalingChanged(newServings)
-        }
-        //        modifier = Modifier.weight(1f)
-      ) {
-        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-      }
-    }
+    ServingsStepper(currentServings = currentServings, onScalingChange = onScalingChange)
 
     SingleChoiceSegmentedButtonRow(modifier = Modifier.width(IntrinsicSize.Min).weight(1f)) {
       scaleOptions.forEach { option ->
@@ -505,11 +544,10 @@ private fun ScalingControls(
         SegmentedButton(
           selected = selected,
           enabled = enabled,
-          onClick = { onScalingChanged(targetServings) },
+          onClick = { onScalingChange(targetServings) },
           shape =
             when (option) {
-              scaleOptions.first() ->
-                RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
+              scaleOptions.first() -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
               scaleOptions.last() -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
               else -> RectangleShape
             },
@@ -529,6 +567,51 @@ private fun ScalingControls(
           )
         }
       }
+    }
+  }
+}
+
+@Composable
+private fun ServingsStepper(
+  currentServings: Int,
+  onScalingChange: (currentServings: Int) -> Unit,
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    OutlinedIconButton(
+      onClick = {
+        val newServings = (currentServings - 1).coerceAtLeast(1)
+        onScalingChange(newServings)
+      },
+      enabled = currentServings > 1,
+    ) {
+      Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
+    }
+
+    val textMeasurer = rememberTextMeasurer()
+    val result =
+      textMeasurer.measure(
+        AnnotatedString("00 servings"),
+        style = LocalTextStyle.current,
+      )
+    val textWidth = with(LocalDensity.current) { result.size.width.toDp() }
+
+    Text(
+      text = "$currentServings servings",
+      maxLines = 1,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.width(textWidth),
+    )
+
+    OutlinedIconButton(
+      onClick = {
+        val newServings = currentServings + 1
+        onScalingChange(newServings)
+      }
+    ) {
+      Icon(imageVector = Icons.Filled.Add, contentDescription = null)
     }
   }
 }
@@ -685,9 +768,7 @@ private fun RecipeContentPreview() {
           recipe = recipe,
           currentServings = currentServings,
           selectedUnits = selectedUnits,
-          onScalingChanged = { newServings ->
-            currentServings = newServings
-          },
+          onScalingChange = { newServings -> currentServings = newServings },
           onUnitSelect = { ingredient, unit -> selectedUnits[ingredient] = unit },
           //          topAppBarScrollBehavior = scrollBehavior
         )

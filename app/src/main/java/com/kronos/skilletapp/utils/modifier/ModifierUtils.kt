@@ -2,7 +2,15 @@ package com.kronos.skilletapp.utils.modifier
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+
+private const val FADE_EDGE_START_STOP = 0f
+private const val FADE_EDGE_MID_STOP = 0.5f
+private const val FADE_EDGE_END_STOP = 1f
 
 fun Modifier.applyIf(condition: Boolean, block: Modifier.() -> Modifier) =
   if (condition) {
@@ -32,9 +40,9 @@ fun Modifier.verticalFadingEdge() =
       drawRect(
         brush =
           Brush.verticalGradient(
-            0f to Color.Transparent,
-            0.5f to Color.Black,
-            1f to Color.Transparent,
+            FADE_EDGE_START_STOP to Color.Transparent,
+            FADE_EDGE_MID_STOP to Color.Black,
+            FADE_EDGE_END_STOP to Color.Transparent,
           ),
         blendMode = BlendMode.DstIn,
       )
@@ -47,9 +55,9 @@ fun Modifier.horizontalFadingEdge() =
       drawRect(
         brush =
           Brush.horizontalGradient(
-            0f to Color.Transparent,
-            0.5f to Color.Black,
-            1f to Color.Transparent,
+            FADE_EDGE_START_STOP to Color.Transparent,
+            FADE_EDGE_MID_STOP to Color.Black,
+            FADE_EDGE_END_STOP to Color.Transparent,
           ),
         blendMode = BlendMode.DstIn,
       )

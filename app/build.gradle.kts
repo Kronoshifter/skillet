@@ -67,7 +67,6 @@ detekt {
   allRules = false
   source.setFrom("src/main/kotlin", "src/main/java")
   failOnSeverity = FailOnSeverity.Error
-  baseline = file("$rootDir/detekt-baseline.xml")
 }
 
 ktfmt {
@@ -77,7 +76,12 @@ ktfmt {
   trailingCommaManagementStrategy = TrailingCommaManagementStrategy.COMPLETE
 }
 
-tasks.withType<Test>().configureEach { useJUnitPlatform() }
+tasks.withType<Test>().configureEach {
+  useJUnitPlatform()
+  // Forward the optional `skillet.scrape` gate onto the test JVM (property only, never a test filter).
+  val scrapeGate = System.getProperty("skillet.scrape") ?: providers.gradleProperty("skillet.scrape").orNull
+  if (scrapeGate != null) systemProperty("skillet.scrape", scrapeGate)
+}
 
 tasks.withType<Detekt>().configureEach {
   exclude("**/generated/**")
@@ -125,6 +129,10 @@ dependencies {
 
   // Coil
   implementation(libs.bundles.coil)
+
+  // Detekt
+  detektPlugins(libs.detekt.koin)
+  detektPlugins(libs.detekt.compose)
 
   // Testing
   testImplementation(libs.junit)

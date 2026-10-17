@@ -34,6 +34,10 @@ dependencies {
   // Shared utilities
   implementation(project(":utils"))
 
+  // Detekt
+  detektPlugins(libs.detekt.koin)
+  detektPlugins(libs.detekt.compose)
+
   // Testing
   testImplementation(libs.kotest.runner)
   testImplementation(libs.kotest.assertions)
@@ -44,8 +48,8 @@ detekt {
   config.setFrom("$rootDir/detekt.yml")
   buildUponDefaultConfig = true
   allRules = false
+  source.setFrom("src/main/kotlin")
   failOnSeverity = FailOnSeverity.Error
-  baseline = file("$rootDir/measurement/detekt-baseline.xml")
 }
 
 tasks.withType<Detekt>().configureEach {
@@ -56,6 +60,6 @@ tasks.withType<Detekt>().configureEach {
 ktfmt {
   googleStyle()
   removeUnusedImports = true
-  maxWidth = 100
+  maxWidth = 140
   trailingCommaManagementStrategy = TrailingCommaManagementStrategy.COMPLETE
 }

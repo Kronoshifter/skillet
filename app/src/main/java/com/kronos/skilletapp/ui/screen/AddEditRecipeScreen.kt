@@ -7,24 +7,100 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ImageSearch
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +112,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.platform.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -49,25 +129,31 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import com.github.michaelbull.result.runCatching
-import com.kronos.skilletapp.model.Equipment
+import com.kronos.measurement.model.Measurement
+import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.model.Instruction
 import com.kronos.skilletapp.model.Recipe
-import com.kronos.measurement.model.Measurement
-import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.skilletapp.parser.IngredientParser
 import com.kronos.skilletapp.ui.AsyncImage
 import com.kronos.skilletapp.ui.DeferredContent
 import com.kronos.skilletapp.ui.DisableRipple
 import com.kronos.skilletapp.ui.KoinPreview
-import com.kronos.skilletapp.ui.component.*
+import com.kronos.skilletapp.ui.component.ActionBottomSheet
+import com.kronos.skilletapp.ui.component.ConfirmDialog
+import com.kronos.skilletapp.ui.component.InfiniteScrollingPicker
+import com.kronos.skilletapp.ui.component.IngredientRow
+import com.kronos.skilletapp.ui.component.ItemPill
+import com.kronos.skilletapp.ui.component.TimeSelectBottomSheet
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.AddEditRecipeViewModel
+import com.kronos.skilletapp.ui.viewmodel.RecipeFormCollectionOps
+import com.kronos.skilletapp.ui.viewmodel.RecipeFormFieldOps
+import com.kronos.skilletapp.ui.viewmodel.RecipeFormState
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.move
 import com.kronos.skilletapp.utils.pluralize
@@ -76,6 +162,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private enum class AddEditRecipeContentTab {
@@ -84,6 +171,8 @@ private enum class AddEditRecipeContentTab {
   Instructions,
   //  Equipment
 }
+
+private const val PHOTO_BUTTON_HEIGHT_FRACTION = 0.95f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +186,7 @@ fun AddEditRecipeScreen(
 ) {
   var showDiscardChangesDialog by remember { mutableStateOf(false) }
 
-  val recipeState by vm.recipeState.collectAsStateWithLifecycle()
+  val recipeState by vm.recipeFormState.collectAsStateWithLifecycle()
   val isInitializing by vm.isInitializing.collectAsStateWithLifecycle()
 
   BackHandler {
@@ -111,26 +200,17 @@ fun AddEditRecipeScreen(
   Scaffold(
     modifier = modifier.fillMaxSize(),
     topBar = {
-      TopAppBar(
-        title = { Text(text = title) },
-        navigationIcon = {
-          IconButton(
-            onClick = {
-              if (recipeState.tharBeChanges) {
-                showDiscardChangesDialog = true
-              } else {
-                onBack()
-              }
-            }
-          ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+      AddEditRecipeTopBar(
+        title = title,
+        isSaveInProgress = recipeState.isSaveInProgress,
+        onBackClick = {
+          if (recipeState.tharBeChanges) {
+            showDiscardChangesDialog = true
+          } else {
+            onBack()
           }
         },
-        actions = {
-          IconButton(onClick = vm::saveRecipe, enabled = !recipeState.isSaveInProgress) {
-            Icon(imageVector = Icons.Default.Save, contentDescription = "Save")
-          }
-        },
+        onSaveClick = vm::saveRecipe,
       )
     },
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -140,40 +220,13 @@ fun AddEditRecipeScreen(
       modifier = Modifier.padding(paddingValues),
     ) {
       AddEditRecipeContent(
-        name = recipeState.name,
-        description = recipeState.description,
-        notes = recipeState.notes,
-        servings = recipeState.servings,
-        prepTime = recipeState.prepTime,
-        cookTime = recipeState.cookTime,
-        source = recipeState.source,
-        sourceName = recipeState.sourceName,
-        image = recipeState.image,
-        ingredients = recipeState.ingredients,
-        instructions = recipeState.instructions,
-        equipment = recipeState.equipment,
-        onNameChanged = vm::updateName,
-        onDescriptionChanged = vm::updateDescription,
-        onServingsChanged = vm::updateServings,
-        onPrepTimeChanged = vm::updatePrepTime,
-        onCookTimeChanged = vm::updateCookTime,
-        onSourceChanged = vm::updateSource,
-        onSourceNameChanged = vm::updateSourceName,
-        onImageChanged = vm::updateImage,
-        onNotesChanged = vm::updateNotes,
-        onIngredientChanged = vm::updateIngredient,
-        onRemoveIngredient = vm::removeIngredient,
-        onMoveIngredient = vm::moveIngredient,
-        onInstructionChanged = vm::updateInstruction,
-        onRemoveInstruction = vm::removeInstruction,
-        onMoveInstruction = vm::moveInstruction,
-        onEquipmentChanged = vm::updateEquipment,
-        onRemoveEquipment = vm::removeEquipment,
-        onMoveEquipment = vm::moveEquipment,
+        state = recipeState,
+        fieldOps = vm.recipeFormFieldOps,
+        collectionOps = vm.recipeFormCollectionOps,
         onUserMessage = vm::showMessage,
       )
 
-      LaunchedEffect(recipeState.isRecipeSaved) {
+      LaunchedEffect(recipeState.isRecipeSaved, onRecipeUpdate) {
         if (recipeState.isRecipeSaved) {
           onRecipeUpdate(vm.getRecipeId())
         }
@@ -214,39 +267,29 @@ fun AddEditRecipeScreen(
   }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddEditRecipeTopBar(
+  title: String,
+  isSaveInProgress: Boolean,
+  onBackClick: () -> Unit,
+  onSaveClick: () -> Unit,
+) {
+  TopAppBar(
+    title = { Text(text = title) },
+    navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
+    actions = {
+      IconButton(onClick = onSaveClick, enabled = !isSaveInProgress) { Icon(imageVector = Icons.Default.Save, contentDescription = "Save") }
+    },
+  )
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AddEditRecipeContent(
-  name: String,
-  description: String,
-  notes: String,
-  servings: Int,
-  prepTime: Int,
-  cookTime: Int,
-  source: String,
-  sourceName: String,
-  image: String?,
-  ingredients: List<Ingredient>,
-  instructions: List<Instruction>,
-  equipment: List<Equipment>,
-  onNameChanged: (String) -> Unit,
-  onDescriptionChanged: (String) -> Unit,
-  onNotesChanged: (String) -> Unit,
-  onServingsChanged: (Int) -> Unit,
-  onPrepTimeChanged: (Int) -> Unit,
-  onCookTimeChanged: (Int) -> Unit,
-  onSourceChanged: (String) -> Unit,
-  onSourceNameChanged: (String) -> Unit,
-  onImageChanged: (String?) -> Unit,
-  onIngredientChanged: (Ingredient) -> Unit,
-  onRemoveIngredient: (Ingredient) -> Unit,
-  onMoveIngredient: (Int, Int) -> Unit,
-  onInstructionChanged: (Instruction) -> Unit,
-  onRemoveInstruction: (Instruction) -> Unit,
-  onMoveInstruction: (Int, Int) -> Unit,
-  onEquipmentChanged: (Equipment) -> Unit,
-  onRemoveEquipment: (Equipment) -> Unit,
-  onMoveEquipment: (Int, Int) -> Unit,
+  state: RecipeFormState,
+  fieldOps: RecipeFormFieldOps,
+  collectionOps: RecipeFormCollectionOps,
   onUserMessage: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -286,9 +329,7 @@ fun AddEditRecipeContent(
 
       LaunchedEffect(tab) { pagerState.animateScrollToPage(tab.ordinal) }
 
-      LaunchedEffect(pagerState.targetPage) {
-        tab = AddEditRecipeContentTab.entries[pagerState.targetPage]
-      }
+      LaunchedEffect(pagerState.targetPage) { tab = AddEditRecipeContentTab.entries[pagerState.targetPage] }
 
       HorizontalPager(
         state = pagerState,
@@ -300,45 +341,24 @@ fun AddEditRecipeContent(
           contentAlignment = Alignment.TopCenter,
         ) {
           when (page) {
-            AddEditRecipeContentTab.Info ->
-              RecipeInfoContent(
-                name = name,
-                source = source,
-                sourceName = sourceName,
-                image = image,
-                description = description,
-                servings = servings,
-                prepTime = prepTime,
-                cookTime = cookTime,
-                notes = notes,
-                onNameChanged = onNameChanged,
-                onSourceChanged = onSourceChanged,
-                onSourceNameChanged = onSourceNameChanged,
-                onImageChanged = onImageChanged,
-                onDescriptionChanged = onDescriptionChanged,
-                onServingsChanged = onServingsChanged,
-                onPrepTimeChanged = onPrepTimeChanged,
-                onCookTimeChanged = onCookTimeChanged,
-                onNotesChanged = onNotesChanged,
-              )
+            AddEditRecipeContentTab.Info -> RecipeInfoContent(state = state, fieldOps = fieldOps)
 
             AddEditRecipeContentTab.Ingredients ->
               IngredientsContent(
-                ingredients = ingredients,
-                onIngredientChanged = onIngredientChanged,
-                onRemoveIngredient = onRemoveIngredient,
-                onMoveIngredient = onMoveIngredient,
+                ingredients = state.ingredients,
+                onIngredientChange = collectionOps::updateIngredient,
+                onRemoveIngredient = collectionOps::removeIngredient,
+                onMoveIngredient = collectionOps::moveIngredient,
                 onUserMessage = onUserMessage,
               )
 
             AddEditRecipeContentTab.Instructions ->
               InstructionsContent(
-                instructions = instructions,
-                ingredients = ingredients,
-                onInstructionChanged = onInstructionChanged,
-                onRemoveInstruction = onRemoveInstruction,
-                onMoveInstruction = onMoveInstruction,
-                onUserMessage = onUserMessage,
+                instructions = state.instructions,
+                ingredients = state.ingredients,
+                onInstructionChange = collectionOps::updateInstruction,
+                onRemoveInstruction = collectionOps::removeInstruction,
+                onMoveInstruction = collectionOps::moveInstruction,
               )
 
           //            AddEditRecipeContentTab.Equipment -> {}
@@ -349,28 +369,10 @@ fun AddEditRecipeContent(
   }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-@ExperimentalMaterial3Api
 @Composable
 private fun RecipeInfoContent(
-  name: String,
-  source: String,
-  sourceName: String,
-  image: String?,
-  description: String,
-  servings: Int,
-  prepTime: Int,
-  cookTime: Int,
-  notes: String,
-  onNameChanged: (String) -> Unit,
-  onSourceChanged: (String) -> Unit,
-  onSourceNameChanged: (String) -> Unit,
-  onImageChanged: (String?) -> Unit,
-  onDescriptionChanged: (String) -> Unit,
-  onServingsChanged: (Int) -> Unit,
-  onPrepTimeChanged: (Int) -> Unit,
-  onCookTimeChanged: (Int) -> Unit,
-  onNotesChanged: (String) -> Unit,
+  state: RecipeFormState,
+  fieldOps: RecipeFormFieldOps,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
@@ -384,8 +386,8 @@ private fun RecipeInfoContent(
     )
 
     OutlinedTextField(
-      value = name,
-      onValueChange = onNameChanged,
+      value = state.name,
+      onValueChange = fieldOps::updateName,
       placeholder = { Text(text = "The name of your recipe") },
       modifier = Modifier.widthIn(max = 488.dp).fillMaxWidth(),
       singleLine = true,
@@ -399,239 +401,19 @@ private fun RecipeInfoContent(
 
     HorizontalDivider()
 
-    Column {
-      Text(
-        text = "Source",
-        style = MaterialTheme.typography.titleLarge,
-      )
-
-      Text(text = "Where did you find this recipe?")
-
-      var showSourceSheet by remember { mutableStateOf(false) }
-      val sheetState = rememberModalBottomSheetState()
-      val scope = rememberCoroutineScope()
-
-      TextButton(onClick = { showSourceSheet = true }) {
-        Text(
-          text = sourceName.ifBlank { "Add Source" },
-          style = MaterialTheme.typography.titleMedium,
-        )
-      }
-
-      if (source.isNotBlank() && source != sourceName) {
-        Text(
-          text = source,
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.secondary,
-          modifier = Modifier.padding(start = 12.dp),
-        )
-      }
-
-      if (showSourceSheet) {
-        var sourceNameInput by remember { mutableStateOf(sourceName) }
-        var sourceInput by remember { mutableStateOf(source) }
-
-        ActionBottomSheet(
-          onDismissRequest = { showSourceSheet = false },
-          sheetState = sheetState,
-          modifier = Modifier.fillMaxWidth().padding(8.dp),
-          title = { Text(text = "Source") },
-          action = {
-            TextButton(
-              onClick = {
-                onSourceChanged(sourceInput)
-                onSourceNameChanged(sourceNameInput)
-
-                sheetState.dismiss(scope) { showSourceSheet = false }
-              }
-            ) {
-              Text(text = "Save")
-            }
-          },
-        ) {
-          val focusManager = LocalFocusManager.current
-          val sheetKeyboard = LocalSoftwareKeyboardController.current
-
-          OutlinedTextField(
-            value = sourceNameInput,
-            onValueChange = { sourceNameInput = it },
-            label = { Text("Name") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            keyboardActions =
-              KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
-            modifier = Modifier.fillMaxWidth(),
-          )
-
-          OutlinedTextField(
-            value = sourceInput,
-            onValueChange = { sourceInput = it },
-            label = { Text("Source") },
-            placeholder = { Text("Website URL, recipe book and page number...") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions =
-              KeyboardActions(
-                onDone = {
-                  sheetKeyboard?.hide()
-                  focusManager.clearFocus()
-                }
-              ),
-            modifier = Modifier.fillMaxWidth(),
-          )
-        }
-      }
-    }
+    RecipeSourceSection(
+      source = state.source,
+      sourceName = state.sourceName,
+      onSourceChange = fieldOps::updateSource,
+      onSourceNameChange = fieldOps::updateSourceName,
+    )
 
     HorizontalDivider()
 
-    SharedTransitionLayout {
-      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val context = LocalContext.current
-        val pickPhoto =
-          rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-            if (uri != null) {
-              val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-              context.contentResolver.takePersistableUriPermission(uri, flag)
-              onImageChanged(uri.toString())
-            } else {
-              Log.d("PhotoPicker", "No media selected")
-            }
-          }
-
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.SpaceBetween,
-          modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        ) {
-          Text(
-            text = "Image",
-            style = MaterialTheme.typography.titleLarge,
-          )
-
-          // ImageControls()
-          AnimatedVisibility(
-            visible = image != null,
-            enter = fadeIn(),
-            exit = fadeOut(),
-          ) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.End,
-            ) {
-              IconButton(
-                onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
-              ) {
-                Icon(
-                  imageVector = Icons.Filled.ImageSearch,
-                  contentDescription = "Choose new image from gallery",
-                  tint = MaterialTheme.colorScheme.primary,
-                  modifier =
-                    Modifier.sharedElement(
-                      sharedContentState =
-                        rememberSharedContentState(key = "image-controls-gallery"),
-                      animatedVisibilityScope = this@AnimatedVisibility,
-                    ),
-                )
-              }
-
-              IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                  imageVector = Icons.Filled.PhotoCamera,
-                  contentDescription = "Take a new photo",
-                  tint = MaterialTheme.colorScheme.primary,
-                  modifier =
-                    Modifier.sharedElement(
-                      sharedContentState =
-                        rememberSharedContentState(key = "image-controls-camera"),
-                      animatedVisibilityScope = this@AnimatedVisibility,
-                    ),
-                )
-              }
-
-              IconButton(onClick = { onImageChanged(null) }) {
-                Icon(
-                  imageVector = Icons.Filled.Delete,
-                  contentDescription = "Delete Image",
-                  tint = MaterialTheme.colorScheme.error,
-                )
-              }
-            }
-          }
-        }
-
-        AnimatedContent(
-          targetState = image,
-          transitionSpec = { fadeIn() togetherWith fadeOut() },
-          modifier = Modifier.fillMaxWidth().heightIn(max = 256.dp).aspectRatio(ratio = 2f),
-        ) { imageUri ->
-          imageUri?.let {
-            AsyncImage(
-              model = it,
-              contentDescription = "Recipe Image",
-              contentScale = ContentScale.Crop,
-              modifier =
-                Modifier.clip(MaterialTheme.shapes.medium).clickable {
-                  pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
-                },
-            )
-          }
-            ?: Row(
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.fillMaxWidth(),
-            ) {
-              SquareIconButton(
-                modifier = Modifier.fillMaxHeight(0.95f),
-                onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
-                icon = {
-                  Icon(
-                    imageVector = Icons.Filled.ImageSearch,
-                    contentDescription = "Choose from gallery",
-                    modifier =
-                      Modifier.sharedElement(
-                        sharedContentState =
-                          rememberSharedContentState(key = "image-controls-gallery"),
-                        animatedVisibilityScope = this@AnimatedContent,
-                      ),
-                  )
-                },
-                text = {
-                  Text(
-                    text = "Choose from gallery",
-                    textAlign = TextAlign.Center,
-                  )
-                },
-              )
-
-              Spacer(modifier = Modifier.widthIn(min = 8.dp))
-
-              SquareIconButton(
-                modifier = Modifier.fillMaxHeight(0.95f),
-                onClick = { /*TODO*/ },
-                icon = {
-                  Icon(
-                    imageVector = Icons.Filled.PhotoCamera,
-                    contentDescription = "Take a photo",
-                    modifier =
-                      Modifier.sharedElement(
-                        sharedContentState =
-                          rememberSharedContentState(key = "image-controls-camera"),
-                        animatedVisibilityScope = this@AnimatedContent,
-                      ),
-                  )
-                },
-                text = {
-                  Text(
-                    text = "Take a photo",
-                    textAlign = TextAlign.Center,
-                  )
-                },
-              )
-            }
-        }
-      }
-    }
+    RecipeImageSection(
+      image = state.image,
+      onImageChange = fieldOps::updateImage,
+    )
 
     HorizontalDivider()
 
@@ -642,7 +424,7 @@ private fun RecipeInfoContent(
     //
     //    OutlinedTextField(
     //      value = description,
-    //      onValueChange = onDescriptionChanged,
+    //      onValueChange = onDescriptionChange,
     //      modifier = Modifier.fillMaxWidth(),
     //      minLines = 3,
     //      keyboardOptions = KeyboardOptions(
@@ -654,164 +436,30 @@ private fun RecipeInfoContent(
     //
     //    HorizontalDivider()
 
-    Column {
-      Text(
-        text = "Servings",
-        style = MaterialTheme.typography.titleLarge,
-      )
-
-      Text(text = "How many servings does this recipe make? This is used to scale the recipe.")
-
-      var showServingsPicker by remember { mutableStateOf(false) }
-      var servingsSelect by remember { mutableIntStateOf(servings) }
-      val sheetState = rememberModalBottomSheetState()
-      val scope = rememberCoroutineScope()
-
-      TextButton(
-        onClick = {
-          showServingsPicker = true
-          servingsSelect = servings
-        }
-      ) {
-        Text(
-          text =
-            servings.let { n ->
-              if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings"
-            },
-          style = MaterialTheme.typography.titleMedium,
-        )
-      }
-
-      if (showServingsPicker) {
-        ActionBottomSheet(
-          sheetState = sheetState,
-          onDismissRequest = { showServingsPicker = false },
-          modifier = Modifier.fillMaxWidth().padding(8.dp),
-          title = { Text(text = "Servings") },
-          action = {
-            TextButton(
-              onClick = {
-                onServingsChanged(servingsSelect)
-                sheetState.dismiss(scope) { showServingsPicker = false }
-              }
-            ) {
-              Text(text = "Save")
-            }
-          },
-        ) {
-          InfiniteScrollingPicker(
-            options = (0..99).toList(),
-            selected = servingsSelect,
-            onSelect = { servingsSelect = it },
-          ) {
-            Text(text = if (it != 0) it.toString() else "-")
-          }
-        }
-      }
-    }
+    RecipeServingsField(
+      servings = state.servings,
+      onServingsChange = fieldOps::updateServings,
+    )
 
     HorizontalDivider()
 
-    Column {
-      Text(
-        text = "Prep Time",
-        style = MaterialTheme.typography.titleLarge,
-      )
-
-      Text(text = "How long does this recipe take to prepare?")
-
-      var showTimePicker by remember { mutableStateOf(false) }
-      val sheetState = rememberModalBottomSheetState()
-      val scope = rememberCoroutineScope()
-
-      TextButton(onClick = { showTimePicker = true }) {
-        val hours = prepTime / 60
-        val minutes = prepTime % 60
-        val text =
-          when {
-            hours > 0 && minutes > 0 ->
-              "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${
-            "minute".pluralize(
-              minutes
-            ) { "${it}s" }
-          }"
-
-            hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
-            minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
-            else -> "Set prep time"
-          }
-
-        Text(
-          text = text,
-          style = MaterialTheme.typography.titleMedium,
-        )
-      }
-
-      if (showTimePicker) {
-        TimeSelectBottomSheet(
-          initialTime = prepTime,
-          sheetState = sheetState,
-          onDismissRequest = { showTimePicker = false },
-          title = { Text("Prep Time") },
-          onTimeSelect = {
-            onPrepTimeChanged(it)
-            sheetState.dismiss(scope) { showTimePicker = false }
-          },
-        )
-      }
-    }
+    RecipeTimeField(
+      label = "Prep Time",
+      description = "How long does this recipe take to prepare?",
+      placeholder = "Set prep time",
+      timeMinutes = state.prepTime,
+      onTimeChange = fieldOps::updatePrepTime,
+    )
 
     HorizontalDivider()
 
-    Column {
-      Text(
-        text = "Cook Time",
-        style = MaterialTheme.typography.titleLarge,
-      )
-
-      Text(text = "How long does this recipe take to cook?")
-
-      var showTimePicker by remember { mutableStateOf(false) }
-      val sheetState = rememberModalBottomSheetState()
-      val scope = rememberCoroutineScope()
-
-      TextButton(onClick = { showTimePicker = true }) {
-        val hours = cookTime / 60
-        val minutes = cookTime % 60
-        val text =
-          when {
-            hours > 0 && minutes > 0 ->
-              "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${
-            "minute".pluralize(
-              minutes
-            ) { "${it}s" }
-          }"
-
-            hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
-            minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
-            else -> "Set cook time"
-          }
-
-        Text(
-          text = text,
-          style = MaterialTheme.typography.titleMedium,
-        )
-      }
-
-      if (showTimePicker) {
-        TimeSelectBottomSheet(
-          initialTime = cookTime,
-          sheetState = sheetState,
-          onDismissRequest = { showTimePicker = false },
-          title = { Text("Cook Time") },
-          onTimeSelect = {
-            onCookTimeChanged(it)
-
-            sheetState.dismiss(scope) { showTimePicker = false }
-          },
-        )
-      }
-    }
+    RecipeTimeField(
+      label = "Cook Time",
+      description = "How long does this recipe take to cook?",
+      placeholder = "Set cook time",
+      timeMinutes = state.cookTime,
+      onTimeChange = fieldOps::updateCookTime,
+    )
 
     HorizontalDivider()
 
@@ -821,8 +469,8 @@ private fun RecipeInfoContent(
     )
 
     OutlinedTextField(
-      value = notes,
-      onValueChange = onNotesChanged,
+      value = state.notes,
+      onValueChange = fieldOps::updateNotes,
       modifier = Modifier.widthIn(max = 488.dp).fillMaxWidth(),
       placeholder = { Text("Any additional notes about the recipe") },
       minLines = 3,
@@ -833,6 +481,381 @@ private fun RecipeInfoContent(
         ),
       keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
     )
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecipeSourceSection(
+  source: String,
+  sourceName: String,
+  onSourceChange: (String) -> Unit,
+  onSourceNameChange: (String) -> Unit,
+) {
+  Column {
+    Text(
+      text = "Source",
+      style = MaterialTheme.typography.titleLarge,
+    )
+
+    Text(text = "Where did you find this recipe?")
+
+    var showSourceSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
+    TextButton(onClick = { showSourceSheet = true }) {
+      Text(
+        text = sourceName.ifBlank { "Add Source" },
+        style = MaterialTheme.typography.titleMedium,
+      )
+    }
+
+    if (source.isNotBlank() && source != sourceName) {
+      Text(
+        text = source,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary,
+        modifier = Modifier.padding(start = 12.dp),
+      )
+    }
+
+    if (showSourceSheet) {
+      var sourceNameInput by remember { mutableStateOf(sourceName) }
+      var sourceInput by remember { mutableStateOf(source) }
+
+      ActionBottomSheet(
+        onDismissRequest = { showSourceSheet = false },
+        sheetState = sheetState,
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        title = { Text(text = "Source") },
+        action = {
+          TextButton(
+            onClick = {
+              onSourceChange(sourceInput)
+              onSourceNameChange(sourceNameInput)
+
+              sheetState.dismiss(scope) { showSourceSheet = false }
+            }
+          ) {
+            Text(text = "Save")
+          }
+        },
+      ) {
+        val focusManager = LocalFocusManager.current
+        val sheetKeyboard = LocalSoftwareKeyboardController.current
+
+        OutlinedTextField(
+          value = sourceNameInput,
+          onValueChange = { sourceNameInput = it },
+          label = { Text("Name") },
+          singleLine = true,
+          keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+          keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
+          modifier = Modifier.fillMaxWidth(),
+        )
+
+        OutlinedTextField(
+          value = sourceInput,
+          onValueChange = { sourceInput = it },
+          label = { Text("Source") },
+          placeholder = { Text("Website URL, recipe book and page number...") },
+          singleLine = true,
+          keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+          keyboardActions =
+            KeyboardActions(
+              onDone = {
+                sheetKeyboard?.hide()
+                focusManager.clearFocus()
+              }
+            ),
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun RecipeImageSection(
+  image: String?,
+  onImageChange: (String?) -> Unit,
+) {
+  SharedTransitionLayout {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      val context = LocalContext.current
+      val pickPhoto =
+        rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+          if (uri != null) {
+            val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(uri, flag)
+            onImageChange(uri.toString())
+          } else {
+            Log.d("PhotoPicker", "No media selected")
+          }
+        }
+
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+      ) {
+        Text(
+          text = "Image",
+          style = MaterialTheme.typography.titleLarge,
+        )
+
+        // ImageControls()
+        AnimatedVisibility(
+          visible = image != null,
+          enter = fadeIn(),
+          exit = fadeOut(),
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End,
+          ) {
+            IconButton(onClick = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }) {
+              Icon(
+                imageVector = Icons.Filled.ImageSearch,
+                contentDescription = "Choose new image from gallery",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier =
+                  Modifier.sharedElement(
+                    sharedContentState = rememberSharedContentState(key = "image-controls-gallery"),
+                    animatedVisibilityScope = this@AnimatedVisibility,
+                  ),
+              )
+            }
+
+            IconButton(onClick = { /*TODO*/ }) {
+              Icon(
+                imageVector = Icons.Filled.PhotoCamera,
+                contentDescription = "Take a new photo",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier =
+                  Modifier.sharedElement(
+                    sharedContentState = rememberSharedContentState(key = "image-controls-camera"),
+                    animatedVisibilityScope = this@AnimatedVisibility,
+                  ),
+              )
+            }
+
+            IconButton(onClick = { onImageChange(null) }) {
+              Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "Delete Image",
+                tint = MaterialTheme.colorScheme.error,
+              )
+            }
+          }
+        }
+      }
+
+      RecipeImageDisplay(
+        image = image,
+        onPickPhoto = { pickPhoto.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
+        sharedTransitionScope = this@SharedTransitionLayout,
+      )
+    }
+  }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun RecipeImageDisplay(
+  image: String?,
+  onPickPhoto: () -> Unit,
+  sharedTransitionScope: SharedTransitionScope,
+) {
+  AnimatedContent(
+    targetState = image,
+    transitionSpec = { fadeIn() togetherWith fadeOut() },
+    modifier = Modifier.fillMaxWidth().heightIn(max = 256.dp).aspectRatio(ratio = 2f),
+  ) { imageUri ->
+    imageUri?.let {
+      AsyncImage(
+        model = it,
+        contentDescription = "Recipe Image",
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { onPickPhoto() },
+      )
+    }
+      ?: Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+      ) {
+        SquareIconButton(
+          modifier = Modifier.fillMaxHeight(PHOTO_BUTTON_HEIGHT_FRACTION),
+          onClick = onPickPhoto,
+          icon = {
+            Icon(
+              imageVector = Icons.Filled.ImageSearch,
+              contentDescription = "Choose from gallery",
+              modifier =
+                with(sharedTransitionScope) {
+                  Modifier.sharedElement(
+                    sharedContentState = rememberSharedContentState(key = "image-controls-gallery"),
+                    animatedVisibilityScope = this@AnimatedContent,
+                  )
+                },
+            )
+          },
+          text = {
+            Text(
+              text = "Choose from gallery",
+              textAlign = TextAlign.Center,
+            )
+          },
+        )
+
+        Spacer(modifier = Modifier.widthIn(min = 8.dp))
+
+        SquareIconButton(
+          modifier = Modifier.fillMaxHeight(PHOTO_BUTTON_HEIGHT_FRACTION),
+          onClick = { /*TODO*/ },
+          icon = {
+            Icon(
+              imageVector = Icons.Filled.PhotoCamera,
+              contentDescription = "Take a photo",
+              modifier =
+                with(sharedTransitionScope) {
+                  Modifier.sharedElement(
+                    sharedContentState = rememberSharedContentState(key = "image-controls-camera"),
+                    animatedVisibilityScope = this@AnimatedContent,
+                  )
+                },
+            )
+          },
+          text = {
+            Text(
+              text = "Take a photo",
+              textAlign = TextAlign.Center,
+            )
+          },
+        )
+      }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecipeServingsField(
+  servings: Int,
+  onServingsChange: (Int) -> Unit,
+) {
+  Column {
+    Text(
+      text = "Servings",
+      style = MaterialTheme.typography.titleLarge,
+    )
+
+    Text(text = "How many servings does this recipe make? This is used to scale the recipe.")
+
+    var showServingsPicker by remember { mutableStateOf(false) }
+    var servingsSelect by remember { mutableIntStateOf(servings) }
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
+    TextButton(
+      onClick = {
+        showServingsPicker = true
+        servingsSelect = servings
+      }
+    ) {
+      Text(
+        text = servings.let { n -> if (n > 0) "$n serving".pluralize(n) { "${it}s" } else "Set servings" },
+        style = MaterialTheme.typography.titleMedium,
+      )
+    }
+
+    if (showServingsPicker) {
+      ActionBottomSheet(
+        sheetState = sheetState,
+        onDismissRequest = { showServingsPicker = false },
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        title = { Text(text = "Servings") },
+        action = {
+          TextButton(
+            onClick = {
+              onServingsChange(servingsSelect)
+              sheetState.dismiss(scope) { showServingsPicker = false }
+            }
+          ) {
+            Text(text = "Save")
+          }
+        },
+      ) {
+        InfiniteScrollingPicker(
+          options = (0..99).toList(),
+          selected = servingsSelect,
+          onSelect = { servingsSelect = it },
+        ) {
+          Text(text = if (it != 0) it.toString() else "-")
+        }
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecipeTimeField(
+  label: String,
+  description: String,
+  placeholder: String,
+  timeMinutes: Int,
+  onTimeChange: (Int) -> Unit,
+) {
+  Column {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.titleLarge,
+    )
+
+    Text(text = description)
+
+    var showTimePicker by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
+    TextButton(onClick = { showTimePicker = true }) {
+      val hours = timeMinutes / 60
+      val minutes = timeMinutes % 60
+      val text =
+        when {
+          hours > 0 && minutes > 0 ->
+            "$hours ${"hour".pluralize(hours) { "${it}s" }}, $minutes ${
+          "minute".pluralize(
+            minutes
+          ) { "${it}s" }
+        }"
+
+          hours > 0 -> "$hours hour".pluralize(hours) { "${it}s" }
+          minutes > 0 -> "$minutes minute".pluralize(minutes) { "${it}s" }
+          else -> placeholder
+        }
+
+      Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+      )
+    }
+
+    if (showTimePicker) {
+      TimeSelectBottomSheet(
+        initialTime = timeMinutes,
+        sheetState = sheetState,
+        onDismissRequest = { showTimePicker = false },
+        title = { Text(label) },
+        onTimeSelect = {
+          onTimeChange(it)
+          sheetState.dismiss(scope) { showTimePicker = false }
+        },
+      )
+    }
   }
 }
 
@@ -876,21 +899,17 @@ private fun SquareIconButton(
 @Composable
 private fun IngredientsContent(
   ingredients: List<Ingredient>,
-  onIngredientChanged: (Ingredient) -> Unit,
+  onIngredientChange: (Ingredient) -> Unit,
   onRemoveIngredient: (Ingredient) -> Unit,
   onMoveIngredient: (Int, Int) -> Unit,
   onUserMessage: (String) -> Unit,
-  parser: IngredientParser = koinInject(), // TODO: move this into the viewmodel
+  parser: IngredientParser = koinInject(),
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
-  val view = LocalView.current
 
   val scope = rememberCoroutineScope()
   val lazyListState = rememberLazyListState()
-  val reorderableLazyListState =
-    rememberReorderableLazyListState(lazyListState) { from, to ->
-      onMoveIngredient(from.index, to.index)
-    }
+  val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to -> onMoveIngredient(from.index, to.index) }
 
   var reordering by remember { mutableStateOf(false) }
 
@@ -915,103 +934,20 @@ private fun IngredientsContent(
         key = { it.id },
         contentType = { "Ingredient" },
       ) { ingredient ->
-        ReorderableItem(
+        ReorderableIngredientItem(
           state = reorderableLazyListState,
-          key = ingredient.id,
-        ) { isDragging ->
-          var editing by remember { mutableStateOf(false) }
-          val elevation by
-            animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
-
-          Surface(
-            shadowElevation = elevation,
-            shape = MaterialTheme.shapes.medium,
-          ) {
-            AnimatedContent(
-              targetState = editing,
-              label = "Ingredient editing transition",
-              transitionSpec = { fadeIn() togetherWith fadeOut() },
-            ) { isEditing ->
-              if (!isEditing) {
-                IngredientRow(
-                  ingredient = ingredient,
-                  selectedUnit = ingredient.measurement.unit,
-                  showSelection = false,
-                  onClick = { editing = true },
-                  trailingIcon = {
-                    AnimatedVisibility(
-                      visible = reordering,
-                      enter = fadeIn() + expandHorizontally() + slideInHorizontally { it },
-                      exit = fadeOut() + shrinkHorizontally() + slideOutHorizontally { it },
-                    ) {
-                      IconButton(
-                        onClick = {},
-                        modifier =
-                          Modifier.draggableHandle(
-                            onDragStarted = {
-                              view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
-                            },
-                            onDragStopped = {
-                              view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
-                            },
-                          ),
-                      ) {
-                        Icon(
-                          imageVector = Icons.Default.DragHandle,
-                          contentDescription = "drag ingredient",
-                        )
-                      }
-                    }
-                  },
-                )
-              } else {
-                val focusRequester = remember { FocusRequester() }
-                val focusManager = LocalFocusManager.current
-                var focusGained by remember { mutableStateOf(false) }
-
-                IngredientEdit(
-                  ingredient = ingredient,
-                  modifier =
-                    Modifier.fillMaxWidth()
-                      .onFocusChanged {
-                        if (focusGained) {
-                          if (!it.isFocused || !it.hasFocus) {
-                            editing = false
-                          }
-                        } else {
-                          focusGained = it.isFocused || it.hasFocus
-                        }
-                      }
-                      .focusRequester(focusRequester),
-                  onEdit = {
-                    onIngredientChanged(it)
-                    editing = false
-                  },
-                  onRemove = {
-                    onRemoveIngredient(it)
-                    editing = false
-                  },
-                  onUserMessage = onUserMessage,
-                )
-
-                LaunchedEffect(editing) {
-                  if (editing) {
-                    focusRequester.requestFocus()
-                  } else {
-                    focusManager.clearFocus()
-                  }
-                }
-              }
-            }
-          }
-        }
+          ingredient = ingredient,
+          reordering = reordering,
+          onIngredientChange = onIngredientChange,
+          onRemoveIngredient = onRemoveIngredient,
+          onUserMessage = onUserMessage,
+        )
       }
 
       if (!reordering) {
         item(key = "Ingredient Input") {
           var ingredientInput by remember { mutableStateOf("") }
 
-          // TODO: find some sort of onPaste callback
           OutlinedTextField(
             value = ingredientInput,
             onValueChange = { ingredientInput = it },
@@ -1019,9 +955,7 @@ private fun IngredientsContent(
             placeholder = { Text(text = "Add an ingredient") },
             trailingIcon = {
               if (ingredientInput.isNotBlank()) {
-                IconButton(onClick = { ingredientInput = "" }) {
-                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
-                }
+                IconButton(onClick = { ingredientInput = "" }) { Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear") }
               }
             },
             singleLine = true,
@@ -1029,24 +963,23 @@ private fun IngredientsContent(
             keyboardActions =
               KeyboardActions(
                 onDone = {
-                  // TODO: parse multiple ingredients when a list is pasted in
                   if (ingredientInput.isNotBlank()) {
                     if (ingredientInput.contains("\n")) {
                       runCatching { parser.parseIngredients(ingredientInput) }
-                        .onSuccess { newIngredients ->
-                          newIngredients.forEach { onIngredientChanged(it) }
+                        .onOk { newIngredients ->
+                          newIngredients.forEach { onIngredientChange(it) }
                           ingredientInput = ""
                           scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
                         }
-                        .onFailure { onUserMessage("Failed to parse ingredients: ${it.message}") }
+                        .onErr { onUserMessage("Failed to parse ingredients: ${it.message}") }
                     } else {
                       runCatching { parser.parseIngredient(ingredientInput) }
-                        .onSuccess {
-                          onIngredientChanged(it)
+                        .onOk {
+                          onIngredientChange(it)
                           ingredientInput = ""
                           scope.launch { lazyListState.animateScrollToItem(ingredients.size) }
                         }
-                        .onFailure { onUserMessage("Failed to parse ingredient: ${it.message}") }
+                        .onErr { onUserMessage("Failed to parse ingredient: ${it.message}") }
                     }
                   }
                   keyboard?.hide()
@@ -1059,13 +992,112 @@ private fun IngredientsContent(
   }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun LazyItemScope.ReorderableIngredientItem(
+  state: ReorderableLazyListState,
+  ingredient: Ingredient,
+  reordering: Boolean,
+  onIngredientChange: (Ingredient) -> Unit,
+  onRemoveIngredient: (Ingredient) -> Unit,
+  onUserMessage: (String) -> Unit,
+) {
+  val view = LocalView.current
+
+  ReorderableItem(
+    state = state,
+    key = ingredient.id,
+  ) { isDragging ->
+    var editing by remember { mutableStateOf(false) }
+    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+
+    Surface(
+      shadowElevation = elevation,
+      shape = MaterialTheme.shapes.medium,
+    ) {
+      AnimatedContent(
+        targetState = editing,
+        label = "Ingredient editing transition",
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+      ) { isEditing ->
+        if (!isEditing) {
+          IngredientRow(
+            ingredient = ingredient,
+            selectedUnit = ingredient.measurement.unit,
+            showSelection = false,
+            onClick = { editing = true },
+            trailingIcon = {
+              AnimatedVisibility(
+                visible = reordering,
+                enter = fadeIn() + expandHorizontally() + slideInHorizontally { it },
+                exit = fadeOut() + shrinkHorizontally() + slideOutHorizontally { it },
+              ) {
+                IconButton(
+                  onClick = {},
+                  modifier =
+                    Modifier.draggableHandle(
+                      onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                      onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) },
+                    ),
+                ) {
+                  Icon(
+                    imageVector = Icons.Default.DragHandle,
+                    contentDescription = "drag ingredient",
+                  )
+                }
+              }
+            },
+          )
+        } else {
+          val focusRequester = remember { FocusRequester() }
+          val focusManager = LocalFocusManager.current
+          var focusGained by remember { mutableStateOf(false) }
+
+          IngredientEdit(
+            ingredient = ingredient,
+            modifier =
+              Modifier.fillMaxWidth()
+                .onFocusChanged {
+                  if (focusGained) {
+                    if (!it.isFocused || !it.hasFocus) {
+                      editing = false
+                    }
+                  } else {
+                    focusGained = it.isFocused || it.hasFocus
+                  }
+                }
+                .focusRequester(focusRequester),
+            onEdit = {
+              onIngredientChange(it)
+              editing = false
+            },
+            onRemove = {
+              onRemoveIngredient(it)
+              editing = false
+            },
+            onUserMessage = onUserMessage,
+          )
+
+          LaunchedEffect(editing) {
+            if (editing) {
+              focusRequester.requestFocus()
+            } else {
+              focusManager.clearFocus()
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 @Composable
 private fun IngredientEdit(
   ingredient: Ingredient,
+  onUserMessage: (String) -> Unit,
   modifier: Modifier = Modifier,
   onEdit: (Ingredient) -> Unit = {},
   onRemove: (Ingredient) -> Unit = {},
-  onUserMessage: (String) -> Unit,
   parser: IngredientParser = koinInject(),
 ) {
   var ingredientInput by remember {
@@ -1099,11 +1131,11 @@ private fun IngredientEdit(
         onDone = {
           if (ingredientInput.isNotBlank()) {
             runCatching { parser.parseIngredient(ingredientInput.text) }
-              .onSuccess {
+              .onOk {
                 onEdit(it.copy(id = ingredient.id))
                 ingredientInput = ingredientInput.copy(text = "")
               }
-              .onFailure { onUserMessage("Failed to parse ingredient: ${it.message}") }
+              .onErr { onUserMessage("Failed to parse ingredient: ${it.message}") }
           } else {
             ingredientInput = ingredientInput.copy(text = "")
             onRemove(ingredient)
@@ -1118,10 +1150,10 @@ private fun IngredientEdit(
 fun InstructionsContent(
   instructions: List<Instruction>,
   ingredients: List<Ingredient>,
-  onInstructionChanged: (Instruction) -> Unit,
+  onInstructionChange: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   onMoveInstruction: (Int, Int) -> Unit,
-  onUserMessage: (String) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
   val keyboard = LocalSoftwareKeyboardController.current
 
@@ -1137,7 +1169,7 @@ fun InstructionsContent(
 
   var reordering by remember { mutableStateOf(false) }
 
-  Column {
+  Column(modifier = modifier) {
     TextButton(
       onClick = { reordering = !reordering },
       enabled = instructions.size > 1,
@@ -1162,8 +1194,7 @@ fun InstructionsContent(
           state = reorderableLazyListState,
           key = instruction.id,
         ) { isDragging ->
-          val elevation by
-            animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
+          val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "Drag and Drop elevation")
           var expanded by remember { mutableStateOf(true) }
 
           Surface(shadowElevation = elevation) {
@@ -1175,8 +1206,8 @@ fun InstructionsContent(
                 reorderScope = this@ReorderableItem,
                 instruction = instruction,
                 ingredients = ingredients,
-                onToggleExpanded = { expanded = it },
-                onInstructionChanged = onInstructionChanged,
+                onToggleExpand = { expanded = it },
+                onInstructionChange = onInstructionChange,
                 onRemoveInstruction = onRemoveInstruction,
               )
 
@@ -1199,9 +1230,7 @@ fun InstructionsContent(
             placeholder = { Text(text = "Add an instruction") },
             trailingIcon = {
               if (instructionInput.isNotBlank()) {
-                IconButton(onClick = { instructionInput = "" }) {
-                  Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear")
-                }
+                IconButton(onClick = { instructionInput = "" }) { Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear") }
               }
             },
             minLines = 3,
@@ -1211,13 +1240,10 @@ fun InstructionsContent(
                 onDone = {
                   if (instructionInput.isNotBlank()) {
                     if (instructionInput.contains("\n")) {
-                      instructionInput
-                        .split("\n")
-                        .map { Instruction(it) }
-                        .forEach { onInstructionChanged(it) }
+                      instructionInput.split("\n").map { Instruction(it) }.forEach { onInstructionChange(it) }
                     } else {
                       val instruction = Instruction(instructionInput)
-                      onInstructionChanged(instruction)
+                      onInstructionChange(instruction)
                     }
                     instructionInput = ""
                     scope.launch { lazyListState.animateScrollToItem(instructions.size) }
@@ -1232,7 +1258,7 @@ fun InstructionsContent(
   }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstructionComponent(
   step: Int,
@@ -1241,12 +1267,11 @@ fun InstructionComponent(
   reorderScope: ReorderableCollectionItemScope,
   instruction: Instruction,
   ingredients: List<Ingredient>,
-  onToggleExpanded: (Boolean) -> Unit,
-  onInstructionChanged: (Instruction) -> Unit,
+  onToggleExpand: (Boolean) -> Unit,
+  onInstructionChange: (Instruction) -> Unit,
   onRemoveInstruction: (Instruction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  var editing by remember { mutableStateOf(false) }
   var showBottomSheet by remember { mutableStateOf(false) }
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   val scope = rememberCoroutineScope()
@@ -1255,198 +1280,79 @@ fun InstructionComponent(
 
   Column(
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier =
-      Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp).then(modifier),
+    modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp).then(modifier),
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-      modifier =
-        Modifier.fillMaxWidth().clickable(enabled = !reordering) { onToggleExpanded(!expanded) },
-    ) {
-      Text(
-        text = "Step $step",
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.wrapContentWidth(Alignment.Start),
-      )
+    InstructionStepHeader(
+      step = step,
+      expanded = expanded,
+      reordering = reordering,
+      reorderScope = reorderScope,
+      instruction = instruction,
+      onToggleExpand = onToggleExpand,
+      onInstructionChange = onInstructionChange,
+      onRemoveInstruction = onRemoveInstruction,
+    )
 
-      AnimatedContent(targetState = reordering, label = "Swap between drag handle delete button") {
-        isReordering ->
-        if (!isReordering) {
-          IconButton(
-            onClick = { onRemoveInstruction(instruction) },
-            modifier = Modifier.wrapContentWidth(Alignment.End),
-          ) {
-            Icon(imageVector = Icons.Default.Close, contentDescription = "remove instruction")
-          }
-        } else {
-          val view = LocalView.current
+    InstructionIngredientsArea(
+      instruction = instruction,
+      ingredients = ingredients,
+      isExpanded = isExpanded,
+      onInstructionChange = onInstructionChange,
+      onShowIngredientSheet = { showBottomSheet = true },
+    )
 
-          IconButton(
-            onClick = {},
-            modifier =
-              with(reorderScope) {
-                Modifier.wrapContentWidth(Alignment.End)
-                  .draggableHandle(
-                    onDragStarted = {
-                      view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
-                    },
-                    onDragStopped = {
-                      view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
-                    },
-                  )
-              },
-          ) {
-            Icon(imageVector = Icons.Default.DragHandle, contentDescription = "reorder instruction")
-          }
-        }
-      }
-    }
+    if (showBottomSheet) {
+      val newIngredients = remember { instruction.ingredients.toMutableStateList() }
 
-    AnimatedContent(
-      targetState = editing,
-      label = "Instruction editing transition",
-      transitionSpec = { fadeIn() togetherWith fadeOut() },
-    ) { isEditing ->
-      if (!isEditing) {
-        val maxLines = if (isExpanded) Int.MAX_VALUE else 1
-
-        Text(
-          text = instruction.text,
-          overflow = TextOverflow.Ellipsis,
-          maxLines = maxLines,
-          modifier = Modifier.fillMaxWidth().clickable { editing = true },
-        )
-      } else {
-        val focusRequester = remember { FocusRequester() }
-        val focusManager = LocalFocusManager.current
-        var focusGained by remember { mutableStateOf(false) }
-
-        InstructionEdit(
-          instruction = instruction,
-          modifier =
-            Modifier.fillMaxWidth()
-              .onFocusChanged {
-                if (focusGained) {
-                  if (!it.isFocused || !it.hasFocus) {
-                    editing = false
-                  }
-                } else {
-                  focusGained = it.isFocused || it.hasFocus
-                }
-              }
-              .focusRequester(focusRequester),
-          onEdit = {
-            onInstructionChanged(it)
-            editing = false
-          },
-          onRemove = {
-            onRemoveInstruction(it)
-            editing = false
-          },
-        )
-
-        LaunchedEffect(editing) {
-          if (editing) {
-            focusRequester.requestFocus()
-          } else {
-            focusManager.clearFocus()
-          }
-        }
-      }
-    }
-
-    AnimatedVisibility(
-      visible = isExpanded,
-      enter = fadeIn() + expandVertically(),
-      exit = fadeOut() + shrinkVertically(),
-    ) {
-      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (instruction.ingredients.isNotEmpty()) {
-          FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth(),
-          ) {
-            ingredients.intersect(instruction.ingredients.toSet()).forEach { ingredient ->
-              key(ingredient.id) {
-                val visible = remember { MutableTransitionState(true) }
-
-                if (!visible.targetState && !visible.currentState && visible.isIdle) {
-                  onInstructionChanged(
-                    instruction.copy(ingredients = instruction.ingredients - ingredient)
-                  )
-                }
-
-                AnimatedVisibility(
-                  visibleState = visible,
-                  exit = fadeOut(),
-                ) {
-                  ItemPill(
-                    modifier = Modifier,
-                    leadingContent = {
-                      if (ingredient.measurement.quantity > 0) {
-                        IngredientQuantity(ingredient = ingredient)
-                      }
-                    },
-                    trailingIcon = {
-                      IconButton(onClick = { visible.targetState = false }) {
-                        Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
-                      }
-                    },
-                  ) {
-                    Text(
-                      text = ingredient.name,
-                      modifier =
-                        Modifier.applyIf(ingredient.measurement.quantity <= 0) {
-                          padding(start = 8.dp)
-                        },
-                    )
-                  }
-                }
-              }
+      ActionBottomSheet(
+        onDismissRequest = { showBottomSheet = false },
+        sheetState = sheetState,
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        title = { Text(text = "Select Ingredients") },
+        action = {
+          TextButton(
+            onClick = {
+              onInstructionChange(instruction.copy(ingredients = newIngredients))
+              sheetState.dismiss(scope) { showBottomSheet = false }
             }
+          ) {
+            Text(text = "Save")
           }
-        }
-
-        ItemPill(
-          enabled = true,
-          onClick = { showBottomSheet = true },
-          leadingContent = {
-            AnimatedContent(
-              targetState = instruction.ingredients.isEmpty(),
-              label = "Add/Edit Ingredient Icon",
-            ) {
-              if (it) {
-                Icon(
-                  imageVector = Icons.Default.Add,
-                  contentDescription = "Add ingredients to instruction",
-                  modifier = Modifier.padding(8.dp),
-                )
-              } else {
-                Icon(
-                  imageVector = Icons.Default.Edit,
-                  contentDescription = "Edit instruction's ingredients",
-                  modifier = Modifier.padding(8.dp),
-                )
-              }
-            }
-          },
+        },
+      ) {
+        LazyColumn(
+          contentPadding = PaddingValues(8.dp),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalAlignment = Alignment.CenterHorizontally,
+          modifier = Modifier.wrapContentSize(),
         ) {
-          AnimatedContent(
-            targetState = instruction.ingredients.isEmpty(),
-            label = "Add/Edit Ingredient Text",
-          ) {
-            if (it) {
+          items(ingredients) { ingredient ->
+            ItemPill(
+              modifier = Modifier.fillMaxWidth(),
+              leadingContent = {
+                if (ingredient.measurement.quantity > 0) {
+                  IngredientQuantity(ingredient = ingredient)
+                }
+              },
+              trailingIcon = {
+                Checkbox(
+                  checked = newIngredients.contains(ingredient),
+                  onCheckedChange = null,
+                  modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+              },
+              enabled = true,
+              onClick = {
+                if (newIngredients.contains(ingredient)) {
+                  newIngredients.remove(ingredient)
+                } else {
+                  newIngredients.add(ingredient)
+                }
+              },
+            ) {
               Text(
-                text = "Add Ingredients",
-                modifier = Modifier.padding(end = 8.dp),
-              )
-            } else {
-              Text(
-                text = "Edit Ingredients",
-                modifier = Modifier.padding(end = 8.dp),
+                text = ingredient.name,
+                modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
               )
             }
           }
@@ -1454,60 +1360,211 @@ fun InstructionComponent(
       }
     }
   }
+}
 
-  if (showBottomSheet) {
-    val newIngredients = remember { instruction.ingredients.toMutableStateList() }
+@Composable
+private fun InstructionStepHeader(
+  step: Int,
+  expanded: Boolean,
+  reordering: Boolean,
+  reorderScope: ReorderableCollectionItemScope,
+  instruction: Instruction,
+  onToggleExpand: (Boolean) -> Unit,
+  onInstructionChange: (Instruction) -> Unit,
+  onRemoveInstruction: (Instruction) -> Unit,
+) {
+  var editing by remember { mutableStateOf(false) }
 
-    ActionBottomSheet(
-      onDismissRequest = { showBottomSheet = false },
-      sheetState = sheetState,
-      modifier = Modifier.fillMaxWidth().padding(8.dp),
-      title = { Text(text = "Select Ingredients") },
-      action = {
-        TextButton(
-          onClick = {
-            onInstructionChanged(instruction.copy(ingredients = newIngredients))
-            sheetState.dismiss(scope) { showBottomSheet = false }
-          }
+  val isExpanded = expanded && !reordering
+
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween,
+    modifier = Modifier.fillMaxWidth().clickable(enabled = !reordering) { onToggleExpand(!expanded) },
+  ) {
+    Text(
+      text = "Step $step",
+      style = MaterialTheme.typography.titleLarge,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier.wrapContentWidth(Alignment.Start),
+    )
+
+    AnimatedContent(targetState = reordering, label = "Swap between drag handle delete button") { isReordering ->
+      if (!isReordering) {
+        IconButton(
+          onClick = { onRemoveInstruction(instruction) },
+          modifier = Modifier.wrapContentWidth(Alignment.End),
         ) {
-          Text(text = "Save")
+          Icon(imageVector = Icons.Default.Close, contentDescription = "remove instruction")
         }
-      },
-    ) {
-      LazyColumn(
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.wrapContentSize(),
-      ) {
-        items(ingredients) { ingredient ->
-          ItemPill(
-            modifier = Modifier.fillMaxWidth(),
-            leadingContent = {
-              if (ingredient.measurement.quantity > 0) {
-                IngredientQuantity(ingredient = ingredient)
-              }
+      } else {
+        val view = LocalView.current
+
+        IconButton(
+          onClick = {},
+          modifier =
+            with(reorderScope) {
+              Modifier.wrapContentWidth(Alignment.End)
+                .draggableHandle(
+                  onDragStarted = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START) },
+                  onDragStopped = { view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END) },
+                )
             },
-            trailingIcon = {
-              Checkbox(
-                checked = newIngredients.contains(ingredient),
-                onCheckedChange = null,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-              )
-            },
-            enabled = true,
-            onClick = {
-              if (newIngredients.contains(ingredient)) {
-                newIngredients.remove(ingredient)
+        ) {
+          Icon(imageVector = Icons.Default.DragHandle, contentDescription = "reorder instruction")
+        }
+      }
+    }
+  }
+
+  AnimatedContent(
+    targetState = editing,
+    label = "Instruction editing transition",
+    transitionSpec = { fadeIn() togetherWith fadeOut() },
+  ) { isEditing ->
+    if (!isEditing) {
+      val maxLines = if (isExpanded) Int.MAX_VALUE else 1
+
+      Text(
+        text = instruction.text,
+        overflow = TextOverflow.Ellipsis,
+        maxLines = maxLines,
+        modifier = Modifier.fillMaxWidth().clickable { editing = true },
+      )
+    } else {
+      val focusRequester = remember { FocusRequester() }
+      val focusManager = LocalFocusManager.current
+      var focusGained by remember { mutableStateOf(false) }
+
+      InstructionEdit(
+        instruction = instruction,
+        modifier =
+          Modifier.fillMaxWidth()
+            .onFocusChanged {
+              if (focusGained) {
+                if (!it.isFocused || !it.hasFocus) {
+                  editing = false
+                }
               } else {
-                newIngredients.add(ingredient)
+                focusGained = it.isFocused || it.hasFocus
               }
-            },
+            }
+            .focusRequester(focusRequester),
+        onEdit = {
+          onInstructionChange(it)
+          editing = false
+        },
+        onRemove = {
+          onRemoveInstruction(it)
+          editing = false
+        },
+      )
+
+      LaunchedEffect(editing) {
+        if (editing) {
+          focusRequester.requestFocus()
+        } else {
+          focusManager.clearFocus()
+        }
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun InstructionIngredientsArea(
+  instruction: Instruction,
+  ingredients: List<Ingredient>,
+  isExpanded: Boolean,
+  onInstructionChange: (Instruction) -> Unit,
+  onShowIngredientSheet: () -> Unit,
+) {
+  AnimatedVisibility(
+    visible = isExpanded,
+    enter = fadeIn() + expandVertically(),
+    exit = fadeOut() + shrinkVertically(),
+  ) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      if (instruction.ingredients.isNotEmpty()) {
+        FlowRow(
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+          modifier = Modifier.fillMaxWidth(),
+        ) {
+          ingredients.intersect(instruction.ingredients.toSet()).forEach { ingredient ->
+            key(ingredient.id) {
+              val visible = remember { MutableTransitionState(true) }
+
+              if (!visible.targetState && !visible.currentState && visible.isIdle) {
+                onInstructionChange(instruction.copy(ingredients = instruction.ingredients - ingredient))
+              }
+
+              AnimatedVisibility(
+                visibleState = visible,
+                exit = fadeOut(),
+              ) {
+                ItemPill(
+                  modifier = Modifier,
+                  leadingContent = {
+                    if (ingredient.measurement.quantity > 0) {
+                      IngredientQuantity(ingredient = ingredient)
+                    }
+                  },
+                  trailingIcon = {
+                    IconButton(onClick = { visible.targetState = false }) {
+                      Icon(imageVector = Icons.Default.Clear, contentDescription = "Remove")
+                    }
+                  },
+                ) {
+                  Text(
+                    text = ingredient.name,
+                    modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
+                  )
+                }
+              }
+            }
+          }
+        }
+      }
+
+      ItemPill(
+        enabled = true,
+        onClick = { onShowIngredientSheet() },
+        leadingContent = {
+          AnimatedContent(
+            targetState = instruction.ingredients.isEmpty(),
+            label = "Add/Edit Ingredient Icon",
           ) {
+            if (it) {
+              Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add ingredients to instruction",
+                modifier = Modifier.padding(8.dp),
+              )
+            } else {
+              Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit instruction's ingredients",
+                modifier = Modifier.padding(8.dp),
+              )
+            }
+          }
+        },
+      ) {
+        AnimatedContent(
+          targetState = instruction.ingredients.isEmpty(),
+          label = "Add/Edit Ingredient Text",
+        ) {
+          if (it) {
             Text(
-              text = ingredient.name,
-              modifier =
-                Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) },
+              text = "Add Ingredients",
+              modifier = Modifier.padding(end = 8.dp),
+            )
+          } else {
+            Text(
+              text = "Edit Ingredients",
+              modifier = Modifier.padding(end = 8.dp),
             )
           }
         }
@@ -1529,16 +1586,10 @@ private fun IngredientQuantity(ingredient: Ingredient) {
       }
     }
 
-  // TODO: this works for now, but it should use a custom layout to avoid recomposition
   var minWidth by remember { mutableStateOf(Dp.Unspecified) }
   val density = LocalDensity.current
 
-  Box(
-    modifier =
-      Modifier.onPlaced { minWidth = with(density) { it.size.height.toDp() } }
-        .widthIn(min = minWidth)
-        .fillMaxHeight()
-  ) {
+  Box(modifier = Modifier.onPlaced { minWidth = with(density) { it.size.height.toDp() } }.widthIn(min = minWidth).fillMaxHeight()) {
     Text(
       text = quantity,
       color = MaterialTheme.colorScheme.onPrimary,
@@ -1590,45 +1641,30 @@ private fun TextFieldValue.isNotBlank() = text.isNotBlank()
 
 @Preview
 @Composable
-fun AddEditRecipeContentPreview() {
+private fun AddEditRecipeContentPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
-
+    val formState =
+      RecipeFormState(
+        name = recipe.name,
+        notes = recipe.notes,
+        servings = recipe.servings,
+        prepTime = recipe.time.preparation,
+        cookTime = recipe.time.cooking,
+        source = recipe.source.source,
+        sourceName = recipe.source.name,
+        image = recipe.cover,
+        ingredients = recipe.ingredients,
+        instructions = recipe.instructions,
+      )
     SkilletAppTheme {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         AddEditRecipeContent(
           modifier = Modifier.fillMaxSize(),
-          name = recipe.name,
-          description = recipe.description,
-          ingredients = recipe.ingredients,
-          instructions = recipe.instructions,
-          equipment = recipe.equipment,
-          source = recipe.source.source,
-          sourceName = recipe.source.name,
-          image = recipe.cover,
-          servings = recipe.servings,
-          prepTime = recipe.time.preparation,
-          cookTime = recipe.time.cooking,
-          notes = recipe.notes,
-          onNameChanged = {},
-          onDescriptionChanged = {},
-          onIngredientChanged = {},
-          onRemoveIngredient = {},
+          state = formState,
+          fieldOps = koinInject<RecipeFormFieldOps>(),
+          collectionOps = koinInject<RecipeFormCollectionOps>(),
           onUserMessage = {},
-          onInstructionChanged = {},
-          onServingsChanged = {},
-          onPrepTimeChanged = {},
-          onCookTimeChanged = {},
-          onNotesChanged = {},
-          onSourceChanged = {},
-          onSourceNameChanged = {},
-          onImageChanged = {},
-          onRemoveInstruction = {},
-          onRemoveEquipment = {},
-          onEquipmentChanged = {},
-          onMoveIngredient = { _, _ -> },
-          onMoveInstruction = { _, _ -> },
-          onMoveEquipment = { _, _ -> },
         )
       }
     }
@@ -1638,7 +1674,7 @@ fun AddEditRecipeContentPreview() {
 @OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
-fun IngredientsTabPreview() {
+private fun IngredientsTabPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -1648,7 +1684,7 @@ fun IngredientsTabPreview() {
       Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         IngredientsContent(
           ingredients = ingredients,
-          onIngredientChanged = { ingredients.add(it) },
+          onIngredientChange = { ingredients.add(it) },
           onRemoveIngredient = { ingredients.remove(it) },
           onMoveIngredient = { from, to -> with(ingredients) { add(to, removeAt(from)) } },
           onUserMessage = {},
@@ -1660,9 +1696,8 @@ fun IngredientsTabPreview() {
 
 @Preview
 @Composable
-fun IngredientEditPreview() {
-  val ingredients =
-    mutableListOf(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
+private fun IngredientEditPreview() {
+  val ingredients = mutableListOf(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
   ingredients.add(Ingredient("test", Measurement(1f, MeasurementUnit.Cup), "1 cup test"))
 
   Surface {
@@ -1696,7 +1731,7 @@ fun IngredientEditPreview() {
 
 @Preview
 @Composable
-fun InstructionsTabPreview() {
+private fun InstructionsTabPreview() {
   KoinPreview {
     val recipe = koinInject<Recipe>()
 
@@ -1708,7 +1743,7 @@ fun InstructionsTabPreview() {
         InstructionsContent(
           instructions = instructions,
           ingredients = ingredients,
-          onInstructionChanged = { instruction ->
+          onInstructionChange = { instruction ->
             instructions =
               if (instructions.any { it.id == instruction.id }) {
                 instructions.map { i -> if (i.id == instruction.id) instruction else i }
@@ -1718,7 +1753,6 @@ fun InstructionsTabPreview() {
           },
           onRemoveInstruction = { instructions = instructions - it },
           onMoveInstruction = { from, to -> instructions = instructions.move(from, to) },
-          onUserMessage = {},
         )
       }
     }

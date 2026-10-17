@@ -1,16 +1,42 @@
 package com.kronos.skilletapp.ui.component
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,17 +49,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kronos.skilletapp.model.Ingredient
 import com.kronos.measurement.model.Measurement
 import com.kronos.measurement.model.MeasurementUnit
 import com.kronos.measurement.model.convertTo
 import com.kronos.measurement.model.hasSameDimensionAs
+import com.kronos.skilletapp.model.Ingredient
 import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
-import com.kronos.utils.Fraction
-import com.kronos.utils.fraction
 import com.kronos.skilletapp.utils.modifier.applyIf
 import com.kronos.skilletapp.utils.modifier.applyUnless
+import com.kronos.utils.Fraction
+import com.kronos.utils.fraction
 
 @Composable
 fun IngredientRow(
@@ -49,18 +75,14 @@ fun IngredientRow(
   trailingIcon: @Composable (() -> Unit)? = null,
 ) {
   val measurement =
-    with(ingredient.measurement.scale(scale)) {
-      selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce }
-    }
+    with(ingredient.measurement.scale(scale)) { selectedUnit?.let { convertTo(it) } ?: normalized { it !is MeasurementUnit.FluidOunce } }
 
   val transition = updateTransition(checked, label = "Checked")
 
   val bgColor by
     animateColorAsState(
-      targetValue =
-        if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
-      animationSpec =
-        if (checked) tween(durationMillis = 220, delayMillis = 120) else tween(durationMillis = 90),
+      targetValue = if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
+      animationSpec = if (checked) tween(durationMillis = 220, delayMillis = 120) else tween(durationMillis = 90),
       label = "Background Color",
     )
 
@@ -101,8 +123,7 @@ fun IngredientRow(
               text = quantity,
               color = detailContentColor,
               fontSize = 18.sp,
-              modifier =
-                Modifier.applyUnless(measurement.unit is MeasurementUnit.None) { offset(y = 4.dp) },
+              modifier = Modifier.applyUnless(measurement.unit is MeasurementUnit.None) { offset(y = 4.dp) },
             )
 
             if (measurement.unit !is MeasurementUnit.None) {
@@ -182,8 +203,8 @@ fun IngredientListItem(
   if (showBottomSheet) {
     UnitSelectionBottomSheet(
       onDismissRequest = { showBottomSheet = false },
-      onUnitSelect = {
-        onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
+      onUnitSelect = { unit ->
+        onUnitSelect(ingredient, unit.takeIf { selectedUnit != it })
         sheetState.dismiss(scope) { showBottomSheet = false }
       },
       ingredient = ingredient,
@@ -198,6 +219,7 @@ fun IngredientListItem(
 @OptIn(ExperimentalMaterial3Api::class)
 fun IngredientPill(
   ingredient: Ingredient,
+  modifier: Modifier = Modifier,
   scale: Float = 1f,
   //  selectedUnits: Map<Ingredient, MeasurementUnit?> = mapOf(),
   selectedUnit: MeasurementUnit? = null,
@@ -216,6 +238,7 @@ fun IngredientPill(
   val borderColor = selectedUnit?.let { contentColor } ?: bgColor
 
   ItemPill(
+    modifier = modifier,
     enabled = measurements.isNotEmpty(),
     onClick = { showBottomSheet = true },
     color = bgColor,
@@ -236,16 +259,10 @@ fun IngredientPill(
             }
           }
 
-        // TODO: this works for now, but it should use a custom layout to avoid recomposition
         var minWidth by remember { mutableStateOf(Dp.Unspecified) }
         val density = LocalDensity.current
 
-        Box(
-          modifier =
-            Modifier.onPlaced { minWidth = with(density) { it.size.height.toDp() } }
-              .widthIn(min = minWidth)
-              .fillMaxHeight()
-        ) {
+        Box(modifier = Modifier.onPlaced { minWidth = with(density) { it.size.height.toDp() } }.widthIn(min = minWidth).fillMaxHeight()) {
           Text(
             text = quantity,
             fontSize = 18.sp,
@@ -257,9 +274,7 @@ fun IngredientPill(
   ) {
     Text(
       text = ingredient.name,
-      modifier =
-        Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }
-          .padding(vertical = 8.dp),
+      modifier = Modifier.applyIf(ingredient.measurement.quantity <= 0) { padding(start = 8.dp) }.padding(vertical = 8.dp),
     )
   }
 
@@ -269,8 +284,8 @@ fun IngredientPill(
   if (showBottomSheet) {
     UnitSelectionBottomSheet(
       onDismissRequest = { showBottomSheet = false },
-      onUnitSelect = {
-        onUnitSelect(ingredient, it.takeIf { selectedUnit != it })
+      onUnitSelect = { unit ->
+        onUnitSelect(ingredient, unit.takeIf { selectedUnit != it })
         sheetState.dismiss(scope) { showBottomSheet = false }
       },
       ingredient = ingredient,
@@ -295,11 +310,7 @@ private fun IngredientRowPreview() {
       IngredientRow(
         ingredient = ingredient,
         scale = 1f,
-        trailingIcon = {
-          IconButton(onClick = {}) {
-            Icon(imageVector = Icons.Default.DragHandle, contentDescription = "Dragging")
-          }
-        },
+        trailingIcon = { IconButton(onClick = {}) { Icon(imageVector = Icons.Default.DragHandle, contentDescription = "Dragging") } },
       )
     }
   }
@@ -307,7 +318,7 @@ private fun IngredientRowPreview() {
 
 @Preview
 @Composable
-fun IngredientRowCheckablePreview() {
+private fun IngredientRowCheckablePreview() {
   val ingredient =
     Ingredient(
       name = "Pasta",
@@ -336,7 +347,7 @@ fun IngredientRowCheckablePreview() {
 
 @Preview
 @Composable
-fun IngredientListItemPreview() {
+private fun IngredientListItemPreview() {
   val ingredient =
     Ingredient(
       name = "Pasta",
@@ -351,11 +362,7 @@ fun IngredientListItemPreview() {
         scale = 1f,
         selectedUnit = null,
         onUnitSelect = { _, _ -> },
-        trailingIcon = {
-          IconButton(onClick = {}) {
-            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More Options")
-          }
-        },
+        trailingIcon = { IconButton(onClick = {}) { Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More Options") } },
       )
     }
   }
@@ -383,7 +390,7 @@ private fun IngredientPillPreview() {
 
 @Preview
 @Composable
-fun IngredientPillNoQuantityPreview() {
+private fun IngredientPillNoQuantityPreview() {
   val ingredient =
     Ingredient(
       name = "Salt",
@@ -404,7 +411,7 @@ fun IngredientPillNoQuantityPreview() {
 
 @Preview
 @Composable
-fun IngredientPillNoMeasurementPreview() {
+private fun IngredientPillNoMeasurementPreview() {
   val ingredient =
     Ingredient(
       name = "Pepe",

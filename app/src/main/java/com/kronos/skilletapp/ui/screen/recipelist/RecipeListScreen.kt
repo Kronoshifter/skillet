@@ -7,7 +7,20 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -18,9 +31,32 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.contentColorFor
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,15 +77,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import com.kronos.skilletapp.model.RecipeSummary
-import com.kronos.skilletapp.ui.*
+import com.kronos.skilletapp.ui.AsyncContent
+import com.kronos.skilletapp.ui.DisableRipple
+import com.kronos.skilletapp.ui.FabPadding
+import com.kronos.skilletapp.ui.KoinPreview
 import com.kronos.skilletapp.ui.component.ActionBottomSheet
 import com.kronos.skilletapp.ui.component.SkilletBottomNavigationBar
+import com.kronos.skilletapp.ui.dismiss
 import com.kronos.skilletapp.ui.theme.SkilletAppTheme
 import com.kronos.skilletapp.ui.viewmodel.RecipeListViewModel
 import com.kronos.skilletapp.utils.isNotNullOrBlank
 import com.leinardi.android.speeddial.compose.SpeedDial
 import com.leinardi.android.speeddial.compose.SpeedDialOverlay
 import com.leinardi.android.speeddial.compose.SpeedDialState
+import kotlinx.coroutines.CoroutineScope
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -59,6 +100,7 @@ fun RecipeListScreen(
   onNewRecipe: () -> Unit,
   onNewRecipeByUrl: (url: String) -> Unit,
   onRecipeClick: (id: String) -> Unit,
+  modifier: Modifier = Modifier,
   vm: RecipeListViewModel = koinViewModel(),
 ) {
   var speedDialState by rememberSaveable { mutableStateOf(SpeedDialState.Collapsed) }
@@ -67,75 +109,28 @@ fun RecipeListScreen(
   var showImportRecipeBottomSheet by rememberSaveable { mutableStateOf(false) }
 
   Scaffold(
+    modifier = modifier,
     topBar = {
       TopAppBar(
         title = { Text(text = "Recipes") },
         actions = {
-          // TODO: Implement search
           //          IconButton(onClick = { /*TODO*/ }) {
           //            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
           //          }
 
-          IconButton(onClick = { /*TODO*/ }) {
-            Icon(Icons.Default.MoreVert, contentDescription = "More Options")
-          }
+          IconButton(onClick = { /*TODO*/ }) { Icon(Icons.Default.MoreVert, contentDescription = "More Options") }
         },
       )
     },
     bottomBar = { SkilletBottomNavigationBar() },
     floatingActionButton = {
-      SpeedDial(
-        state = speedDialState,
-        reverseAnimationOnClose = true,
-        onFabClick = {
-          overlayVisible = !it
-          speedDialState = speedDialState.toggle()
-        },
-        fabClosedContent = {
-          Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options")
-        },
-        fabOpenedContent = {
-          Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options")
-        },
-      ) {
-        item {
-          Button(
-            onClick = {
-              onNewRecipe()
-              overlayVisible = false
-              speedDialState = speedDialState.toggle()
-            },
-            colors =
-              ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              ),
-          ) {
-            Text(text = "Create new recipe")
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(imageVector = Icons.Default.Add, contentDescription = "Create new recipe")
-          }
-        }
-
-        item {
-          Button(
-            onClick = {
-              showImportRecipeBottomSheet = true
-              overlayVisible = false
-              speedDialState = speedDialState.toggle()
-            },
-            colors =
-              ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              ),
-          ) {
-            Text(text = "Import from URL")
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(imageVector = Icons.Default.Link, contentDescription = "Import from URL")
-          }
-        }
-      }
+      RecipeSpeedDial(
+        speedDialState = speedDialState,
+        onFabToggle = { speedDialState = it },
+        onOverlayDismiss = { overlayVisible = false },
+        onNewRecipe = onNewRecipe,
+        onImportFromUrl = { showImportRecipeBottomSheet = true },
+      )
     },
     floatingActionButtonPosition = FabPosition.End,
   ) { padding ->
@@ -168,75 +163,149 @@ fun RecipeListScreen(
         )
       }
 
-      LaunchedEffect(vm.sharedRecipe) {
-        showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl
-      }
+      LaunchedEffect(vm.sharedRecipe) { showImportRecipeBottomSheet = vm.sharedRecipe?.url.isNotNullOrBlank() && vm.showSharedUrl }
 
       val sheetState = rememberModalBottomSheetState()
       val scope = rememberCoroutineScope()
-      var url by remember {
-        mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl } ?: "")
-      }
+      var url by remember { mutableStateOf(vm.sharedRecipe?.url?.takeIf { vm.showSharedUrl }.orEmpty()) }
 
       if (showImportRecipeBottomSheet) {
-        var isValidUrl = isValidUrl(url)
-
-        ActionBottomSheet(
+        ImportRecipeBottomSheet(
+          url = url,
+          onUrlChange = { url = it },
+          scope = scope,
           sheetState = sheetState,
-          modifier = Modifier.fillMaxWidth().padding(8.dp),
-          onDismissRequest = {
-            url = ""
+          onImport = { imported -> onNewRecipeByUrl(imported) },
+          onDismiss = {
             vm.showSharedUrl = false
             showImportRecipeBottomSheet = false
           },
-          title = { Text(text = "Import Recipe") },
-          action = {
-            TextButton(
-              onClick = {
-                onNewRecipeByUrl(url)
-                url = ""
-                vm.showSharedUrl = false
-                sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-              },
-              enabled = isValidUrl,
-            ) {
-              Text(text = "Import")
-            }
-          },
-        ) {
-          val keyboard = LocalSoftwareKeyboardController.current
-
-          OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
-            label = { Text(text = "URL") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions =
-              KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
-            keyboardActions =
-              KeyboardActions(
-                onDone = {
-                  if (isValidUrl) {
-                    onNewRecipeByUrl(url)
-                    url = ""
-                    vm.showSharedUrl = false
-                    sheetState.dismiss(scope) { showImportRecipeBottomSheet = false }
-                  }
-
-                  keyboard?.hide()
-                }
-              ),
-            singleLine = true,
-            isError = !isValidUrl && url.isNotBlank(),
-            supportingText = {
-              if (!isValidUrl && url.isNotBlank()) {
-                Text(text = "Invalid URL")
-              }
-            },
-          )
-        }
+        )
       }
     }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@Composable
+private fun RecipeSpeedDial(
+  speedDialState: SpeedDialState,
+  onFabToggle: (SpeedDialState) -> Unit,
+  onOverlayDismiss: () -> Unit,
+  onNewRecipe: () -> Unit,
+  onImportFromUrl: () -> Unit,
+) {
+  SpeedDial(
+    state = speedDialState,
+    reverseAnimationOnClose = true,
+    onFabClick = {
+      onOverlayDismiss()
+      onFabToggle(speedDialState.toggle())
+    },
+    fabClosedContent = { Icon(imageVector = Icons.Default.Add, contentDescription = "Open new recipe options") },
+    fabOpenedContent = { Icon(imageVector = Icons.Default.Close, contentDescription = "Close new recipe options") },
+  ) {
+    item {
+      Button(
+        onClick = {
+          onNewRecipe()
+          onOverlayDismiss()
+          onFabToggle(speedDialState.toggle())
+        },
+        colors =
+          ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          ),
+      ) {
+        Text(text = "Create new recipe")
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(imageVector = Icons.Default.Add, contentDescription = "Create new recipe")
+      }
+    }
+
+    item {
+      Button(
+        onClick = {
+          onImportFromUrl()
+          onOverlayDismiss()
+          onFabToggle(speedDialState.toggle())
+        },
+        colors =
+          ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          ),
+      ) {
+        Text(text = "Import from URL")
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(imageVector = Icons.Default.Link, contentDescription = "Import from URL")
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ImportRecipeBottomSheet(
+  url: String,
+  onUrlChange: (String) -> Unit,
+  scope: CoroutineScope,
+  sheetState: SheetState,
+  onImport: (String) -> Unit,
+  onDismiss: () -> Unit,
+) {
+  val isValidUrl = isValidUrl(url)
+
+  ActionBottomSheet(
+    sheetState = sheetState,
+    modifier = Modifier.fillMaxWidth().padding(8.dp),
+    onDismissRequest = {
+      onUrlChange("")
+      onDismiss()
+    },
+    title = { Text(text = "Import Recipe") },
+    action = {
+      TextButton(
+        onClick = {
+          onImport(url)
+          onUrlChange("")
+          sheetState.dismiss(scope) { onDismiss() }
+        },
+        enabled = isValidUrl,
+      ) {
+        Text(text = "Import")
+      }
+    },
+  ) {
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    OutlinedTextField(
+      value = url,
+      onValueChange = onUrlChange,
+      label = { Text(text = "URL") },
+      modifier = Modifier.fillMaxWidth(),
+      keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Uri),
+      keyboardActions =
+        KeyboardActions(
+          onDone = {
+            if (isValidUrl) {
+              onImport(url)
+              onUrlChange("")
+              sheetState.dismiss(scope) { onDismiss() }
+            }
+
+            keyboard?.hide()
+          }
+        ),
+      singleLine = true,
+      isError = !isValidUrl && url.isNotBlank(),
+      supportingText = {
+        if (!isValidUrl && url.isNotBlank()) {
+          Text(text = "Invalid URL")
+        }
+      },
+    )
   }
 }
 
@@ -248,9 +317,7 @@ private fun RecipeListContent(
   gridPadding: PaddingValues = PaddingValues(8.dp),
 ) {
   if (recipes.isEmpty()) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-      Text(text = "No Recipes", color = MaterialTheme.colorScheme.secondary)
-    }
+    Box(modifier = modifier, contentAlignment = Alignment.Center) { Text(text = "No Recipes", color = MaterialTheme.colorScheme.secondary) }
     return
   }
 
@@ -299,8 +366,7 @@ fun RecipeCard(
           painter = painter,
           contentDescription = recipe.name,
           contentScale = ContentScale.Crop,
-          modifier =
-            Modifier.fillMaxWidth().defaultMinSize(minHeight = 1.dp).align(Alignment.Center),
+          modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 1.dp).align(Alignment.Center),
         )
       }
         ?: Canvas(modifier = Modifier.height(192.dp).fillMaxWidth()) {
@@ -352,7 +418,7 @@ fun RecipeCard(
 
 @Preview(widthDp = 200)
 @Composable
-fun RecipeCardPreview() {
+private fun RecipeCardPreview() {
   KoinPreview {
     val recipe =
       RecipeSummary(
@@ -379,7 +445,7 @@ fun RecipeCardPreview() {
 
 @Preview
 @Composable
-fun RecipeListPreview() {
+private fun RecipeListPreview() {
   KoinPreview {
     val recipes =
       List(10) { i ->

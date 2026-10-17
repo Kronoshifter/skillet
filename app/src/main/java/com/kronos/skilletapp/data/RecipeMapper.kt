@@ -14,10 +14,9 @@ import com.kronos.skilletapp.model.RecipeSource
 import com.kronos.skilletapp.model.RecipeTime
 
 /**
- * A flat bundle of every entity row that a single domain [Recipe] maps to: the `recipe` row, the
- * three child-table rows (ordered by their stored `position`), and the two join-table rows. The
- * later write path upserts all of these inside one `RoomDatabase.withTransaction`; the read path
- * assembles a [MappedRecipe] from the per-table DAOs and hands it to [RecipeMapper.toDomain].
+ * A flat bundle of every entity row that a single domain [Recipe] maps to: the `recipe` row, the three child-table rows (ordered by their
+ * stored `position`), and the two join-table rows. The later write path upserts all of these inside one `RoomDatabase.withTransaction`; the
+ * read path assembles a [MappedRecipe] from the per-table DAOs and hands it to [RecipeMapper.toDomain].
  */
 data class MappedRecipe(
   val recipe: RecipeEntity,
@@ -33,16 +32,13 @@ data class MappedRecipe(
  *
  * Domain → entities ([toEntities]):
  * - The [Recipe] flattens to a single [RecipeEntity] (`time`/`source` VOs become scalar columns).
- * - Child rows are keyed by their domain `id`. Ingredients/equipment referenced at both the recipe
- *   level and an instruction level produce exactly ONE child row (deduped by id). `position` is the
- *   index in the source list where the id first appears: recipe-level ids take positions 0..n-1,
- *   and any id first seen only at an instruction level is appended after them (collision-free).
- * - Join rows carry `position` = the index within that specific instruction's ingredient/equipment
- *   list.
+ * - Child rows are keyed by their domain `id`. Ingredients/equipment referenced at both the recipe level and an instruction level produce
+ *   exactly ONE child row (deduped by id). `position` is the index in the source list where the id first appears: recipe-level ids take
+ *   positions 0..n-1, and any id first seen only at an instruction level is appended after them (collision-free).
+ * - Join rows carry `position` = the index within that specific instruction's ingredient/equipment list.
  *
- * Entities → domain ([toDomain]): reassembles the [Recipe] graph. Each instruction's ingredients
- * and equipment are looked up by id from the child rows, ordered by the join row's `position`; a
- * shared id may therefore appear under multiple instructions.
+ * Entities → domain ([toDomain]): reassembles the [Recipe] graph. Each instruction's ingredients and equipment are looked up by id from the
+ * child rows, ordered by the join row's `position`; a shared id may therefore appear under multiple instructions.
  */
 class RecipeMapper {
 
@@ -65,10 +61,7 @@ class RecipeMapper {
           .associateByTo(equipmentMap) { it.id }
       }
 
-    val instructions =
-      recipe.instructions.mapIndexed { position, ins ->
-        ins.toEntity(recipeId, position)
-      }
+    val instructions = recipe.instructions.mapIndexed { position, ins -> ins.toEntity(recipeId, position) }
 
     val instructionIngredients =
       recipe.instructions.flatMap { ins ->
@@ -128,12 +121,7 @@ class RecipeMapper {
         .mapValues { (_, rows) ->
           rows
             .sortedBy { it.position }
-            .map {
-              requireNotNull(ingredientById[it.ingredientId]) {
-                  "dangling ingredient ref: ${it.ingredientId}"
-                }
-                .toDomain()
-            }
+            .map { requireNotNull(ingredientById[it.ingredientId]) { "dangling ingredient ref: ${it.ingredientId}" }.toDomain() }
         }
     val equipmentByInstruction =
       mapped.instructionEquipment
@@ -141,12 +129,7 @@ class RecipeMapper {
         .mapValues { (_, rows) ->
           rows
             .sortedBy { it.position }
-            .map {
-              requireNotNull(equipmentById[it.equipmentId]) {
-                  "dangling equipment ref: ${it.equipmentId}"
-                }
-                .toDomain()
-            }
+            .map { requireNotNull(equipmentById[it.equipmentId]) { "dangling equipment ref: ${it.equipmentId}" }.toDomain() }
         }
 
     return Recipe(

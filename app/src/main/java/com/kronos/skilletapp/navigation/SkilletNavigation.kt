@@ -50,8 +50,8 @@ fun KClass<out Route>.toRouteString(): String {
     properties
       .groupBy { it.returnType.isMarkedNullable }
       .let { grouped ->
-        val nonNullableProperties = grouped[false] ?: emptyList()
-        val nullableProperties = grouped[true] ?: emptyList()
+        val nonNullableProperties = grouped[false].orEmpty()
+        val nullableProperties = grouped[true].orEmpty()
         var count = 0
 
         nonNullableProperties.forEach { property -> append("/${count++}") }
@@ -98,7 +98,5 @@ class SkilletNavigationActions(private val navController: NavHostController) {
   }
 }
 
-val LocalNavigationActions =
-  compositionLocalOf<SkilletNavigationActions> { error("No SkilletNavigationActions provided") }
-val LocalNavController =
-  compositionLocalOf<NavHostController> { error("No NavController provided") }
+val LocalNavigationActions = compositionLocalOf<SkilletNavigationActions> { error("No SkilletNavigationActions provided") }
+val LocalNavController = compositionLocalOf<NavHostController> { error("No NavController provided") }

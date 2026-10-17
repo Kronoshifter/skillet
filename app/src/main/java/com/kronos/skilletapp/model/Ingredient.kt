@@ -15,7 +15,7 @@ data class Ingredient(
   val id: String = Uuid.random().toString(),
 ) {
   override fun toString(): String {
-    return "$measurement $name${comment?.let { ", $it" } ?: ""}"
+    return "$measurement $name${comment?.let { ", $it" }.orEmpty()}"
   }
 }
 

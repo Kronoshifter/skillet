@@ -25,6 +25,8 @@ espresso = "3.7.0"
 kotlin-result = "2.3.1"
 kotlinx-serialization = "1.11.0"
 detekt = "2.0.0-alpha.6"
+detekt-koin = "1.1.1"
+detekt-compose = "0.6.8"
 ktfmt = "0.27.0"
 
 [libraries]
@@ -81,6 +83,10 @@ espresso-core = { group = "androidx.test.espresso", name = "espresso-core", vers
 compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+
+# Detekt
+detekt-koin = { group = "dev.androidbroadcast.rules.koin", name = "detekt-koin4-rules", version.ref = "detekt-koin" }
+detekt-compose = { group = "io.nlopez.compose.rules", name = "detekt", version.ref = "detekt-compose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

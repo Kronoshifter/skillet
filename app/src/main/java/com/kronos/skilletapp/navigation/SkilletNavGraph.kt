@@ -35,8 +35,7 @@ fun SkilletNavGraph(
   modifier: Modifier = Modifier,
   navController: NavHostController = rememberNavController(),
   startDestination: Route = Route.RecipeList(),
-  navActions: SkilletNavigationActions =
-    remember(navController) { SkilletNavigationActions(navController) },
+  navActions: SkilletNavigationActions = remember(navController) { SkilletNavigationActions(navController) },
 ) {
   LaunchedEffect(intentFlow) {
     intentFlow.collectLatest { intent ->
@@ -54,7 +53,6 @@ fun SkilletNavGraph(
         val json = sharedRecipe?.toJson()
         val uri = Route.RecipeList::class.buildUri(json)
 
-        // TODO: encapsulate in SkilletNavigationActions
         navController.navigate(
           request =
             navDeepLinkRequest(uri = uri) {
@@ -88,8 +86,8 @@ fun SkilletNavGraph(
       val args = it.toRoute<Route.RecipeList>()
       RecipeListScreen(
         onNewRecipe = { navActions.navigateToAddEditRecipe("Add Recipe") },
-        onNewRecipeByUrl = { navActions.navigateToAddEditRecipe(title = "Add Recipe", url = it) },
-        onRecipeClick = { navActions.navigateToRecipe(it) },
+        onNewRecipeByUrl = { url -> navActions.navigateToAddEditRecipe(title = "Add Recipe", url = url) },
+        onRecipeClick = { recipeId -> navActions.navigateToRecipe(recipeId) },
         vm = koinViewModel(key = args.sharedRecipe.toString()),
       )
     }
@@ -117,9 +115,6 @@ fun SkilletNavGraph(
       )
     }
 
-    composable<Route.Cooking> { backStackEntry ->
-      val args = backStackEntry.toRoute<Route.Cooking>()
-      CookingScreen(onBack = { navController.navigateUp() })
-    }
+    composable<Route.Cooking> { CookingScreen(onBack = { navController.navigateUp() }) }
   }
 }
