@@ -2,10 +2,19 @@ package com.kronos.skilletapp
 
 import com.github.michaelbull.result.unwrap
 import com.kronos.skilletapp.scraping.DefaultRecipeScraper
+import io.kotest.core.annotation.Condition
+import io.kotest.core.annotation.DisabledIf
+import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlin.reflect.KClass
 
+class ScrapeGate : Condition {
+  override fun evaluate(kclass: KClass<out Spec>): Boolean = System.getProperty("skillet.scrape") != "true"
+}
+
+@DisabledIf(ScrapeGate::class)
 class RecipeScrapingTests :
   FunSpec({
     context("Scraping") {

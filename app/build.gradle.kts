@@ -76,7 +76,12 @@ ktfmt {
   trailingCommaManagementStrategy = TrailingCommaManagementStrategy.COMPLETE
 }
 
-tasks.withType<Test>().configureEach { useJUnitPlatform() }
+tasks.withType<Test>().configureEach {
+  useJUnitPlatform()
+  // Forward the optional `skillet.scrape` gate onto the test JVM (property only, never a test filter).
+  val scrapeGate = System.getProperty("skillet.scrape") ?: providers.gradleProperty("skillet.scrape").orNull
+  if (scrapeGate != null) systemProperty("skillet.scrape", scrapeGate)
+}
 
 tasks.withType<Detekt>().configureEach {
   exclude("**/generated/**")
